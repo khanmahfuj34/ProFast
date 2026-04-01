@@ -11,14 +11,30 @@ import FAQ from '../Faq/Faq';
 const Home = () => {
     return (
         <div>
-            <Banner></Banner>
-            <HowItWorks></HowItWorks>
-            <Services></Services>
-            <ClientLogo></ClientLogo>
-            <Features></Features>
-            <MerchantBanner></MerchantBanner>
-            <CustomerReviews></CustomerReviews>
-            <FAQ></FAQ>
+            <div data-aos="fade-down">
+                <Banner></Banner>
+            </div>
+            <div data-aos="fade-up">
+                <HowItWorks></HowItWorks>
+            </div>
+            <div data-aos="fade-up">
+                <Services></Services>
+            </div>
+            <div data-aos="fade-up">
+                <ClientLogo></ClientLogo>
+            </div>
+            <div data-aos="fade-up">
+                <Features></Features>
+            </div>
+            <div data-aos="fade-up">
+                <MerchantBanner></MerchantBanner>
+            </div>
+            <div data-aos="fade-up">
+                <CustomerReviews></CustomerReviews>
+            </div>
+            <div data-aos="fade-up">
+                <FAQ></FAQ>
+            </div>
         </div>
     );
 };

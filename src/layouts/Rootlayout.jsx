@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import Navbar from '../pages/Home/shared/Navbar/Navbar';
 import Footer from '../pages/Home/shared/Footer/Footer';
 
 const Rootlayout = () => {
+    useEffect(() => {
+        AOS.init({
+            duration: 800,
+            once: false,
+            offset: 100,
+            delay: 0,
+        });
+    }, []);
     return (
         <div>
             <Navbar></Navbar>

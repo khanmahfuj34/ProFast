@@ -109,7 +109,7 @@ const CustomerReviews = () => {
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={24}
-            slidesPerView={3}
+            slidesPerView={5}
             centeredSlides={true}
             loop={true}
             autoplay={{ delay: 4000, disableOnInteraction: false }}
@@ -120,9 +120,11 @@ const CustomerReviews = () => {
             }}
             breakpoints={{
               320: { slidesPerView: 1 },
-              640: { slidesPerView: 1.5 },
-              768: { slidesPerView: 2.5 },
-              1024: { slidesPerView: 3 },
+              480: { slidesPerView: 2 },
+              640: { slidesPerView: 2.5 },
+              768: { slidesPerView: 3 },
+              1024: { slidesPerView: 4 },
+              1280: { slidesPerView: 5 },
             }}
             className="pb-12"
           >
@@ -162,16 +164,16 @@ const CustomerReviews = () => {
         
         /* All slides default styling */
         .swiper-slide {
-          opacity: 0.5;
-          filter: grayscale(40%) brightness(0.9);
-          transform: scale(0.85) translateY(20px);
+          opacity: 0.4;
+          filter: grayscale(60%) brightness(0.8);
+          transform: scale(0.75) translateY(25px);
           transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         
         /* Active (center) slide - Dramatically Elevated & Enlarged */
         .swiper-slide-active {
-          opacity: 2;
-          filter: grayscale(0%) brightness(1.3);
+          opacity: 1;
+          filter: grayscale(0%) brightness(1);
           transform: scale(1.56) translateY(-25px);
           z-index: 20;
           box-shadow: 0 40px 80px rgba(0, 0, 0, 0.2);
@@ -180,7 +182,7 @@ const CustomerReviews = () => {
         /* Adjacent slides - Smaller and lower */
         .swiper-slide-prev,
         .swiper-slide-next {
-          opacity: 0.25;
+          opacity: 0.65;
           filter: grayscale(30%) brightness(0.95);
           transform: scale(0.92) translateY(5px);
         }
