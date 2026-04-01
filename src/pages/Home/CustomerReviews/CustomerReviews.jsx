@@ -108,35 +108,36 @@ const CustomerReviews = () => {
         <div className="relative">
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
-            spaceBetween={24}
-            slidesPerView={5}
+            spaceBetween={30}
+            slidesPerView={3}
             centeredSlides={true}
             loop={true}
-            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
             pagination={{ clickable: true }}
             navigation={{
               nextEl: ".review-next",
               prevEl: ".review-prev",
             }}
             breakpoints={{
-              320: { slidesPerView: 1 },
-              480: { slidesPerView: 2 },
-              640: { slidesPerView: 2.5 },
-              768: { slidesPerView: 3 },
-              1024: { slidesPerView: 4 },
-              1280: { slidesPerView: 5 },
+              320: { slidesPerView: 1, spaceBetween: 20 },
+              640: { slidesPerView: 1.5, spaceBetween: 20 },
+              768: { slidesPerView: 2, spaceBetween: 25 },
+              1024: { slidesPerView: 3, spaceBetween: 30 },
+              1280: { slidesPerView: 3, spaceBetween: 30 },
             }}
-            className="pb-12"
+            className="pb-16 px-4"
           >
             {reviews.map((item) => (
-              <SwiperSlide key={item.id} className="h-auto">
-                <ReviewCard {...item} />
+              <SwiperSlide key={item.id} className="h-auto flex items-center justify-center">
+                <div className="swiper-slide-wrapper">
+                  <ReviewCard {...item} />
+                </div>
               </SwiperSlide>
             ))}
           </Swiper>
 
           {/* Custom Navigation Buttons */}
-          <div className="flex items-center justify-center gap-4 mt-4">
+          <div className="flex items-center justify-center gap-4 mt-8">
             <button className="review-prev btn btn-circle btn-sm btn-outline border-base-300 hover:btn-primary">
               ←
             </button>
@@ -147,44 +148,73 @@ const CustomerReviews = () => {
         </div>
       </div>
 
-      {/* Swiper pagination dot override */}
+      {/* Professional Testimonial Slider Styling */}
       <style>{`
+        /* Pagination Dots */
         .swiper-pagination-bullet {
-          background-color: #9ca3af;
-          opacity: 0.5;
-          width: 8px;
-          height: 8px;
+          background-color: #cbd5e1;
+          opacity: 0.6;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          transition: all 0.3s ease;
         }
+        
         .swiper-pagination-bullet-active {
           background-color: #0d4a42;
           opacity: 1;
-          width: 24px;
-          border-radius: 4px;
+          width: 28px;
+          border-radius: 5px;
+          transform: scaleX(1.2);
         }
         
-        /* All slides default styling */
+        /* Swiper slide wrapper for better stacking */
+        .swiper-slide-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+        }
+        
+        /* DEFAULT: Side slides - Smaller, Faded, Below */
         .swiper-slide {
-          opacity: 0.4;
-          filter: grayscale(60%) brightness(0.8);
-          transform: scale(0.75) translateY(25px);
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          opacity: 0.5;
+          filter: grayscale(30%) brightness(0.9);
+          transform: scale(0.85);
+          transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          transform-origin: center;
         }
         
-        /* Active (center) slide - Dramatically Elevated & Enlarged */
+        /* ACTIVE: Center slide - Full Size, Full Brightness, Elevated */
         .swiper-slide-active {
           opacity: 1;
           filter: grayscale(0%) brightness(1);
-          transform: scale(1.56) translateY(-25px);
-          z-index: 20;
-          box-shadow: 0 40px 80px rgba(0, 0, 0, 0.2);
+          transform: scale(1) translateY(0px);
+          z-index: 10;
+          box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
         }
         
-        /* Adjacent slides - Smaller and lower */
+        /* ADJACENT: Near-center slides - Slightly larger than far sides */
         .swiper-slide-prev,
         .swiper-slide-next {
-          opacity: 0.65;
-          filter: grayscale(30%) brightness(0.95);
-          transform: scale(0.92) translateY(5px);
+          opacity: 0.7;
+          filter: grayscale(15%) brightness(0.95);
+          transform: scale(0.92);
+        }
+        
+        /* Smooth animation for all transitions */
+        .swiper-slide {
+          will-change: transform, opacity;
+        }
+        
+        /* Remove any 3D perspective effects */
+        .swiper {
+          perspective: none;
+        }
+        
+        .swiper-wrapper {
+          align-items: center;
         }
       `}</style>
     </section>
