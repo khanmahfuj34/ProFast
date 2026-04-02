@@ -1,6 +1,6 @@
 import React from 'react';
 import Banner from '../Banner/Banner';
-import Services from '../services/services';
+import Services from '../services/Services';
 import HowItWorks from '../HowItWork/HowItWorks';
 import ClientLogo from '../ClientLogo/ClientLogo';
 import Features from '../Features/Features';

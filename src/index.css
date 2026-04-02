@@ -1,9 +1,208 @@
 @import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* Font Families */
+
 .font-urbanist {
     font-family: "Urbanist", sans-serif;
     font-optical-sizing: auto;
     font-weight: 400;
     font-style: normal;
+}
+
+.font-syne {
+    font-family: "Syne", sans-serif;
+    font-optical-sizing: auto;
+}
+
+.font-dm-sans {
+    font-family: "DM Sans", sans-serif;
+    font-optical-sizing: auto;
+}
+
+
+/* Premium Glassmorphism Blur */
+
+.glass-blur {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+
+/* Grid Overlay */
+
+.bg-grid-small {
+    background-image: linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+}
+
+
+/* Animated Background Blobs */
+
+@keyframes blob-1 {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(20px, -30px) scale(1.05);
+    }
+    50% {
+        transform: translate(-10px, 20px) scale(1);
+    }
+    75% {
+        transform: translate(-30px, -10px) scale(1.05);
+    }
+}
+
+@keyframes blob-2 {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(-25px, 35px) scale(1.1);
+    }
+    50% {
+        transform: translate(15px, -25px) scale(1);
+    }
+    75% {
+        transform: translate(35px, 15px) scale(1.1);
+    }
+}
+
+@keyframes float-dot-1 {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(30px, -40px) scale(1.1);
+    }
+    50% {
+        transform: translate(-20px, 30px) scale(1);
+    }
+    75% {
+        transform: translate(40px, 20px) scale(1.1);
+    }
+}
+
+@keyframes float-dot-2 {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(-35px, 25px) scale(0.9);
+    }
+    50% {
+        transform: translate(25px, -35px) scale(1.05);
+    }
+    75% {
+        transform: translate(-25px, -25px) scale(0.9);
+    }
+}
+
+@keyframes float-dot-3 {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(-30px, -30px) scale(1.1);
+    }
+    50% {
+        transform: translate(30px, 20px) scale(1);
+    }
+    75% {
+        transform: translate(-15px, 35px) scale(1.05);
+    }
+}
+
+@keyframes pulse-ring {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+.blob-1 {
+    animation: blob-1 15s infinite;
+}
+
+.blob-2 {
+    animation: blob-2 18s infinite;
+}
+
+.float-dot-1 {
+    animation: float-dot-1 12s infinite;
+}
+
+.float-dot-2 {
+    animation: float-dot-2 14s infinite;
+}
+
+.float-dot-3 {
+    animation: float-dot-3 16s infinite;
+}
+
+.pulse-ring {
+    animation: pulse-ring 4s infinite;
+}
+
+
+/* Glow Shadow */
+
+.glow-indigo {
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.3), 0 0 60px rgba(99, 102, 241, 0.15);
+}
+
+.glow-emerald {
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.3), 0 0 60px rgba(16, 185, 129, 0.15);
+}
+
+
+/* Input Focus Glow */
+
+.input-focus-indigo:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+.input-focus-emerald:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1), 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+
+/* Illustration Glow Ring */
+
+.illustration-ring {
+    border: 2px solid;
+    border-image: linear-gradient(135deg, rgba(99, 102, 241, 0.5), rgba(147, 112, 219, 0.3), rgba(99, 102, 241, 0.2)) 1;
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.2), inset 0 0 40px rgba(99, 102, 241, 0.1);
+}
+
+.illustration-ring.emerald {
+    border-image: linear-gradient(135deg, rgba(16, 185, 129, 0.5), rgba(52, 211, 153, 0.3), rgba(16, 185, 129, 0.2)) 1;
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.2), inset 0 0 40px rgba(16, 185, 129, 0.1);
+}
+
+
+/* Badge Styling */
+
+.stat-badge {
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.stat-badge.emerald {
+    border-color: rgba(16, 185, 129, 0.2);
 }

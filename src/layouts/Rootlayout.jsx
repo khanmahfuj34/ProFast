@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import Navbar from '../pages/Home/shared/Navbar/Navbar';
@@ -15,7 +15,7 @@ const Rootlayout = () => {
         });
     }, []);
     return (
-        <div>
+        <div className='font-dm-sans max-w-7xl mx-auto'>
             <Navbar></Navbar>
             
             <Outlet></Outlet>

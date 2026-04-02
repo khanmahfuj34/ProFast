@@ -7,47 +7,78 @@ import { toast } from 'react-toastify';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-const Login = () => {
-    const { register, handleSubmit, formState: { errors } } = useForm();
-    const { signIn } = useAuth();
-
+const Register = () => {
+    const {register, handleSubmit, formState: { errors }} = useForm();
+    const { createUser } = useAuth();
+    
     const onSubmit = data => {
-        signIn(data.email, data.password)
-            .then(result => {
-                toast.success('🎉 Login successful!', { position: 'top-right', autoClose: 4000 });
-                console.log('✅ Login successful:', result.user);
-            })
-            .catch(error => {
-                console.error('❌ Auth Error Code:', error.code);
-                console.error('❌ Auth Error Message:', error.message);
-                if (error.code === 'auth/api-key-not-valid') {
-                    toast.error('Firebase Configuration Issue. Contact admin.', { position: 'top-right', autoClose: 4000 });
-                } else if (error.code === 'auth/user-not-found') {
-                    toast.error('User not found. Please register first.', { position: 'top-right', autoClose: 4000 });
-                } else if (error.code === 'auth/wrong-password') {
-                    toast.error('Incorrect password.', { position: 'top-right', autoClose: 4000 });
-                } else {
-                    toast.error(`Error: ${error.message}`, { position: 'top-right', autoClose: 4000 });
-                }
+        createUser(data.email, data.password)
+        .then(result => {
+            toast.success('🎉 Account created successfully!', {
+                position: 'top-right',
+                autoClose: 4000,
             });
+            console.log('✅ Registration successful:', result.user);
+        })
+        .catch(error => {
+            console.error('❌ Auth Error Code:', error.code);
+            console.error('❌ Auth Error Message:', error.message);
+            
+            if (error.code === 'auth/api-key-not-valid') {
+                toast.error('Firebase Configuration Issue. Contact admin.', {
+                    position: 'top-right',
+                    autoClose: 4000,
+                });
+            } else if (error.code === 'auth/operation-not-allowed') {
+                toast.error('Email/Password login not enabled. Contact admin.', {
+                    position: 'top-right',
+                    autoClose: 4000,
+                });
+            } else if (error.code === 'auth/weak-password') {
+                toast.error('Password is too weak. Use at least 6 characters.', {
+                    position: 'top-right',
+                    autoClose: 4000,
+                });
+            } else if (error.code === 'auth/email-already-in-use') {
+                toast.error('Email already registered.', {
+                    position: 'top-right',
+                    autoClose: 4000,
+                });
+            } else {
+                toast.error(`Error: ${error.message}`, {
+                    position: 'top-right',
+                    autoClose: 4000,
+                });
+            }
+        });
     };
 
-    const handleGoogleLogin = async () => {
+    const handleGoogleRegister = async () => {
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
-            toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 4000 });
-            console.log('✅ Google Login successful:', result.user);
+            toast.success(`Welcome ${result.user.displayName}!`, {
+                position: 'top-right',
+                autoClose: 4000,
+            });
+            console.log('✅ Google Registration successful:', result.user);
         } catch (error) {
-            console.error('❌ Google Login Error:', error.message);
-            toast.error(`Login failed: ${error.message}`, { position: 'top-right', autoClose: 4000 });
+            console.error('❌ Google Registration Error:', error.message);
+            toast.error(`Registration failed: ${error.message}`, {
+                position: 'top-right',
+                autoClose: 4000,
+            });
         }
     };
 
     useEffect(() => {
-        AOS.init({ duration: 800, once: true, offset: 30 });
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 50,
+        });
     }, []);
-
+    
     return (
         <div className="min-h-screen w-full bg-gradient-to-b from-yellow-100 to-yellow-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
             {/* Main Container - 2 Column Layout */}
@@ -63,28 +94,46 @@ const Login = () => {
 
                         {/* Heading */}
                         <div className="mb-8">
-                            <h1 className="text-5xl font-bold text-gray-900 mb-3 font-syne">Welcome Back</h1>
-                            <p className="text-gray-600 text-sm font-dm-sans">Login with your credentials</p>
+                            <h1 className="text-5xl font-bold text-gray-900 mb-3 font-syne">Create Account</h1>
+                            <p className="text-gray-600 text-sm font-dm-sans">Join ProFast today</p>
                         </div>
 
                         {/* Form */}
                         <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
-                    
+                        
+                            {/* Name Field */}
+                            <div className="space-y-1.5">
+                                <label className="block text-sm font-medium text-gray-900 font-dm-sans">Name</label>
+                                <input 
+                                    type="text" 
+                                    placeholder='John Doe' 
+                                    {...register('name', { required: "Name is required", pattern: { value: /^[a-zA-Z\s]+$/, message: "Name must contain only alphabetical characters" } })}
+                                    aria-invalid={errors.name ? "true" : "false"}
+                                    className={`w-full px-4 py-2.5 rounded-lg bg-white border-2 transition-all duration-300 focus:outline-none font-dm-sans text-gray-900 placeholder-gray-400 ${
+                                        errors.name 
+                                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200' 
+                                        : 'border-gray-200 focus:border-lime-400 focus:ring-2 focus:ring-lime-100'
+                                    }`}
+                                />
+                                {errors.name && (
+                                    <p role="alert" className='text-red-500 text-xs font-medium flex items-center gap-1 font-dm-sans'>
+                                        <span>⚠</span> {errors.name.message}
+                                    </p>
+                                )}
+                            </div>
+
                             {/* Email Field */}
                             <div className="space-y-1.5">
                                 <label className="block text-sm font-medium text-gray-900 font-dm-sans">Email</label>
-                                <input
-                                    type="email"
-                                    placeholder="your.email@gmail.com"
-                                    {...register('email', {
-                                        required: "Email is required",
-                                        pattern: { value: /^[^\s@]+@gmail\.com$/, message: "Email must be a valid Gmail address (@gmail.com)" }
-                                    })}
+                                <input 
+                                    type="email" 
+                                    placeholder='your.email@gmail.com' 
+                                    {...register('email', { required: "Email is required", pattern: { value: /^[^\s@]+@gmail\.com$/, message: "Email must be a valid Gmail address (@gmail.com)" } })}
                                     aria-invalid={errors.email ? "true" : "false"}
                                     className={`w-full px-4 py-2.5 rounded-lg bg-white border-2 transition-all duration-300 focus:outline-none font-dm-sans text-gray-900 placeholder-gray-400 ${
-                                        errors.email
-                                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                            : 'border-gray-200 focus:border-lime-400 focus:ring-2 focus:ring-lime-100'
+                                        errors.email 
+                                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200' 
+                                        : 'border-gray-200 focus:border-lime-400 focus:ring-2 focus:ring-lime-100'
                                     }`}
                                 />
                                 {errors.email && (
@@ -97,15 +146,15 @@ const Login = () => {
                             {/* Password Field */}
                             <div className="space-y-1.5">
                                 <label className="block text-sm font-medium text-gray-900 font-dm-sans">Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
+                                <input 
+                                    type="password" 
+                                    placeholder='Create a strong password' 
                                     {...register('password', { required: "Password is required", minLength: 6, maxLength: 32 })}
                                     aria-invalid={errors.password ? "true" : "false"}
                                     className={`w-full px-4 py-2.5 rounded-lg bg-white border-2 transition-all duration-300 focus:outline-none font-dm-sans text-gray-900 placeholder-gray-400 ${
-                                        errors.password
-                                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                            : 'border-gray-200 focus:border-lime-400 focus:ring-2 focus:ring-lime-100'
+                                        errors.password 
+                                        ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200' 
+                                        : 'border-gray-200 focus:border-lime-400 focus:ring-2 focus:ring-lime-100'
                                     }`}
                                 />
                                 {errors.password?.type === "required" && (
@@ -125,26 +174,24 @@ const Login = () => {
                                 )}
                             </div>
 
-                            {/* Remember & Forgot */}
-                            <div className="flex items-center justify-between pt-1">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 rounded bg-white border-2 border-gray-300 text-lime-500 focus:ring-2 focus:ring-lime-200 cursor-pointer"
-                                    />
-                                    <span className="text-xs text-gray-700 font-dm-sans">Remember me</span>
-                                </label>
-                                <a href="#" className="text-xs text-gray-600 hover:text-gray-900 transition-colors font-dm-sans">
-                                    Forgot password?
-                                </a>
-                            </div>
+                            {/* Terms & Conditions */}
+                            <label className="flex items-center gap-2 cursor-pointer pt-1">
+                                <input 
+                                    type="checkbox" 
+                                    required
+                                    className="w-4 h-4 rounded bg-white border-2 border-gray-300 text-lime-500 focus:ring-2 focus:ring-lime-200 cursor-pointer" 
+                                />
+                                <span className="text-xs text-gray-700 font-dm-sans">
+                                    I agree to the terms and conditions
+                                </span>
+                            </label>
 
-                            {/* Login Button */}
-                            <button
+                            {/* Register Button */}
+                            <button 
                                 type="submit"
                                 className="w-full mt-6 px-6 py-3 bg-lime-400 hover:bg-lime-500 active:bg-lime-600 text-gray-900 font-bold rounded-lg transition-all duration-200 hover:shadow-lg active:scale-95 font-syne uppercase tracking-wider text-sm"
                             >
-                                Login
+                                Register
                             </button>
 
                             {/* Divider */}
@@ -157,10 +204,10 @@ const Login = () => {
                                 </div>
                             </div>
 
-                            {/* Google Login Button */}
-                            <button
+                            {/* Google Register Button */}
+                            <button 
                                 type="button"
-                                onClick={handleGoogleLogin}
+                                onClick={handleGoogleRegister}
                                 className="w-full px-6 py-2.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-medium rounded-lg transition-all duration-200 font-dm-sans text-sm flex items-center justify-center gap-2 active:scale-95"
                             >
                                 {/* Official Google Logo */}
@@ -170,15 +217,15 @@ const Login = () => {
                                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                                 </svg>
-                                Login with Google
+                                Register with Google
                             </button>
 
-                            {/* Sign Up Link */}
+                            {/* Sign In Link */}
                             <div className="text-center pt-2">
                                 <p className="text-gray-600 text-xs font-dm-sans">
-                                    Don't have an account?{' '}
-                                    <a href="/auth/register" className="text-lime-600 hover:text-lime-700 transition-colors font-bold cursor-pointer">
-                                        Register
+                                    Already have an account?{' '}
+                                    <a href="/auth/login" className="text-lime-600 hover:text-lime-700 transition-colors font-bold cursor-pointer">
+                                        Login
                                     </a>
                                 </p>
                             </div>
@@ -242,4 +289,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default Register;
