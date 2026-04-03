@@ -87,18 +87,18 @@ const reviews = [
 
 const CustomerReviews = () => {
   return (
-    <section className="py-16 px-4 bg-base-200">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col items-center text-center mb-12 gap-4">
+        <div className="flex flex-col items-center text-center mb-12 sm:mb-16 lg:mb-20 gap-4">
           {/* Top illustration */}
           <img
             src={cartImg}
             alt="Delivery cart"
-            className="w-24 h-24 object-contain"
+            className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
           />
-          <h2 className="text-3xl font-bold">What our customers are saying</h2>
-          <p className="text-base-content/60 text-sm max-w-md leading-relaxed">
+          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 font-syne">What our customers are saying</h2>
+          <p className="text-gray-600 text-base max-w-2xl leading-relaxed font-dm-sans">
             Real experiences from our valued customers across Bangladesh. We
             deliver smiles, not just parcels.
           </p>

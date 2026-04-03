@@ -5,7 +5,7 @@ import locationImg from "../../../assets/location-merchant.png";
 
 const MerchantBanner = () => {
   return (
-    <section className="py-16 px-4">
+    <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div
           className="relative overflow-hidden rounded-2xl"
@@ -32,15 +32,15 @@ const MerchantBanner = () => {
           />
 
           {/* Content wrapper */}
-          <div className="relative z-10 flex items-center justify-between px-8 py-16 gap-6">
+          <div className="relative z-10 flex items-center justify-between px-6 sm:px-8 lg:px-10 py-16 sm:py-20 gap-6 lg:gap-8">
             {/* Left — Text + Buttons */}
-            <div className="flex flex-col gap-5 max-w-lg">
-              <h2 className="text-white text-2xl md:text-3xl font-bold leading-snug">
+            <div className="flex flex-col gap-6 max-w-lg">
+              <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold leading-snug font-syne">
                 Merchant and Customer Satisfaction{" "}
                 <span className="block">is Our First Priority</span>
               </h2>
 
-              <p className="text-white/70 text-sm leading-relaxed">
+              <p className="text-white/80 text-base sm:text-lg leading-relaxed font-dm-sans">
                 We offer the lowest delivery charge with the highest value along
                 with 100% safety of your product. ZapShift courier delivers your
                 parcels in every corner of Bangladesh right on time.
@@ -49,14 +49,13 @@ const MerchantBanner = () => {
               {/* Buttons */}
               <div className="flex flex-wrap gap-4 mt-2">
                 <button
-                  className="btn border-none rounded-xl text-[#0f3d38] font-semibold px-6"
+                  className="px-6 py-3 rounded-lg text-base font-semibold transition-all hover:opacity-90 text-gray-900"
                   style={{ backgroundColor: "#c6f135" }}
                 >
                   Become a Merchant
                 </button>
                 <button
-                  className="btn btn-outline text-white border-white/50 hover:bg-white/10 hover:border-white font-semibold px-6 rounded-xl"
-                  style={{ backgroundColor: "transparent" }}
+                  className="px-6 py-3 border-2 border-white/50 rounded-lg text-white font-semibold hover:bg-white/10 transition-all"
                 >
                   Earn with ZapShift Courier
                 </button>

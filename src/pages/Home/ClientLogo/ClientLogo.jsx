@@ -59,12 +59,12 @@ const ClientLogo = () => {
   return (
     <>
       <style>{marqueeStyle}</style>
-      <section className="py-12 bg-base-100">
-        <div className="max-w-6xl mx-auto px-4">
+      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3">We've helped thousands of sales teams</h2>
-            <p className="text-base-content/60 text-sm">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 font-syne mb-3">We've helped thousands of sales teams</h2>
+            <p className="text-gray-600 text-base font-dm-sans max-w-2xl mx-auto">
               Companies that trust us to deliver on time, every time.
             </p>
           </div>

@@ -27,30 +27,30 @@ const ReviewCard = ({ review, userName, user_photoURL, ratings, date }) => {
   });
 
   return (
-    <div className="bg-base-100 rounded-2xl p-6 flex flex-col gap-4 h-full shadow-sm border border-base-200">
+    <div className="bg-white rounded-lg p-6 sm:p-8 flex flex-col gap-4 h-full shadow-sm hover:shadow-md transition-shadow border border-gray-100">
       {/* Quote icon */}
-      <FaQuoteLeft className="text-primary text-2xl opacity-60" />
+      <FaQuoteLeft className="text-lime-600 text-2xl opacity-70" />
 
       {/* Review text */}
-      <p className="text-base-content/70 text-sm leading-relaxed flex-1">
+      <p className="text-gray-600 text-sm sm:text-base leading-relaxed flex-1 font-dm-sans">
         {review}
       </p>
 
       {/* Divider */}
-      <div className="border-t border-dashed border-base-300" />
+      <div className="border-t border-gray-100" />
 
       {/* User info */}
       <div className="flex items-center gap-3">
         <img
           src={user_photoURL}
           alt={userName}
-          className="w-11 h-11 rounded-full object-cover ring-2 ring-primary/20"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-lime-600/20"
         />
-        <div className="flex flex-col">
-          <span className="font-semibold text-sm">{userName}</span>
+        <div className="flex flex-col flex-1">
+          <span className="font-semibold text-sm text-gray-900 font-syne">{userName}</span>
           <StarRating rating={ratings} />
         </div>
-        <span className="ml-auto text-xs text-base-content/40">
+        <span className="text-xs text-gray-400">
           {formattedDate}
         </span>
       </div>

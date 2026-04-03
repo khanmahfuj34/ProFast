@@ -48,14 +48,14 @@ const FAQ = () => {
   const visibleFaqs = showAll ? faqs : faqs.slice(0, INITIAL_SHOW);
 
   return (
-    <section className="py-16 px-4 bg-base-200">
+    <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-3">
-            Frequently Asked Question (FAQ)
+        <div className="text-center mb-12 sm:mb-16 lg:mb-20">
+          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 font-syne mb-4">
+            Frequently Asked Questions
           </h2>
-          <p className="text-base-content/60 text-sm leading-relaxed max-w-lg mx-auto">
+          <p className="text-gray-600 text-base leading-relaxed max-w-xl mx-auto font-dm-sans">
             Have questions about our services? We've got answers. Browse through
             our most common queries below.
           </p>
@@ -67,12 +67,12 @@ const FAQ = () => {
             <div
               key={faq.id}
               tabIndex={0}
-              className="collapse collapse-arrow bg-base-100 border border-base-300 rounded-xl"
+              className="collapse collapse-arrow bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
             >
-              <div className="collapse-title font-semibold text-sm pe-4 ps-5">
+              <div className="collapse-title font-semibold text-base text-gray-900 font-syne pe-4 ps-5 py-4">
                 {faq.question}
               </div>
-              <div className="collapse-content text-sm text-base-content/70 leading-relaxed ps-5">
+              <div className="collapse-content text-base text-gray-600 leading-relaxed ps-5 pb-4 font-dm-sans">
                 {faq.answer}
               </div>
             </div>
@@ -84,15 +84,11 @@ const FAQ = () => {
           <div className="flex justify-center mt-10">
             <button
               onClick={() => setShowAll(true)}
-              className="flex items-center gap-2 px-6 py-3 font-semibold text-sm rounded-full border-2 border-base-content/20 hover:border-primary transition-all duration-300"
-              style={{ backgroundColor: "#c6f135", color: "#0f3d38" }}
+              className="flex items-center gap-2 px-6 py-3 font-semibold text-sm rounded-full border-2 border-lime-600 hover:bg-lime-50 transition-all duration-300 text-lime-600 bg-white"
             >
               See More FAQ's
-              <span
-                className="flex items-center justify-center w-7 h-7 rounded-full"
-                style={{ backgroundColor: "#0f3d38" }}
-              >
-                <MdArrowOutward size={16} color="#c6f135" />
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-lime-600">
+                <MdArrowOutward size={16} color="#ffffff" />
               </span>
             </button>
           </div>

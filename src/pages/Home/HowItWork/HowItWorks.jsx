@@ -35,15 +35,18 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="py-16 px-4 bg-base-200">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 bg-white">
+      <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="mb-10">
-          <h2 className="text-3xl font-bold">How it Works</h2>
+        <div className="mb-12 sm:mb-16 lg:mb-20">
+          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 font-syne">How it Works</h2>
+          <p className="text-gray-600 mt-4 text-base font-dm-sans max-w-2xl">
+            Follow our simple 4-step process to get your parcels delivered efficiently.
+          </p>
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           {steps.map((step, index) => (
             <HowItWorksCard
               key={index}

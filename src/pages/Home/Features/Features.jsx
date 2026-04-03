@@ -29,8 +29,20 @@ const features = [
 
 const Features = () => {
   return (
-    <section className="py-16 px-4 bg-base-200">
-      <div className="max-w-4xl mx-auto flex flex-col gap-5">
+    <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Section Header */}
+        <div className="mb-12 sm:mb-16 lg:mb-20 text-center">
+          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 font-syne mb-4">
+            Why Choose ProFast?
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-base leading-relaxed font-dm-sans">
+            Experience premium delivery services with cutting-edge features and unmatched reliability.
+          </p>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {features.map((feature, index) => (
           <FeatureCard
             key={index}
@@ -39,6 +51,7 @@ const Features = () => {
             description={feature.description}
           />
         ))}
+        </div>
       </div>
     </section>
   );
