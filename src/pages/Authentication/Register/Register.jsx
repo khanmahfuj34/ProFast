@@ -6,6 +6,7 @@ import useAuth from '../../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
 
 const Register = () => {
     const {register, handleSubmit, formState: { errors }} = useForm();
@@ -14,11 +15,12 @@ const Register = () => {
     const onSubmit = data => {
         createUser(data.email, data.password)
         .then(result => {
-            toast.success('🎉 Account created successfully!', {
+            toast.success('✅ Account created! Check your email to verify.', {
                 position: 'top-right',
-                autoClose: 4000,
+                autoClose: 6000,
             });
             console.log('✅ Registration successful:', result.user);
+            console.log('📧 Verification email sent to:', data.email);
         })
         .catch(error => {
             console.error('❌ Auth Error Code:', error.code);
@@ -89,7 +91,8 @@ const Register = () => {
                     <div className="w-full lg:w-5/12 flex flex-col justify-center" data-aos="fade-right">
                         {/* Logo */}
                         <div className="mb-8">
-                            <h2 className="text-3xl font-bold text-gray-900 font-syne">ProFast</h2>
+                            {/* <h2 className="text-3xl font-bold text-gray-900 font-syne">ProFast</h2> */}
+                            <ProFastLogo className="w-32 h-32 text-3xl font-bold text-gray-900 font-syne"></ProFastLogo>
                         </div>
 
                         {/* Heading */}
@@ -181,7 +184,7 @@ const Register = () => {
                                     required
                                     className="w-4 h-4 rounded bg-white border-2 border-gray-300 text-lime-500 focus:ring-2 focus:ring-lime-200 cursor-pointer" 
                                 />
-                                <span className="text-xs text-gray-700 font-dm-sans">
+                                <span className="text-md text-gray-700 font-dm-sans">
                                     I agree to the terms and conditions
                                 </span>
                             </label>
@@ -199,7 +202,7 @@ const Register = () => {
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-gray-200"></div>
                                 </div>
-                                <div className="relative flex justify-center text-xs">
+                                <div className="relative flex justify-center text-xl">
                                     <span className="px-2 bg-yellow-50 text-gray-500">or</span>
                                 </div>
                             </div>
@@ -208,7 +211,7 @@ const Register = () => {
                             <button 
                                 type="button"
                                 onClick={handleGoogleRegister}
-                                className="w-full px-6 py-2.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-medium rounded-lg transition-all duration-200 font-dm-sans text-sm flex items-center justify-center gap-2 active:scale-95"
+                                className="w-full px-6 py-2.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-medium rounded-lg transition-all duration-200 font-dm-sans text-md flex items-center justify-center gap-2 active:scale-95"
                             >
                                 {/* Official Google Logo */}
                                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -222,7 +225,7 @@ const Register = () => {
 
                             {/* Sign In Link */}
                             <div className="text-center pt-2">
-                                <p className="text-gray-600 text-xs font-dm-sans">
+                                <p className="text-gray-600 text-xl font-dm-sans">
                                     Already have an account?{' '}
                                     <a href="/auth/login" className="text-lime-600 hover:text-lime-700 transition-colors font-bold cursor-pointer">
                                         Login

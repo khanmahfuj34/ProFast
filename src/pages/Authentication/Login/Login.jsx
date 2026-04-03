@@ -6,6 +6,7 @@ import useAuth from '../../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -26,6 +27,8 @@ const Login = () => {
                     toast.error('User not found. Please register first.', { position: 'top-right', autoClose: 4000 });
                 } else if (error.code === 'auth/wrong-password') {
                     toast.error('Incorrect password.', { position: 'top-right', autoClose: 4000 });
+                } else if (error.code === 'auth/email-not-verified') {
+                    toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
                 } else {
                     toast.error(`Error: ${error.message}`, { position: 'top-right', autoClose: 4000 });
                 }
@@ -57,8 +60,8 @@ const Login = () => {
                     {/* LEFT COLUMN - FORM */}
                     <div className="w-full lg:w-5/12 flex flex-col justify-center" data-aos="fade-right">
                         {/* Logo */}
-                        <div className="mb-8">
-                            <h2 className="text-3xl font-bold text-gray-900 font-syne">ProFast</h2>
+                        <div className="mb-8 ">
+                            <ProFastLogo></ProFastLogo>
                         </div>
 
                         {/* Heading */}

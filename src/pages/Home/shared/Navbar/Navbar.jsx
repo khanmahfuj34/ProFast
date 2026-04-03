@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 import ProFastLogo from '../ProFastLogo/ProFastLogo';
 const Navbar = () => {
     const navItems = <>
-    <li><NavLink to="/">Service</NavLink></li>
+    <li><NavLink to="/">Home</NavLink></li>
+    <li><NavLink to="/service">Service</NavLink></li>
     <li><NavLink to="/coverage">Coverage</NavLink></li>
     <li><NavLink to="/about">About Us</NavLink></li>
     <li><NavLink to="/pricing">Pricing</NavLink></li>

@@ -5,7 +5,8 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     onAuthStateChanged,
-    signOut
+    signOut,
+    sendEmailVerification
 } from 'firebase/auth';
 
 const USE_MOCK_AUTH = false; // Set to true for testing without valid Firebase credentials
@@ -33,7 +34,13 @@ const AuthProvider = ({ children }) => {
             if (USE_MOCK_AUTH) {
                 return await mockCreateUser(email, password);
             }
-            return await createUserWithEmailAndPassword(auth, email, password);
+            const result = await createUserWithEmailAndPassword(auth, email, password);
+            
+            // Send email verification after successful account creation
+            await sendEmailVerification(result.user);
+            console.log('✅ Verification email sent to:', email);
+            
+            return result;
         } catch (error) {
             setAuthError(error.message);
             setLoading(false);
@@ -56,6 +63,16 @@ const AuthProvider = ({ children }) => {
         }
         
         return signInWithEmailAndPassword(auth, email, password)
+            .then(result => {
+                // Check if email is verified
+                if (!result.user.emailVerified) {
+                    setLoading(false);
+                    const error = new Error('Please verify your email first');
+                    error.code = 'auth/email-not-verified';
+                    throw error;
+                }
+                return result;
+            })
             .catch(error => {
                 setAuthError(error.message);
                 setLoading(false);
@@ -81,6 +98,21 @@ const AuthProvider = ({ children }) => {
             });
     };
 
+    // Resend verification email
+    const resendVerificationEmail = async () => {
+        if (user && !user.emailVerified) {
+            try {
+                await sendEmailVerification(user);
+                console.log('✅ Verification email resent to:', user.email);
+                return true;
+            } catch (error) {
+                setAuthError(error.message);
+                console.error('❌ Error resending verification email:', error.message);
+                throw error;
+            }
+        }
+    };
+
     useEffect(() => {
         if (!USE_MOCK_AUTH) {
             const unsubscribe = onAuthStateChanged(auth, currentUser => {
@@ -99,7 +131,8 @@ const AuthProvider = ({ children }) => {
         user,
         loading,
         logOut,
-        authError
+        authError,
+        resendVerificationEmail
     };
 
     return (
