@@ -49,8 +49,8 @@ const services = [
 
 const Services = () => {
   return (
-    <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
+    <section className="w-full py-16 sm:py-20 lg:py-24 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4 font-syne">Our Services</h2>

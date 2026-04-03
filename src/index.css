@@ -4,6 +4,21 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* Global Styling */
+
+html,
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+#root {
+    width: 100%;
+}
+
+
 /* Font Families */
 
 .font-urbanist {

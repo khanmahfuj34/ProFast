@@ -15,7 +15,7 @@ const Rootlayout = () => {
         });
     }, []);
     return (
-        <div className='font-dm-sans max-w-7xl mx-auto'>
+        <div className='font-dm-sans w-full bg-white'>
             <Navbar></Navbar>
             
             <Outlet></Outlet>

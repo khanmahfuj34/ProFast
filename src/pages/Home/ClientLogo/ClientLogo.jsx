@@ -59,7 +59,7 @@ const ClientLogo = () => {
   return (
     <>
       <style>{marqueeStyle}</style>
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+      <section className="w-full py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center mb-12 sm:mb-16">

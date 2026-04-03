@@ -48,8 +48,8 @@ const FAQ = () => {
   const visibleFaqs = showAll ? faqs : faqs.slice(0, INITIAL_SHOW);
 
   return (
-    <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="max-w-3xl mx-auto">
+    <section className="w-full py-16 sm:py-20 lg:py-24 bg-gray-50">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16 lg:mb-20">
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 font-syne mb-4">
