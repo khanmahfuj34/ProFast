@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../../hooks/useAuth';
@@ -10,21 +11,28 @@ import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
-    const { signIn } = useAuth();
+    const { signIn, user, loading } = useAuth();
+    const navigate = useNavigate();
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
     const [resetLoading, setResetLoading] = useState(false);
     const [resetError, setResetError] = useState('');
 
+
     const onSubmit = data => {
+        // AuthProvider.signIn handles reload() + emailVerified check internally.
+        // .then() is ONLY reached when the user is verified → safe to navigate.
+        // .catch() handles all error cases including 'auth/email-not-verified'.
         signIn(data.email, data.password)
-            .then(result => {
-                toast.success('🎉 Login successful!', { position: 'top-right', autoClose: 4000 });
-                console.log('✅ Login successful:', result.user);
+            .then(() => {
+                // ✅ Verified user — navigate immediately, no toast needed
+                navigate('/', { replace: true });
             })
             .catch(error => {
+                // Handle all authentication errors — no navigation occurs here
                 console.error('❌ Auth Error Code:', error.code);
                 console.error('❌ Auth Error Message:', error.message);
+
                 if (error.code === 'auth/api-key-not-valid') {
                     toast.error('Firebase Configuration Issue. Contact admin.', { position: 'top-right', autoClose: 4000 });
                 } else if (error.code === 'auth/user-not-found') {
@@ -32,6 +40,7 @@ const Login = () => {
                 } else if (error.code === 'auth/wrong-password') {
                     toast.error('Incorrect password.', { position: 'top-right', autoClose: 4000 });
                 } else if (error.code === 'auth/email-not-verified') {
+                    // ❌ Unverified — show error only, no redirect
                     toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
                 } else {
                     toast.error(`Error: ${error.message}`, { position: 'top-right', autoClose: 4000 });
@@ -43,8 +52,26 @@ const Login = () => {
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
-            toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 4000 });
-            console.log('✅ Google Login successful:', result.user);
+            
+            // ✅ Reload user data to ensure fresh email verification status
+            await result.user.reload();
+            
+            // ❌ Check if email is verified - BLOCK here if not verified
+            if (!result.user.emailVerified) {
+                toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
+                console.log('❌ Email not verified - Google user:', result.user.email);
+                return; // STOP execution - don't navigate
+            }
+            
+            // ✅ Email verified - ONLY proceed from here
+            toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 2000 });
+            console.log('✅ Google Login successful - Email verified:', result.user.email);
+            
+            // Navigate to home after 2 seconds
+            setTimeout(() => {
+                navigate('/', { replace: true });
+            }, 2000);
+            
         } catch (error) {
             console.error('❌ Google Login Error:', error.message);
             toast.error(`Login failed: ${error.message}`, { position: 'top-right', autoClose: 4000 });
@@ -110,6 +137,11 @@ const Login = () => {
     useEffect(() => {
         AOS.init({ duration: 800, once: true, offset: 30 });
     }, []);
+
+    // 🔒 All hooks called above — safe to do early return now
+    if (!loading && user) {
+        return <Navigate to="/" replace />;
+    }
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-b from-yellow-100 to-yellow-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">

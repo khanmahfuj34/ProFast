@@ -13,7 +13,7 @@ const Register = () => {
     const { createUser } = useAuth();
     
     const onSubmit = data => {
-        createUser(data.email, data.password)
+        createUser(data.email, data.password, data.name)
         .then(result => {
             toast.success('✅ Account created! Check your email to verify.', {
                 position: 'top-right',

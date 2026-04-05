@@ -6,7 +6,8 @@ import {
     signInWithEmailAndPassword,
     onAuthStateChanged,
     signOut,
-    sendEmailVerification
+    sendEmailVerification,
+    updateProfile
 } from 'firebase/auth';
 
 const USE_MOCK_AUTH = false; // Set to true for testing without valid Firebase credentials
@@ -27,7 +28,7 @@ const AuthProvider = ({ children }) => {
         });
     };
 
-    const createUser = async (email, password) => {
+    const createUser = async (email, password, name) => {
         setLoading(true);
         setAuthError(null);
         try {
@@ -35,11 +36,20 @@ const AuthProvider = ({ children }) => {
                 return await mockCreateUser(email, password);
             }
             const result = await createUserWithEmailAndPassword(auth, email, password);
-            
+
+            // Set the user's display name from registration form
+            if (name) {
+                await updateProfile(result.user, { displayName: name });
+                // ⚡ updateProfile doesn't trigger onAuthStateChanged,
+                // so manually push the updated user into state
+                setUser({ ...auth.currentUser });
+                console.log('✅ Display name set:', name);
+            }
+
             // Send email verification after successful account creation
             await sendEmailVerification(result.user);
             console.log('✅ Verification email sent to:', email);
-            
+
             return result;
         } catch (error) {
             setAuthError(error.message);
@@ -63,9 +73,13 @@ const AuthProvider = ({ children }) => {
         }
         
         return signInWithEmailAndPassword(auth, email, password)
-            .then(result => {
-                // Check if email is verified
-                if (!result.user.emailVerified) {
+            .then(async result => {
+                // Reload user to get the latest emailVerified status from Firebase
+                await result.user.reload();
+                // Re-read from auth.currentUser to get refreshed data
+                const freshUser = auth.currentUser;
+                // Check if email is verified using fresh data
+                if (!freshUser || !freshUser.emailVerified) {
                     setLoading(false);
                     const error = new Error('Please verify your email first');
                     error.code = 'auth/email-not-verified';
@@ -86,11 +100,21 @@ const AuthProvider = ({ children }) => {
         
         if (USE_MOCK_AUTH) {
             setUser(null);
+            localStorage.clear();
+            sessionStorage.clear();
             setLoading(false);
             return Promise.resolve();
         }
         
         return signOut(auth)
+            .then(() => {
+                // Clear user state
+                setUser(null);
+                // Clear all storage data
+                localStorage.clear();
+                sessionStorage.clear();
+                setLoading(false);
+            })
             .catch(error => {
                 setAuthError(error.message);
                 setLoading(false);
@@ -113,10 +137,43 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    // Update user profile image in Firebase
+    const updateUserProfilePhoto = async (photoURL) => {
+        try {
+            if (!auth.currentUser) {
+                throw new Error('No user logged in');
+            }
+
+            // Update Firebase profile
+            await updateProfile(auth.currentUser, { photoURL });
+            console.log('✅ Profile photo updated in Firebase:', photoURL);
+
+            // Reload user to get updated data
+            await auth.currentUser.reload();
+
+            // Update local state with new user data
+            setUser({ ...auth.currentUser });
+            console.log('✅ User state synced with Firebase');
+
+            return true;
+        } catch (error) {
+            const errorMessage = error.message || 'Failed to update profile photo';
+            setAuthError(errorMessage);
+            console.error('❌ Error updating profile photo:', errorMessage);
+            throw error;
+        }
+    };
+
     useEffect(() => {
         if (!USE_MOCK_AUTH) {
-            const unsubscribe = onAuthStateChanged(auth, currentUser => {
-                setUser(currentUser);
+            const unsubscribe = onAuthStateChanged(auth, async currentUser => {
+                if (currentUser) {
+                    // Reload to get the latest profile (displayName, emailVerified, etc.)
+                    await currentUser.reload();
+                    setUser({ ...auth.currentUser });
+                } else {
+                    setUser(null);
+                }
                 setLoading(false);
             });
             return () => unsubscribe();
@@ -132,7 +189,8 @@ const AuthProvider = ({ children }) => {
         loading,
         logOut,
         authError,
-        resendVerificationEmail
+        resendVerificationEmail,
+        updateUserProfilePhoto
     };
 
     return (
