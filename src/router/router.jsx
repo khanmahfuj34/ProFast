@@ -1,5 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Home from "../pages/Home";
+import About from "../pages/About/About";
+import Pricing from "../pages/Pricing/Pricing";
 import Rootlayout from "../layouts/Rootlayout";
 import AuthLayout from "../layouts/AuthLayout";
 import Login from "../pages/Authentication/Login/Login";
@@ -9,6 +11,11 @@ import SendParcel from "../pages/SendParcel/SendParcel";
 import BeRider from "../pages/BeRider/BeRider";
 import ParcelConfirmation from "../pages/ParcelConfirmation/ParcelConfirmation";
 import PrivateRoute from "../routes/PrivateRoute";
+
+// Wrapper components for private routes
+const PrivateSendParcel = () => <PrivateRoute><SendParcel /></PrivateRoute>;
+const PrivateParcelConfirmation = () => <PrivateRoute><ParcelConfirmation /></PrivateRoute>;
+const PrivateBeRider = () => <PrivateRoute><BeRider /></PrivateRoute>;
 
 // Not Found component
 const NotFound = () => (
@@ -31,21 +38,28 @@ export const router = createBrowserRouter([
             Component: Home
         },
         {
+          path: 'about',
+          Component: About
+        },
+        {
+          path: 'pricing',
+          Component: Pricing
+        },
+        {
           path: 'coverage',
           Component: Coverage
         },
         {
           path: 'send-parcel',
-          element: <PrivateRoute><SendParcel /></PrivateRoute>
-          
+          Component: PrivateSendParcel
         },
         {
           path: 'parcel-confirmation',
-          element: <PrivateRoute><ParcelConfirmation /></PrivateRoute>
+          Component: PrivateParcelConfirmation
         },
         {
           path: 'be-rider',
-          element: <PrivateRoute><BeRider /></PrivateRoute>
+          Component: PrivateBeRider
         }
     ]
   },

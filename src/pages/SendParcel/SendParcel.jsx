@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useForm, watch } from 'react-hook-form';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { districts } from '../../data/districts';
@@ -27,7 +27,8 @@ const SendParcel = () => {
     handleSubmit,
     formState: { errors },
     watch: formWatch,
-    getValues
+    getValues,
+    setValue
   } = useForm({
     defaultValues: {
       parcelType: 'document',
@@ -40,6 +41,23 @@ const SendParcel = () => {
   const [showSenderDropdown, setShowSenderDropdown] = useState(false);
   const [showReceiverDropdown, setShowReceiverDropdown] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryTypeWarning, setDeliveryTypeWarning] = useState('');
+
+  // Auto-adjust delivery type when receiver district changes
+  useEffect(() => {
+    if (senderDistrictSearch && receiverDistrictSearch) {
+      if (senderDistrictSearch !== receiverDistrictSearch) {
+        // Different districts = must be "outside-city"
+        if (getValues('deliveryType') === 'within-city') {
+          setValue('deliveryType', 'outside-city');
+          setDeliveryTypeWarning('Delivery type auto-set to "Outside City" - different districts detected');
+        }
+      } else {
+        // Same district = can be "within-city"
+        setDeliveryTypeWarning('');
+      }
+    }
+  }, [receiverDistrictSearch, senderDistrictSearch, setValue, getValues]);
 
   // Watch form values for real-time price calculation
   const parcelType = formWatch('parcelType');
@@ -81,6 +99,16 @@ const SendParcel = () => {
 
     if (!receiverDistrictSearch) {
       Swal.fire('Error', 'Please select receiver district', 'error');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate delivery type matches district selection
+    const isSameDistrict = senderDistrictSearch === receiverDistrictSearch;
+    const isWithinCity = data.deliveryType === 'within-city';
+
+    if (!isSameDistrict && isWithinCity) {
+      Swal.fire('Invalid Delivery Type', 'Please select "Outside City/District" for deliveries to different districts', 'error');
       setIsSubmitting(false);
       return;
     }
@@ -217,6 +245,11 @@ const SendParcel = () => {
                     <span className="text-gray-800 font-medium">Outside City/District</span>
                   </label>
                 </div>
+                {deliveryTypeWarning && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                    ℹ️ {deliveryTypeWarning}
+                  </div>
+                )}
               </div>
 
               <div>
