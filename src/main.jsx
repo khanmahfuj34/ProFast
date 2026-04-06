@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast'
 import { RouterProvider } from "react-router-dom";
 import { router } from './router/router.jsx';
 import AuthProvider from './contexts/AuthContext/AuthProvider.jsx';
+import { ParcelProvider } from './contexts/ParcelContext.jsx';
 
 // Error boundary for debugging
 class ErrorBoundary extends Component {
@@ -69,7 +70,9 @@ root.render(
         }}
       />
       <AuthProvider>
-        <RouterProvider router={router} />
+        <ParcelProvider>
+          <RouterProvider router={router} />
+        </ParcelProvider>
       </AuthProvider>
     </ErrorBoundary>
   </StrictMode>,

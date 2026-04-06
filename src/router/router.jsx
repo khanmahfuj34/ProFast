@@ -7,6 +7,7 @@ import Register from "../pages/Authentication/Register/Register";
 import Coverage from "../pages/Coverage/Coverage";
 import SendParcel from "../pages/SendParcel/SendParcel";
 import BeRider from "../pages/BeRider/BeRider";
+import ParcelConfirmation from "../pages/ParcelConfirmation/ParcelConfirmation";
 import PrivateRoute from "../routes/PrivateRoute";
 
 // Not Found component
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
           path: 'send-parcel',
           element: <PrivateRoute><SendParcel /></PrivateRoute>
           
+        },
+        {
+          path: 'parcel-confirmation',
+          element: <PrivateRoute><ParcelConfirmation /></PrivateRoute>
         },
         {
           path: 'be-rider',
