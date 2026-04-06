@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { FiX, FiUpload } from 'react-icons/fi';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import useImageUpload from '../hooks/useImageUpload';
 import useAuth from '../hooks/useAuth';
 
@@ -25,8 +25,8 @@ const ProfileModal = ({
     currentProfileImage,
     isLoading = false
 }) => {
-    const { updateUserProfilePhoto } = useAuth();
-    const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+    const { updateUserProfilePhoto, updateUserDisplayName } = useAuth();
+    const { register, handleSubmit, formState: { errors }, setValue, getValues } = useForm({
         defaultValues: {
             name: userName || '',
             email: userEmail || '',
@@ -64,6 +64,7 @@ const ProfileModal = ({
     const onSubmit = async () => {
         try {
             setIsSaving(true);
+            const formValues = getValues();
             let finalImageUrl = currentProfileImage;
 
             // Upload image if a new one was selected
@@ -86,6 +87,18 @@ const ProfileModal = ({
                     toast.success('Profile photo updated successfully!');
                 } catch (error) {
                     toast.error(error.message || 'Failed to update profile photo');
+                    setIsSaving(false);
+                    return;
+                }
+            }
+
+            // Update Firebase user display name
+            if (formValues.name && formValues.name.trim()) {
+                try {
+                    await updateUserDisplayName(formValues.name.trim());
+                    toast.success('Display name updated successfully!');
+                } catch (error) {
+                    toast.error(error.message || 'Failed to update display name');
                     setIsSaving(false);
                     return;
                 }
@@ -197,7 +210,7 @@ const ProfileModal = ({
                                 minLength: { value: 2, message: 'Name must be at least 2 characters' }
                             })}
                             disabled={isProcessing}
-                            className={`w-full px-4 py-2.5 border rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base-100 disabled:bg-base-100 disabled:cursor-not-allowed ${
+                            className={`w-full px-4 py-2.5 border rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
                                 errors.name ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="Enter your name"

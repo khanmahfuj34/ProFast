@@ -164,6 +164,33 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    // Update user display name in Firebase
+    const updateUserDisplayName = async (displayName) => {
+        try {
+            if (!auth.currentUser) {
+                throw new Error('No user logged in');
+            }
+
+            // Update Firebase profile
+            await updateProfile(auth.currentUser, { displayName });
+            console.log('✅ Display name updated in Firebase:', displayName);
+
+            // Reload user to get updated data
+            await auth.currentUser.reload();
+
+            // Update local state with new user data
+            setUser({ ...auth.currentUser });
+            console.log('✅ User state synced with Firebase');
+
+            return true;
+        } catch (error) {
+            const errorMessage = error.message || 'Failed to update display name';
+            setAuthError(errorMessage);
+            console.error('❌ Error updating display name:', errorMessage);
+            throw error;
+        }
+    };
+
     useEffect(() => {
         if (!USE_MOCK_AUTH) {
             const unsubscribe = onAuthStateChanged(auth, async currentUser => {
@@ -190,7 +217,8 @@ const AuthProvider = ({ children }) => {
         logOut,
         authError,
         resendVerificationEmail,
-        updateUserProfilePhoto
+        updateUserProfilePhoto,
+        updateUserDisplayName
     };
 
     return (

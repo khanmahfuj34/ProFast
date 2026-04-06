@@ -5,6 +5,9 @@ import AuthLayout from "../layouts/AuthLayout";
 import Login from "../pages/Authentication/Login/Login";
 import Register from "../pages/Authentication/Register/Register";
 import Coverage from "../pages/Coverage/Coverage";
+import SendParcel from "../pages/SendParcel/SendParcel";
+import BeRider from "../pages/BeRider/BeRider";
+import PrivateRoute from "../routes/PrivateRoute";
 
 // Not Found component
 const NotFound = () => (
@@ -29,6 +32,15 @@ export const router = createBrowserRouter([
         {
           path: 'coverage',
           Component: Coverage
+        },
+        {
+          path: 'send-parcel',
+          element: <PrivateRoute><SendParcel /></PrivateRoute>
+          
+        },
+        {
+          path: 'be-rider',
+          element: <PrivateRoute><BeRider /></PrivateRoute>
         }
     ]
   },
