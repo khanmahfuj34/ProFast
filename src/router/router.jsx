@@ -4,6 +4,7 @@ import About from "../pages/About/About";
 import Pricing from "../pages/Pricing/Pricing";
 import Rootlayout from "../layouts/Rootlayout";
 import AuthLayout from "../layouts/AuthLayout";
+import DashboardLayout from "../layouts/DashboardLayout";
 import Login from "../pages/Authentication/Login/Login";
 import Register from "../pages/Authentication/Register/Register";
 import Coverage from "../pages/Coverage/Coverage";
@@ -11,6 +12,8 @@ import SendParcel from "../pages/SendParcel/SendParcel";
 import BeRider from "../pages/BeRider/BeRider";
 import ParcelConfirmation from "../pages/ParcelConfirmation/ParcelConfirmation";
 import PrivateRoute from "../routes/PrivateRoute";
+import MyParcels from "../pages/Dashboard/MyParcels/MyParcels";
+import Payment from "../pages/Dashboard/Payment/Payment";
 
 // Wrapper components for private routes
 const PrivateSendParcel = () => <PrivateRoute><SendParcel /></PrivateRoute>;
@@ -80,5 +83,19 @@ export const router = createBrowserRouter([
   {
     path: '*',
     Component: NotFound
+  },
+  {
+    path:'dashboard',
+    Component:() => <PrivateRoute><DashboardLayout /></PrivateRoute>,
+    children:[
+      {
+        path:'my-parcels',
+        Component:MyParcels
+      },
+      {
+        path:'payment',
+        Component:Payment
+      }
+    ]
   }
 ]);

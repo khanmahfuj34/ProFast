@@ -37,7 +37,12 @@ const Navbar = () => {
         <li><NavLink to={user ? "/send-parcel" : "/auth/login"} className="text-gray-700 hover:text-lime-600 transition-colors duration-200">Send Parcel</NavLink></li>
         
         <li><NavLink to="/about" className="text-gray-700 hover:text-lime-600 transition-colors duration-200">About Us</NavLink></li>
-        <li><NavLink to="/pricing" className="text-gray-700 hover:text-lime-600 transition-colors duration-200">Pricing</NavLink></li>        <li><NavLink to={user ? "/be-rider" : "/auth/login"} className="btn btn-sm bg-lime-500 hover:bg-lime-600 text-white border-none rounded-xl transition-all duration-200 ml-3">Be a Rider</NavLink></li>        
+        <li><NavLink to="/pricing" className="text-gray-700 hover:text-lime-600 transition-colors duration-200">Pricing</NavLink></li>        <li><NavLink to={user ? "/be-rider" : "/auth/login"} className="btn btn-sm bg-lime-500 hover:bg-lime-600 text-white border-none rounded-xl transition-all duration-200 ml-3">Be a Rider</NavLink></li>   
+        {
+            user && (
+                <li><NavLink to="/dashboard/my-parcels" className="text-gray-700 hover:text-lime-600 transition-colors duration-200">My Parcels</NavLink></li>
+            )
+        }     
 
     </>
 
@@ -57,9 +62,7 @@ const Navbar = () => {
                             {navItems}
                         </ul>
                     </div>
-                    <a className="btn btn-ghost text-xl">
-                        <ProFastLogo></ProFastLogo>
-                    </a>
+                    <ProFastLogo></ProFastLogo>
                 </div>
                 <div className="navbar-center hidden lg:flex">
                     <ul className="menu menu-horizontal px-1">

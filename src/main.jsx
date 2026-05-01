@@ -8,7 +8,8 @@ import { RouterProvider } from "react-router-dom";
 import { router } from './router/router.jsx';
 import AuthProvider from './contexts/AuthContext/AuthProvider.jsx';
 import { ParcelProvider } from './contexts/ParcelContext.jsx';
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+const queryClient = new QueryClient();
 // Error boundary for debugging
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -42,6 +43,8 @@ class ErrorBoundary extends Component {
   }
 }
 
+
+
 const root = createRoot(document.getElementById('root'));
 
 root.render(
@@ -69,11 +72,13 @@ root.render(
           },
         }}
       />
+      <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ParcelProvider>
           <RouterProvider router={router} />
         </ParcelProvider>
       </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

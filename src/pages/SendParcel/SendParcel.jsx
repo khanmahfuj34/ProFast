@@ -5,6 +5,8 @@ import Swal from 'sweetalert2';
 import { districts } from '../../data/districts';
 import { calculateDeliveryPrice } from '../../utils/pricingCalculator';
 import { useParcel } from '../../hooks/useParcel';
+import useAxiosSecure from '../../hooks/useAxiosSecure';
+import useAuth from '../../hooks/useAuth';
 
 const inputStyle =
   "w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition";
@@ -35,7 +37,8 @@ const SendParcel = () => {
       deliveryType: 'within-city'
     }
   });
-
+  const {user}=useAuth();
+  const axiosSecure = useAxiosSecure();
   const [senderDistrictSearch, setSenderDistrictSearch] = useState('');
   const [receiverDistrictSearch, setReceiverDistrictSearch] = useState('');
   const [showSenderDropdown, setShowSenderDropdown] = useState(false);
@@ -152,31 +155,41 @@ const SendParcel = () => {
     });
 
     if (confirmResult.isConfirmed) {
-      // Prepare parcel data
-      const completeParcelData = {
-        ...data,
-        senderDistrict: senderDistrictSearch,
-        receiverDistrict: receiverDistrictSearch,
-        basePrice: priceInfo.basePrice,
-        extraCharges: priceInfo.extraCharges,
-        totalPrice: priceInfo.totalPrice
-      };
+      //save the info to the database
+      try {
+        // Prepare parcel data
+        const completeParcelData = {
+          ...data,
+          senderDistrict: senderDistrictSearch,
+          receiverDistrict: receiverDistrictSearch,
+          basePrice: priceInfo.basePrice,
+          extraCharges: priceInfo.extraCharges,
+          totalPrice: priceInfo.totalPrice
+        };
 
-      // Store parcel data in context
-      setParcelData(completeParcelData);
+        const res = await axiosSecure.post('/parcels', completeParcelData);
+        console.log('Parcel saved:', res.data);
 
-      // Show success message
-      await Swal.fire({
-        title: 'Success!',
-        text: 'Your parcel order has been created. Redirecting to confirmation...',
-        icon: 'success',
-        allowOutsideClick: false,
-        didOpen: async (modal) => {
-          setTimeout(() => {
-            navigate('/parcel-confirmation');
-          }, 1500);
-        }
-      });
+        // Store parcel data in context
+        setParcelData(completeParcelData);
+
+        // Show success message
+        await Swal.fire({
+          title: 'Success!',
+          text: 'Your parcel order has been created. Redirecting to confirmation...',
+          icon: 'success',
+          allowOutsideClick: false,
+          didOpen: async () => {
+            setTimeout(() => {
+              navigate('/parcel-confirmation');
+            }, 1500);
+          }
+        });
+      } catch (error) {
+        console.error('Error saving parcel:', error);
+        Swal.fire('Error', 'Failed to save parcel. Please try again.', 'error');
+        setIsSubmitting(false);
+      }
     } else {
       setIsSubmitting(false);
     }
@@ -281,7 +294,7 @@ const SendParcel = () => {
 
                 <div>
                   <label className={labelStyle}>Sender Name *</label>
-                  <input {...register("senderName", { required: "Name is required" })} className={inputStyle} placeholder="Enter your name" />
+                  <input {...register("senderName", { required: "Name is required" })} defaultValue={user?.displayName} className={inputStyle} placeholder="Enter your name" />
                 </div>
 
                 <div>
@@ -292,6 +305,20 @@ const SendParcel = () => {
                 <div>
                   <label className={labelStyle}>Sender Info</label>
                   <textarea {...register("senderInfo")} className={inputStyle} placeholder="Additional information" rows="3" />
+                </div>
+
+                <div>
+                  <label className={labelStyle}>Email *</label>
+                  <input 
+                    type="email"
+                    {...register("senderEmail", { 
+                      required: "Email is required"
+                    })} 
+                    defaultValue={user?.email}
+                    className={inputStyle} 
+                    placeholder="Enter your email" 
+                  />
+                  {errors.senderEmail && <p className="text-red-500 text-sm mt-1">{errors.senderEmail.message}</p>}
                 </div>
 
                 <div>
