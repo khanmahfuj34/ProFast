@@ -14,7 +14,7 @@ const Payment = () => {
 
     const parcel = location.state?.parcel;
 
-    // Use TanStack Query to fetch payment status
+    // Fetch latest parcel data from DB (to check payment status)
     const { data: paymentData, isLoading, isError } = useQuery({
         queryKey: ['paymentStatus', parcel?._id],
         queryFn: async () => {
@@ -25,20 +25,28 @@ const Payment = () => {
         enabled: !!parcel?._id,
     });
 
-    // Mutation for processing payment
+    // Mutation: call backend → get Stripe checkout URL → redirect
     const paymentMutation = useMutation({
         mutationFn: async (paymentDetails) => {
-            const res = await axiosSecure.post('/payment/process', paymentDetails);
-            return res.data;
+            const res = await axiosSecure.post('/create-payment-intent', paymentDetails);
+            return res.data; // { url: 'https://checkout.stripe.com/...' }
         },
         onSuccess: (data) => {
-            Swal.fire('Success!', 'Payment processed successfully.', 'success');
-            navigate('/dashboard/my-parcels');
+            if (data?.url) {
+                // Redirect to Stripe hosted checkout page
+                window.location.href = data.url;
+            } else {
+                Swal.fire('Error', 'Could not get payment URL from server.', 'error');
+            }
         },
         onError: (error) => {
             console.error('Payment error:', error);
-            Swal.fire('Error', error.response?.data?.message || 'Payment failed. Please try again.', 'error');
-        }
+            Swal.fire(
+                'Payment Failed',
+                error.response?.data?.error || 'Something went wrong. Please try again.',
+                'error'
+            );
+        },
     });
 
     const handlePaymentSubmit = async () => {
@@ -51,9 +59,9 @@ const Payment = () => {
         try {
             const paymentDetails = {
                 parcelId: parcel._id,
-                email: user.email,
-                amount: parcel.totalPrice,
+                cost: parcel.totalPrice,        // backend reads paymentInfo.cost
                 parcelName: parcel.parcelName,
+                senderEmail: user?.email,       // backend reads paymentInfo.senderEmail
             };
 
             paymentMutation.mutate(paymentDetails);
@@ -93,7 +101,7 @@ const Payment = () => {
             <div className="max-w-2xl mx-auto">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-slate-800">Payment</h1>
-                    <p className="text-sm text-slate-500 mt-1">Complete your parcel payment</p>
+                    <p className="text-sm text-slate-500 mt-1">Complete your parcel payment via Stripe</p>
                 </div>
 
                 {isLoading && (
@@ -205,6 +213,18 @@ const Payment = () => {
                                         {formatLabel(paymentStatus)}
                                     </span>
                                 </div>
+
+                                {/* Stripe info note */}
+                                {!isPaid && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-2 mt-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
+                                        </svg>
+                                        <p className="text-sm text-blue-700">
+                                            You will be redirected to <strong>Stripe's secure checkout</strong> to complete the payment.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -216,6 +236,7 @@ const Payment = () => {
                             >
                                 Cancel
                             </button>
+
                             {!isPaid && (
                                 <button
                                     onClick={handlePaymentSubmit}
@@ -225,13 +246,19 @@ const Payment = () => {
                                     {isProcessing || paymentMutation.isPending ? (
                                         <>
                                             <span className="loading loading-spinner loading-sm"></span>
-                                            Processing...
+                                            Redirecting to Stripe...
                                         </>
                                     ) : (
-                                        'Complete Payment'
+                                        <>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                            </svg>
+                                            Pay with Stripe
+                                        </>
                                     )}
                                 </button>
                             )}
+
                             {isPaid && (
                                 <div className="alert alert-success">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">

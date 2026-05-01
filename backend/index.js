@@ -40,14 +40,20 @@ async function run() {
         const db = client.db("zep_shift_db");
         parcelsCollection = db.collection("parcels");
 
+        // Start server AFTER MongoDB connects
+        app.listen(port, () => {
+            console.log(`Server running on port ${port}`);
+        });
+
     } catch (error) {
         console.log(error);
+        process.exit(1); // Exit if connection fails
     }
 }
 run();
 
 // parcel api
-app.get('/parcels', async (req, res) => {
+app.get('/parcels', async(req, res) => {
     const query = {};
     const { email } = req.query;
     if (email) {
@@ -58,14 +64,14 @@ app.get('/parcels', async (req, res) => {
     res.send(result);
 });
 
-app.post('/parcels', async (req, res) => {
+app.post('/parcels', async(req, res) => {
     const parcel = req.body;
     parcel.createdAt = new Date();
     const result = await parcelsCollection.insertOne(parcel);
     res.send(result);
 });
 
-app.delete('/parcels/:id', async (req, res) => {
+app.delete('/parcels/:id', async(req, res) => {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
     const result = await parcelsCollection.deleteOne(query);
@@ -73,31 +79,47 @@ app.delete('/parcels/:id', async (req, res) => {
 });
 
 // payment related api
-app.post('/create-payment-intent', async (req, res) => {
-    const paymentInfo = req.body;
-    const session = await stripe.checkout.sessions.create({
-        line_items: [
-            {
+app.post('/create-payment-intent', async(req, res) => {
+    try {
+        const paymentInfo = req.body;
+        // totalPrice is in BDT (Taka), convert to smallest unit (paisa)
+        // Stripe needs amount in cents → use USD conversion or charge as-is in cents
+        const amount = Math.round(parseFloat(paymentInfo.cost) * 100);
+
+        if (!amount || amount <= 0) {
+            return res.status(400).send({ error: 'Invalid payment amount' });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: paymentInfo.parcelName,
+                        name: paymentInfo.parcelName || 'Parcel Delivery',
                     },
-                    unit_amount: paymentInfo.price
+                    unit_amount: amount,
                 },
                 quantity: 1,
+            }, ],
+            customer_email: paymentInfo.senderEmail,
+            mode: 'payment',
+            metadata: {
+                parcelId: paymentInfo.parcelId,
             },
-        ],
-        customer_email: paymentInfo.senderEmail,
-        mode: 'payment',
-        success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
-    });
+            success_url: `${process.env.SITE_DOMAIN}?payment=success`,
+            cancel_url: `${process.env.SITE_DOMAIN}?payment=failed`,
+        });
 
-    res.send({ url: session.url }); // ✅ Fixed: session is the correct variable
+        res.send({ url: session.url });
+    } catch (error) {
+        console.error('Stripe error:', error.message);
+        res.status(500).send({ error: error.message });
+    }
 });
 
 // get single parcel by id
-app.get('/parcels/:id', async (req, res) => {
+app.get('/parcels/:id', async(req, res) => {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
     const result = await parcelsCollection.findOne(query);
@@ -105,7 +127,7 @@ app.get('/parcels/:id', async (req, res) => {
 });
 
 // update parcel (status / fields)
-app.patch('/parcels/:id', async (req, res) => {
+app.patch('/parcels/:id', async(req, res) => {
     const id = req.params.id;
     const updatedData = req.body;
     const filter = { _id: new ObjectId(id) };
@@ -114,8 +136,4 @@ app.patch('/parcels/:id', async (req, res) => {
     };
     const result = await parcelsCollection.updateOne(filter, updateDoc);
     res.send(result);
-});
-
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
 });

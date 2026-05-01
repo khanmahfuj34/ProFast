@@ -15,6 +15,8 @@ import ParcelConfirmation from "../pages/ParcelConfirmation/ParcelConfirmation";
 import PrivateRoute from "../routes/PrivateRoute";
 import MyParcels from "../pages/Dashboard/MyParcels/MyParcels";
 import Payment from "../pages/Dashboard/Payment/Payment";
+import PaymentSuccess from "../pages/Dashboard/Payment/PaymentSuccess";
+import PaymentFailed from "../pages/Dashboard/Payment/PaymentFailed";
 
 // Not Found component
 const NotFound = () => (
@@ -77,13 +79,13 @@ export const router = createBrowserRouter([
     ]
   },
   {
-    path: '*',
-    Component: NotFound
-  },
-  {
     path:'dashboard',
-    Component:() => <PrivateRoute><DashboardLayout /></PrivateRoute>,
+    element: <PrivateRoute><DashboardLayout /></PrivateRoute>,
     children:[
+      {
+        index: true,
+        Component: MyParcels
+      },
       {
         path:'my-parcels',
         Component:MyParcels
@@ -91,7 +93,19 @@ export const router = createBrowserRouter([
       {
         path:'payment',
         Component:Payment
+      },
+      {
+        path:'payment-success',
+        Component:PaymentSuccess
+      },
+      {
+        path:'payment-failed',
+        Component:PaymentFailed
       }
     ]
+  },
+  {
+    path: '*',
+    Component: NotFound
   }
 ]);
