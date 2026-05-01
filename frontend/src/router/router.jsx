@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter } from "react-router-dom";
 import Home from "../pages/Home";
 import About from "../pages/About/About";
@@ -14,11 +15,6 @@ import ParcelConfirmation from "../pages/ParcelConfirmation/ParcelConfirmation";
 import PrivateRoute from "../routes/PrivateRoute";
 import MyParcels from "../pages/Dashboard/MyParcels/MyParcels";
 import Payment from "../pages/Dashboard/Payment/Payment";
-
-// Wrapper components for private routes
-const PrivateSendParcel = () => <PrivateRoute><SendParcel /></PrivateRoute>;
-const PrivateParcelConfirmation = () => <PrivateRoute><ParcelConfirmation /></PrivateRoute>;
-const PrivateBeRider = () => <PrivateRoute><BeRider /></PrivateRoute>;
 
 // Not Found component
 const NotFound = () => (
@@ -54,15 +50,15 @@ export const router = createBrowserRouter([
         },
         {
           path: 'send-parcel',
-          Component: PrivateSendParcel
+          element: <PrivateRoute><SendParcel /></PrivateRoute>
         },
         {
           path: 'parcel-confirmation',
-          Component: PrivateParcelConfirmation
+          element: <PrivateRoute><ParcelConfirmation /></PrivateRoute>
         },
         {
           path: 'be-rider',
-          Component: PrivateBeRider
+          element: <PrivateRoute><BeRider /></PrivateRoute>
         }
     ]
   },
