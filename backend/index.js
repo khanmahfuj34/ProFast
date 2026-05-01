@@ -16,7 +16,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 
-// 🔥 এখানে URI বানানো হচ্ছে
+// MongoDB URI
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ttnzsdq.mongodb.net/?retryWrites=true&w=majority`;
 
 // MongoClient
@@ -37,20 +37,19 @@ async function run() {
         await client.connect();
         console.log("✅ Connected to MongoDB");
 
-        const db = client.db("zep_shift_db"); // 👉 database name (তুমি change করতে পারো)
-        parcelsCollection = db.collection("parcels"); // 👉 collection
+        const db = client.db("zep_shift_db");
+        parcelsCollection = db.collection("parcels");
 
     } catch (error) {
         console.log(error);
     }
 }
 run();
-//parcel api
-app.get('/parcels', async(req, res) => {
+
+// parcel api
+app.get('/parcels', async (req, res) => {
     const query = {};
-    const {
-        email
-    } = req.query;
+    const { email } = req.query;
     if (email) {
         query.senderEmail = email;
     }
@@ -58,12 +57,14 @@ app.get('/parcels', async(req, res) => {
     const result = await cursor.toArray();
     res.send(result);
 });
-app.post('/parcels', async(req, res) => {
+
+app.post('/parcels', async (req, res) => {
     const parcel = req.body;
     parcel.createdAt = new Date();
     const result = await parcelsCollection.insertOne(parcel);
-    res.send(result)
-})
+    res.send(result);
+});
+
 app.delete('/parcels/:id', async (req, res) => {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
@@ -71,28 +72,26 @@ app.delete('/parcels/:id', async (req, res) => {
     res.send(result);
 });
 
-//payment related api
+// payment related api
 app.post('/create-payment-intent', async (req, res) => {
     const paymentInfo = req.body;
-     const session = await stripe.checkout.sessions.create({
-    line_items: [
-      {
-        // Provide the exact Price ID (for example, price_1234) of the product you want to sell
-        price_data:{
-          currency: 'usd',
-          product_data:{
-            name: paymentInfo.parcelName,
-          },
-          unit_amount: paymentInfo.price
-        },
-        
-        quantity: 1,
-      },
-    ],
-    customer_email: paymentInfo.senderEmail,
-     mode: 'payment',
-    success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
-  });
+    const session = await stripe.checkout.sessions.create({
+        line_items: [
+            {
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: paymentInfo.parcelName,
+                    },
+                    unit_amount: paymentInfo.price
+                },
+                quantity: 1,
+            },
+        ],
+        customer_email: paymentInfo.senderEmail,
+        mode: 'payment',
+        success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
+    });
 
     res.send({ url: session.url }); // ✅ Fixed: session is the correct variable
 });
@@ -104,7 +103,6 @@ app.get('/parcels/:id', async (req, res) => {
     const result = await parcelsCollection.findOne(query);
     res.send(result);
 });
-
 
 // update parcel (status / fields)
 app.patch('/parcels/:id', async (req, res) => {
