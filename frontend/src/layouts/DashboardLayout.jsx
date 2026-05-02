@@ -146,7 +146,38 @@ const DashboardLayout = () => {
               </NavLink>
             </li>
 
-            {/* Settings */}
+            {/* Payment History */}
+            <li>
+              <NavLink
+                to="/dashboard/payment-history"
+                data-tip="Payment History"
+                className={({ isActive }) =>
+                  `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'bg-lime-500 text-white shadow-lg'
+                      : 'text-gray-300 hover:bg-slate-700'
+                  } is-drawer-close:px-0 is-drawer-close:justify-center`
+                }
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  strokeWidth="2"
+                  fill="none"
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="19" cy="12" r="1"></circle>
+                  <circle cx="5" cy="12" r="1"></circle>
+                  <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span className="font-medium is-drawer-close:hidden">Payment History</span>
+              </NavLink>
+            </li>
             <li>
               <NavLink
                 to="/settings"

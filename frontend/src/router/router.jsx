@@ -17,6 +17,7 @@ import MyParcels from "../pages/Dashboard/MyParcels/MyParcels";
 import Payment from "../pages/Dashboard/Payment/Payment";
 import PaymentSuccess from "../pages/Dashboard/Payment/PaymentSuccess";
 import PaymentFailed from "../pages/Dashboard/Payment/PaymentFailed";
+import PaymentHistory from "../pages/Dashboard/PaymentHistory/PaymentHistory";
 
 // Not Found component
 const NotFound = () => (
@@ -101,6 +102,10 @@ export const router = createBrowserRouter([
       {
         path:'payment-failed',
         Component:PaymentFailed
+      },
+      {
+        path:'payment-history',
+        Component:PaymentHistory
       }
     ]
   },
