@@ -1,8 +1,27 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import useAxiosSecure from '../../../hooks/useAxiosSecure';
 
 const PaymentSuccess = () => {
+    const [searchParams] = useSearchParams();
+    const sessionId = searchParams.get('session_id') || '';
     const navigate = useNavigate();
+    const axiosSecure = useAxiosSecure();
+
+    console.log('Payment success page loaded with session ID:', sessionId);
+
+    useEffect(() => {
+        if (sessionId) {
+            // Verify the session ID with the backend
+            axiosSecure.patch(`/payment-success?session_id=${sessionId}`)
+                .then(response => {
+                    console.log('Payment success confirmed by backend:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error confirming payment:', error);
+                });
+        }
+    }, [sessionId, axiosSecure]);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-green-100 flex items-center justify-center px-4">
@@ -17,9 +36,16 @@ const PaymentSuccess = () => {
                 </div>
 
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">Payment Successful!</h1>
-                <p className="text-slate-500 mb-8">
+                <p className="text-slate-500 mb-4">
                     Your parcel payment was completed successfully. You can track your parcel from the dashboard.
                 </p>
+
+                {sessionId && (
+                    <div className="bg-slate-50 rounded-lg p-4 mb-6">
+                        <p className="text-xs text-slate-600 mb-1">Session ID:</p>
+                        <p className="text-sm font-mono text-slate-800 break-all">{sessionId}</p>
+                    </div>
+                )}
 
                 <div className="flex flex-col gap-3">
                     <button

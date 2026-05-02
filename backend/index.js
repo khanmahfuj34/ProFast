@@ -107,17 +107,35 @@ app.post('/create-payment-intent', async(req, res) => {
             metadata: {
                 parcelId: paymentInfo.parcelId,
             },
-            success_url: `${process.env.SITE_DOMAIN}?payment=success`,
-            cancel_url: `${process.env.SITE_DOMAIN}?payment=failed`,
+            success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-failed?session_id={CHECKOUT_SESSION_ID}`,
         });
 
-        res.send({ url: session.url });
+        res.send({ url: session.url, sessionId: session.id });
     } catch (error) {
         console.error('Stripe error:', error.message);
         res.status(500).send({ error: error.message });
     }
 });
+app.patch('/payment-success', async(req, res) => {
+    // Handle successful payment logic here
+    const sessionId = req.query.session_id;
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    console.log('Payment success session details:', session);
+    if (session.payment_status === 'paid') {
+        const parcelId = session.metadata.parcelId;
+        const query = { _id: new ObjectId(parcelId) };
+        const update = {
 
+            $set: {
+                paymentStatus: 'paid',
+            }
+        }
+        const result = await parcelsCollection.updateOne(query, update);
+        res.send(result)
+    } // You can update the parcel status in the database based on the sessionId if needed
+    res.send({ success: false });
+});
 // get single parcel by id
 app.get('/parcels/:id', async(req, res) => {
     const id = req.params.id;

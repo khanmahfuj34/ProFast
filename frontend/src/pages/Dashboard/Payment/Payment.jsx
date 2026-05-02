@@ -32,7 +32,9 @@ const Payment = () => {
             return res.data; // { url: 'https://checkout.stripe.com/...' }
         },
         onSuccess: (data) => {
-            if (data?.url) {
+            if (data?.url && data?.sessionId) {
+                // Store session ID before redirecting
+                localStorage.setItem('stripeSessionId', data.sessionId);
                 // Redirect to Stripe hosted checkout page
                 window.location.href = data.url;
             } else {
@@ -98,7 +100,7 @@ const Payment = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 py-8 px-4">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-slate-800">Payment</h1>
                     <p className="text-sm text-slate-500 mt-1">Complete your parcel payment via Stripe</p>

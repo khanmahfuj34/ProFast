@@ -1,8 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const PaymentFailed = () => {
     const navigate = useNavigate();
+    const [sessionId, setSessionId] = useState('');
+    const hasRun = useRef(false);
+
+    useEffect(() => {
+        if (hasRun.current) return; // Prevent running twice in strict mode
+        hasRun.current = true;
+
+        const storedSessionId = localStorage.getItem('stripeSessionId');
+        if (storedSessionId) {
+            setSessionId(storedSessionId);
+            localStorage.removeItem('stripeSessionId');
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-red-50 to-rose-100 flex items-center justify-center px-4">
@@ -17,9 +30,16 @@ const PaymentFailed = () => {
                 </div>
 
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">Payment Cancelled</h1>
-                <p className="text-slate-500 mb-8">
+                <p className="text-slate-500 mb-4">
                     Your payment was not completed. You can try again or go back to your parcels.
                 </p>
+
+                {sessionId && (
+                    <div className="bg-slate-50 rounded-lg p-4 mb-6">
+                        <p className="text-xs text-slate-600 mb-1">Session ID:</p>
+                        <p className="text-sm font-mono text-slate-800 break-all">{sessionId}</p>
+                    </div>
+                )}
 
                 <div className="flex flex-col gap-3">
                     <button
