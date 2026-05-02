@@ -1,25 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const PaymentFailed = () => {
     const navigate = useNavigate();
-    const [sessionId, setSessionId] = useState('');
-    const hasRun = useRef(false);
-
-    useEffect(() => {
-        if (hasRun.current) return; // Prevent running twice in strict mode
-        hasRun.current = true;
-
-        const storedSessionId = localStorage.getItem('stripeSessionId');
-        if (storedSessionId) {
-            setSessionId(storedSessionId);
-            localStorage.removeItem('stripeSessionId');
-        }
-    }, []);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-red-50 to-rose-100 flex items-center justify-center px-4">
-            <div className="bg-white rounded-3xl shadow-xl p-10 max-w-md w-full text-center">
+            <div className="bg-white rounded-3xl shadow-xl p-10 max-w-2xl w-full">
                 {/* Error icon */}
                 <div className="flex justify-center mb-6">
                     <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center">
@@ -29,30 +16,39 @@ const PaymentFailed = () => {
                     </div>
                 </div>
 
-                <h1 className="text-3xl font-bold text-slate-800 mb-2">Payment Cancelled</h1>
-                <p className="text-slate-500 mb-4">
-                    Your payment was not completed. You can try again or go back to your parcels.
-                </p>
+                <div className="text-center mb-8">
+                    <h1 className="text-3xl font-bold text-slate-800 mb-2">Payment Cancelled</h1>
+                    <p className="text-slate-600">
+                        Your payment was not completed. You can try again or go back to your parcels.
+                    </p>
+                </div>
 
-                {sessionId && (
-                    <div className="bg-slate-50 rounded-lg p-4 mb-6">
-                        <p className="text-xs text-slate-600 mb-1">Session ID:</p>
-                        <p className="text-sm font-mono text-slate-800 break-all">{sessionId}</p>
-                    </div>
-                )}
+                {/* Error Info */}
+                <div className="bg-red-50 rounded-lg p-6 mb-8 border border-red-200">
+                    <p className="text-sm text-red-800">
+                        <strong>⚠️ What happened?</strong> You cancelled the payment or it was declined. Please try again or contact support if you need help.
+                    </p>
+                </div>
 
+                {/* Action Buttons */}
                 <div className="flex flex-col gap-3">
                     <button
                         onClick={() => navigate(-1)}
-                        className="btn bg-lime-600 hover:bg-lime-700 border-0 text-white w-full"
+                        className="btn bg-lime-600 hover:bg-lime-700 border-0 text-white w-full font-semibold"
                     >
-                        Try Again
+                        🔄 Try Again
                     </button>
                     <button
                         onClick={() => navigate('/dashboard/my-parcels')}
-                        className="btn btn-outline border-slate-300 text-slate-700 w-full"
+                        className="btn btn-outline border-slate-300 text-slate-700 hover:border-slate-400 w-full font-semibold"
                     >
-                        Back to My Parcels
+                        📦 Back to My Parcels
+                    </button>
+                    <button
+                        onClick={() => navigate('/')}
+                        className="btn btn-ghost w-full font-semibold"
+                    >
+                        🏠 Go to Home
                     </button>
                 </div>
             </div>

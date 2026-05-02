@@ -1,12 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useParcel } from '../../hooks/useParcel';
-import { downloadReceipt } from '../../utils/receiptGenerator';
+import useAxiosSecure from '../../hooks/useAxiosSecure';
+import useAuth from '../../hooks/useAuth';
+import Swal from 'sweetalert2';
 import ProFastLogo from '../Home/shared/ProFastLogo/ProFastLogo';
 
 const ParcelConfirmation = () => {
   const navigate = useNavigate();
   const { parcelData } = useParcel();
+  const { user } = useAuth();
+  const axiosSecure = useAxiosSecure();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Block navigation
+  useEffect(() => {
+    // Prevent back button
+    const handleBackButton = () => {
+      if (!isProcessing) {
+        window.history.pushState(null, null, window.location.href);
+      }
+    };
+    
+    window.history.pushState(null, null, window.location.href);
+    window.addEventListener('popstate', handleBackButton);
+
+    // Prevent page refresh
+    const handleBeforeUnload = (e) => {
+      if (isProcessing) return;
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isProcessing]);
 
   if (!parcelData) {
     return (
@@ -42,17 +74,63 @@ const ParcelConfirmation = () => {
     deliveryType,
     basePrice,
     extraCharges,
-    totalPrice
+    totalPrice,
+    _id
   } = parcelData;
 
-  const orderId = 'PF-' + Date.now();
+  // Use actual database _id
+  const orderId = _id || 'PF-' + Date.now();
 
-  const handleDownloadPDF = () => {
-    downloadReceipt(parcelData, 'pdf');
+  // Handle Payment with Stripe
+  const handlePaymentWithStripe = async () => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    try {
+      const paymentDetails = {
+        parcelId: orderId,
+        cost: totalPrice,
+        parcelName: parcelName,
+        senderEmail: user?.email,
+      };
+
+      const res = await axiosSecure.post('/create-payment-intent', paymentDetails);
+      
+      if (res.data?.url) {
+        // Store session ID before redirecting
+        localStorage.setItem('stripeSessionId', res.data.sessionId);
+        // Redirect to Stripe checkout
+        window.location.href = res.data.url;
+      } else {
+        throw new Error('Could not get payment URL');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      Swal.fire(
+        'Payment Failed',
+        error.response?.data?.error || 'Something went wrong. Please try again.',
+        'error'
+      );
+      setIsProcessing(false);
+    }
   };
 
-  const handlePrint = () => {
-    downloadReceipt(parcelData, 'print');
+  // Handle Cancel Payment
+  const handleCancelPayment = () => {
+    Swal.fire({
+      title: 'Cancel Payment?',
+      text: 'Are you sure you want to cancel this payment?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Cancel',
+      cancelButtonText: 'No, Continue'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate('/');
+      }
+    });
   };
 
   return (
@@ -188,25 +266,43 @@ const ParcelConfirmation = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Payment Warning Box */}
+          <div className="bg-amber-50 border border-amber-200 p-6 rounded-xl">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <p className="font-semibold text-gray-900">Payment Required</p>
+                <p className="text-sm text-gray-600 mt-1">Please complete the payment to confirm your parcel delivery. You must stay on this page or your payment will be cancelled.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons - Stripe Payment */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={handleDownloadPDF}
-              className="px-6 py-3 bg-gradient-to-r from-lime-500 to-lime-600 hover:from-lime-600 hover:to-lime-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition"
+              onClick={handlePaymentWithStripe}
+              disabled={isProcessing}
+              className={`px-8 py-4 bg-gradient-to-r from-lime-500 to-lime-600 hover:from-lime-600 hover:to-lime-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition ${
+                isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              📥 Download Receipt
+              {isProcessing ? (
+                <>
+                  <span className="inline-block animate-spin mr-2">⏳</span>
+                  Processing...
+                </>
+              ) : (
+                '💳 Pay with Stripe'
+              )}
             </button>
             <button
-              onClick={handlePrint}
-              className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg transition"
+              onClick={handleCancelPayment}
+              disabled={isProcessing}
+              className={`px-8 py-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg transition ${
+                isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              🖨️ Print Receipt
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-900 font-semibold rounded-lg hover:border-gray-400 transition"
-            >
-              🏠 Go to Home
+              ✕ Cancel Payment
             </button>
           </div>
         </div>

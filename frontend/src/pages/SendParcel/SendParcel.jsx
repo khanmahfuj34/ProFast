@@ -148,7 +148,7 @@ const SendParcel = () => {
       `,
       icon: 'info',
       showCancelButton: true,
-      confirmButtonText: '✅ Confirm',
+      confirmButtonText: '✅ Confirm and Continue to Pay',
       cancelButtonText: '❌ Cancel',
       confirmButtonColor: '#65a30d',
       cancelButtonColor: '#d1d5db'
@@ -170,8 +170,12 @@ const SendParcel = () => {
         const res = await axiosSecure.post('/parcels', completeParcelData);
         console.log('Parcel saved:', res.data);
 
-        // Store parcel data in context
-        setParcelData(completeParcelData);
+        // Store parcel data in context WITH the _id from database
+        const parcelDataWithId = {
+          ...completeParcelData,
+          _id: res.data.insertedId  // Add the database _id
+        };
+        setParcelData(parcelDataWithId);
 
         // Show success message
         await Swal.fire({
