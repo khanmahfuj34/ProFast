@@ -72,7 +72,7 @@ const PaymentSuccess = () => {
                         <div className="bg-gradient-to-r from-lime-50 to-green-50 rounded-lg p-4 border border-lime-200">
                             <p className="text-xs font-semibold text-lime-700 mb-2">✓ Payment Status</p>
                             <p className="text-lg font-bold text-lime-900">PAID</p>
-                            <p className="text-xs text-lime-600 mt-2">Amount: ৳{paymentData.modifyParcel?.totalPrice || 'N/A'}</p>
+                            <p className="text-xs text-lime-600 mt-2">Amount: ৳{paymentData.totalPrice || paymentData.amount || 'N/A'}</p>
                         </div>
                     </div>
                 ) : null}

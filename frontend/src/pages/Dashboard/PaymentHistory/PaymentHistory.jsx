@@ -14,9 +14,9 @@ const PaymentHistory = () => {
         queryKey: ['payment-history', user?.email],
         queryFn: async () => {
             if (!user?.email) return [];
-            const res = await axiosSecure.get(`/parcels?email=${user.email}`);
-            // Filter only paid parcels
-            return res.data.filter(parcel => parcel.paymentStatus === 'paid');
+            const res = await axiosSecure.get('/payments');
+            // Already sorted by latest first from backend
+            return res.data;
         },
         enabled: !!user?.email
     });

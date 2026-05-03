@@ -254,6 +254,40 @@ app.delete('/parcels/:id', verifyJWT, async(req, res) => {
 
 // ============ PAYMENT ROUTES (Protected) ============
 
+// GET /payments - Get user's payment history (latest first)
+app.get('/payments', verifyJWT, async(req, res) => {
+    try {
+        const query = { customerEmail: req.user.email };
+        const cursor = paymentsCollection.find(query).sort({ paidAt: -1 });
+        let payments = await cursor.toArray();
+
+        // Enrich payment data with parcel info if missing
+        payments = await Promise.all(payments.map(async(payment) => {
+            if (!payment.receiverName || payment.receiverName === 'N/A') {
+                try {
+                    const parcel = await parcelsCollection.findOne({ _id: new ObjectId(payment.parcelId) });
+                    if (parcel) {
+                        payment.receiverName = parcel.receiverName || 'N/A';
+                        payment.receiverPhone = parcel.receiverPhone || 'N/A';
+                        payment.receiverAddress = parcel.receiverAddress || 'N/A';
+                        payment.parcelType = parcel.parcelType || 'N/A';
+                        payment.totalPrice = parcel.totalPrice || payment.amount || 0;
+                        payment.trackingId = parcel.trackingId || payment.trackingId || 'N/A';
+                    }
+                } catch (err) {
+                    console.log('Error enriching payment data:', err);
+                }
+            }
+            return payment;
+        }));
+
+        res.send(payments);
+    } catch (error) {
+        console.error('Error fetching payments:', error.message);
+        res.status(500).send({ message: 'Error fetching payments' });
+    }
+});
+
 // POST /create-payment-intent - Create Stripe session
 app.post('/create-payment-intent', verifyJWT, async(req, res) => {
     try {
@@ -321,7 +355,19 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
         const query = { transactionId: transactionId };
         const paymentExists = await paymentsCollection.findOne(query);
         if (paymentExists) {
-            return res.send({ message: 'Payment already processed', transactionId: transactionId }); // Payment already processed
+            // Payment already processed, return existing payment data
+            const parcel = await parcelsCollection.findOne({ _id: new ObjectId(paymentExists.parcelId) });
+            const trackingId = paymentExists.trackingId || (parcel && parcel.trackingId) || 'N/A';
+            const totalPrice = paymentExists.totalPrice || (parcel && parcel.totalPrice) || 0;
+            return res.send({
+                success: true,
+                trackingId: trackingId,
+                transactionId: transactionId,
+                totalPrice: totalPrice,
+                amount: paymentExists.amount || 0,
+                currency: paymentExists.currency || 'usd',
+                message: 'Payment already processed'
+            });
         }
 
         if (session.payment_status === 'paid') {
@@ -351,7 +397,13 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
                 parcelName: session.metadata.parcelName,
                 transactionId: session.payment_intent,
                 paymentStatus: session.payment_status,
-                paidAt: new Date()
+                paidAt: new Date(),
+                trackingId: trackingId,
+                receiverName: parcel.receiverName || 'N/A',
+                receiverPhone: parcel.receiverPhone || 'N/A',
+                receiverAddress: parcel.receiverAddress || 'N/A',
+                parcelType: parcel.parcelType || 'N/A',
+                totalPrice: parcel.totalPrice || 0
             };
             if (session.payment_status === 'paid') {
                 const resultPayment = await paymentsCollection.insertOne(payment);
@@ -359,6 +411,9 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
                     success: true,
                     trackingId: trackingId,
                     transactionId: session.payment_intent,
+                    totalPrice: payment.totalPrice,
+                    amount: payment.amount,
+                    currency: payment.currency,
                     modifyParcel: result,
                     paymentInfo: resultPayment
                 });
