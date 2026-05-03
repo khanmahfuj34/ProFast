@@ -1,0 +1,370 @@
+/* ProFast Delivery Rider Animation - Clean & Optimized */
+
+* {
+    box-sizing: border-box;
+}
+
+.scene {
+    width: 100%;
+    height: 100%;
+    min-height: 750px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #e8f4fd 0%, #cfe8f7 40%, #f0f0f0 40%, #f0f0f0 100%);
+    border-radius: 16px;
+    border: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+
+/* === SKY CLOUDS === */
+
+.cloud {
+    position: absolute;
+    top: 18px;
+    background: white;
+    border-radius: 20px;
+    opacity: 0.7;
+    animation: cloudMove linear infinite;
+}
+
+.cloud::before,
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+}
+
+.c1 {
+    width: 60px;
+    height: 18px;
+    top: 20px;
+    animation-duration: 18s;
+    animation-delay: 0s;
+}
+
+.c1::before {
+    width: 26px;
+    height: 26px;
+    top: -14px;
+    left: 8px;
+}
+
+.c1::after {
+    width: 18px;
+    height: 18px;
+    top: -10px;
+    left: 28px;
+}
+
+.c2 {
+    width: 80px;
+    height: 22px;
+    top: 35px;
+    animation-duration: 24s;
+    animation-delay: -8s;
+}
+
+.c2::before {
+    width: 32px;
+    height: 32px;
+    top: -18px;
+    left: 12px;
+}
+
+.c2::after {
+    width: 22px;
+    height: 22px;
+    top: -12px;
+    left: 38px;
+}
+
+.c3 {
+    width: 50px;
+    height: 14px;
+    top: 14px;
+    animation-duration: 20s;
+    animation-delay: -13s;
+}
+
+.c3::before {
+    width: 20px;
+    height: 20px;
+    top: -12px;
+    left: 6px;
+}
+
+.c3::after {
+    width: 16px;
+    height: 16px;
+    top: -8px;
+    left: 24px;
+}
+
+@keyframes cloudMove {
+    from {
+        transform: translateX(800px);
+    }
+    to {
+        transform: translateX(-200px);
+    }
+}
+
+
+/* === ROAD MARKINGS === */
+
+.road-line {
+    position: absolute;
+    bottom: 42px;
+    height: 5px;
+    width: 60px;
+    background: #fff;
+    border-radius: 3px;
+    opacity: 0.7;
+    animation: roadLine linear 1.2s infinite;
+}
+
+@keyframes roadLine {
+    from {
+        transform: translateX(100vw);
+    }
+    to {
+        transform: translateX(-100px);
+    }
+}
+
+.rl1 {
+    animation-delay: 0s;
+    bottom: 44px;
+}
+
+.rl2 {
+    animation-delay: -0.4s;
+    bottom: 44px;
+}
+
+.rl3 {
+    animation-delay: -0.8s;
+    bottom: 44px;
+}
+
+
+/* === RIDER SVG CONTAINER === */
+
+.rider-wrap {
+    position: absolute;
+    bottom: 35%;
+    left: 0;
+    animation: rideAcross 4s linear infinite;
+    filter: drop-shadow(4px 6px 6px rgba(0, 0, 0, 0.13));
+}
+
+@keyframes rideAcross {
+    0% {
+        transform: translateX(-220px);
+        opacity: 0;
+    }
+    8% {
+        opacity: 1;
+    }
+    88% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(105vw);
+        opacity: 0;
+    }
+}
+
+
+/* === BOUNCE === */
+
+.rider-body {
+    animation: bounce 0.22s ease-in-out infinite alternate;
+    transform-origin: bottom center;
+}
+
+@keyframes bounce {
+    from {
+        transform: translateY(0px);
+    }
+    to {
+        transform: translateY(-3px);
+    }
+}
+
+
+/* === WHEEL SPIN === */
+
+.wheel {
+    animation: spin 0.32s linear infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* === GROUND SHADOW === */
+
+.shadow {
+    position: absolute;
+    bottom: 34%;
+    left: 28px;
+    width: 160px;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.09);
+    border-radius: 50%;
+    animation: shadowPulse 0.22s ease-in-out infinite alternate;
+    filter: blur(3px);
+}
+
+@keyframes shadowPulse {
+    from {
+        transform: scaleX(1);
+        opacity: 0.5;
+    }
+    to {
+        transform: scaleX(0.92);
+        opacity: 0.35;
+    }
+}
+
+
+/* === ROAD SURFACE === */
+
+.road-surface {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 68px;
+    background: #c8c8c8;
+}
+
+.road-edge {
+    position: absolute;
+    bottom: 62px;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    background: #e8b84b;
+}
+
+
+/* === LABEL === */
+
+.brand-label {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+    letter-spacing: 0.02em;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+}
+
+
+/* === SPEED LINES === */
+
+.speed-line {
+    position: absolute;
+    height: 2px;
+    background: rgba(55, 138, 221, 0.18);
+    border-radius: 2px;
+    animation: speedLine linear infinite;
+}
+
+@keyframes speedLine {
+    from {
+        transform: translateX(900px);
+        opacity: 0.7;
+    }
+    to {
+        transform: translateX(-300px);
+        opacity: 0;
+    }
+}
+
+.sl1 {
+    width: 90px;
+    bottom: 100px;
+    animation-duration: 0.55s;
+    animation-delay: 0s;
+}
+
+.sl2 {
+    width: 55px;
+    bottom: 115px;
+    animation-duration: 0.65s;
+    animation-delay: -0.2s;
+}
+
+.sl3 {
+    width: 70px;
+    bottom: 90px;
+    animation-duration: 0.5s;
+    animation-delay: -0.1s;
+}
+
+.sl4 {
+    width: 40px;
+    bottom: 108px;
+    animation-duration: 0.7s;
+    animation-delay: -0.35s;
+}
+
+
+/* === ACCESSIBILITY === */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+
+/* === RESPONSIVE === */
+
+@media (max-width: 768px) {
+    .scene {
+        height: 220px;
+        border-radius: 12px;
+    }
+    .rider-wrap {
+        bottom: 50px;
+    }
+    .brand-label {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scene {
+        height: 180px;
+        border-radius: 8px;
+    }
+    .rider-wrap {
+        bottom: 40px;
+        transform: scale(0.85);
+    }
+    .brand-label {
+        font-size: 11px;
+        top: 8px;
+        right: 12px;
+    }
+}

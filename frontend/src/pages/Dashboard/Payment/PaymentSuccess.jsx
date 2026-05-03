@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 
@@ -9,11 +9,15 @@ const PaymentSuccess = () => {
     const axiosSecure = useAxiosSecure();
     const [paymentData, setPaymentData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const hasCalledApi = useRef(false); // ✅ Prevent multiple API calls
 
     console.log('Payment success page loaded with session ID:', sessionId);
 
     useEffect(() => {
-        if (sessionId) {
+        // ✅ Prevent duplicate API calls (React Strict Mode, race conditions)
+        if (sessionId && !hasCalledApi.current) {
+            hasCalledApi.current = true;
+            
             // Verify the session ID with the backend and get payment details
             axiosSecure.patch(`/payment-success?session_id=${sessionId}`)
                 .then(response => {

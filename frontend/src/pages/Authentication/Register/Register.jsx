@@ -1,74 +1,193 @@
-import React, { useEffect } from 'react';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import React, { useEffect, useState } from 'react';
+import { GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import useAuth from '../../../hooks/useAuth';
+import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import useImageUpload from '../../../hooks/useImageUpload';
 import { toast } from 'react-toastify';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
 
 const Register = () => {
-    const {register, handleSubmit, formState: { errors }} = useForm();
+    const { register, handleSubmit, formState: { errors } } = useForm();
     const { createUser } = useAuth();
+    const navigation = useNavigate();
+    const axiosSecure = useAxiosSecure();
+    const { uploadImage, uploading: isUploading } = useImageUpload();
+    const [photoFile, setPhotoFile] = useState(null);
+    const [photoPreview, setPhotoPreview] = useState(null);
+
+    // Handle photo file selection
+    const handlePhotoChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setPhotoFile(file);
+            // Create preview URL
+            const previewUrl = URL.createObjectURL(file);
+            setPhotoPreview(previewUrl);
+        }
+    };
     
-    const onSubmit = data => {
-        createUser(data.email, data.password, data.name)
-        .then(result => {
-            toast.success('✅ Account created! Check your email to verify.', {
-                position: 'top-right',
-                autoClose: 6000,
-            });
-            console.log('✅ Registration successful:', result.user);
-            console.log('📧 Verification email sent to:', data.email);
-        })
-        .catch(error => {
-            console.error('❌ Auth Error Code:', error.code);
-            console.error('❌ Auth Error Message:', error.message);
-            
-            if (error.code === 'auth/api-key-not-valid') {
-                toast.error('Firebase Configuration Issue. Contact admin.', {
-                    position: 'top-right',
-                    autoClose: 4000,
-                });
-            } else if (error.code === 'auth/operation-not-allowed') {
-                toast.error('Email/Password login not enabled. Contact admin.', {
-                    position: 'top-right',
-                    autoClose: 4000,
-                });
-            } else if (error.code === 'auth/weak-password') {
-                toast.error('Password is too weak. Use at least 6 characters.', {
-                    position: 'top-right',
-                    autoClose: 4000,
-                });
-            } else if (error.code === 'auth/email-already-in-use') {
-                toast.error('Email already registered.', {
-                    position: 'top-right',
-                    autoClose: 4000,
-                });
-            } else {
-                toast.error(`Error: ${error.message}`, {
-                    position: 'top-right',
-                    autoClose: 4000,
-                });
+    const onSubmit = async (data) => {
+        try {
+            let uploadedPhotoURL = null;
+
+            // Upload photo if selected
+            if (photoFile) {
+                try {
+                    toast.info('📸 Uploading photo...', { autoClose: 3000 });
+                    uploadedPhotoURL = await uploadImage(photoFile);
+                    console.log('✅ Photo uploaded:', uploadedPhotoURL);
+                    toast.success('✅ Photo uploaded successfully!', { autoClose: 2000 });
+                } catch (photoError) {
+                    console.warn('⚠️  Photo upload failed (non-critical):', photoError.message);
+                    toast.warn('⚠️  Photo upload failed. Continuing with registration...', { autoClose: 3000 });
+                    // Continue registration even if photo upload fails
+                }
             }
-        });
+
+            // Create user in Firebase
+            const result = await createUser(data.email, data.password, data.name);
+            
+            // ✅ Get Firebase ID token for API authentication
+            const firebaseToken = await result.user.getIdToken();
+            localStorage.setItem('authToken', firebaseToken);
+            console.log('✅ Firebase token stored for API requests');
+            
+            // Prepare user data for database
+            const userInfo = {
+                email: data.email,
+                displayName: data.name,
+                photoURL: uploadedPhotoURL || result.user?.photoURL || null
+            };
+
+            try {
+                // Save user to database with explicit Authorization header
+                const dbResponse = await axiosSecure.post('/user', userInfo, {
+                    headers: {
+                        'Authorization': `Bearer ${firebaseToken}`
+                    }
+                });
+                console.log('✅ User saved to database:', dbResponse.data);
+            } catch (dbError) {
+                console.warn('⚠️  Database save warning (non-critical):', dbError?.response?.data?.message || dbError.message);
+            }
+
+            // Update Firebase user profile with photo
+            try {
+                await updateProfile(result.user, {
+                    displayName: data.name,
+                    photoURL: uploadedPhotoURL || result.user?.photoURL || null
+                });
+                console.log('✅ Firebase profile updated with photo');
+            } catch (profileError) {
+                console.warn('⚠️  Profile update warning:', profileError.message);
+            }
+
+            toast.success('✅ Account created successfully! Redirecting to home...', {
+                position: 'top-right',
+                autoClose: 5000,
+            });
+
+            // Cleanup preview
+            if (photoPreview) {
+                URL.revokeObjectURL(photoPreview);
+            }
+
+            // Redirect to home page
+            setTimeout(() => navigation('/', { replace: true }), 1500);
+
+        } catch (error) {
+            console.error('❌ Registration Error:', error);
+            let errorMessage = 'Registration failed. Please try again.';
+
+            // Firebase specific error messages
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    errorMessage = '📧 This email is already registered.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = '🔐 Password must be at least 6 characters.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = '❌ Invalid email format.';
+                    break;
+                case 'auth/operation-not-allowed':
+                    errorMessage = '⚠️  Email/Password sign-up is not enabled.';
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = '🔒 Too many attempts. Please try again later.';
+                    break;
+                default:
+                    errorMessage = error.message || 'An unexpected error occurred.';
+            }
+
+            toast.error(errorMessage, {
+                position: 'top-right',
+                autoClose: 5000,
+            });
+        }
     };
 
     const handleGoogleRegister = async () => {
         try {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
-            toast.success(`Welcome ${result.user.displayName}!`, {
+            
+            // ✅ Get Firebase ID token for API authentication
+            const firebaseToken = await result.user.getIdToken();
+            localStorage.setItem('authToken', firebaseToken);
+            console.log('✅ Firebase token stored for API requests');
+            
+            // Prepare user data for database
+            const userInfo = {
+                email: result.user.email,
+                displayName: result.user.displayName || 'Google User',
+                photoURL: result.user.photoURL || null
+            };
+
+            try {
+                // Save user to database with explicit Authorization header
+                const dbResponse = await axiosSecure.post('/user', userInfo, {
+                    headers: {
+                        'Authorization': `Bearer ${firebaseToken}`
+                    }
+                });
+                console.log('✅ Google user saved to database:', dbResponse.data);
+            } catch (dbError) {
+                console.warn('⚠️  Database save skipped (user may already exist):', dbError?.response?.data?.message);
+                // Don't fail if user already exists in database
+            }
+
+            toast.success(`👋 Welcome ${result.user.displayName}!`, {
                 position: 'top-right',
                 autoClose: 4000,
             });
-            console.log('✅ Google Registration successful:', result.user);
+
+            console.log('✅ Google Registration successful:', result.user.email);
+            
+            // Redirect to home page
+            setTimeout(() => navigation('/', { replace: true }), 1000);
+
         } catch (error) {
-            console.error('❌ Google Registration Error:', error.message);
-            toast.error(`Registration failed: ${error.message}`, {
+            console.error('❌ Google Registration Error:', error.code, error.message);
+            
+            let errorMessage = 'Google sign-up failed. Please try again.';
+            
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = 'Sign-up cancelled. Please try again.';
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMessage = '🔒 Pop-up blocked. Please enable pop-ups and try again.';
+            } else if (error.code === 'auth/account-exists-with-different-credential') {
+                errorMessage = '⚠️  Account exists with different sign-in method.';
+            }
+            
+            toast.error(errorMessage, {
                 position: 'top-right',
-                autoClose: 4000,
+                autoClose: 5000,
             });
         }
     };
@@ -175,6 +294,50 @@ const Register = () => {
                                         <span>⚠</span> Maximum 32 characters allowed
                                     </p>
                                 )}
+                            </div>
+
+                            {/* Photo Upload Field */}
+                            <div className="space-y-1.5">
+                                <label className="block text-sm font-medium text-gray-900 font-dm-sans">Profile Photo (Optional)</label>
+                                <div className="relative">
+                                    <input 
+                                        type="file" 
+                                        accept="image/jpeg,image/jpg,image/png,image/webp" 
+                                        onChange={handlePhotoChange}
+                                        disabled={isUploading}
+                                        className="hidden"
+                                        id="photo-input"
+                                    />
+                                    <label 
+                                        htmlFor="photo-input"
+                                        className={`w-full px-4 py-2.5 rounded-lg bg-white border-2 transition-all duration-300 cursor-pointer flex items-center gap-2 font-dm-sans text-gray-600 ${
+                                            isUploading
+                                            ? 'border-blue-400 bg-blue-50' 
+                                            : photoFile
+                                            ? 'border-lime-400 bg-lime-50'
+                                            : 'border-gray-200 hover:border-lime-300'
+                                        }`}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        {isUploading ? '📸 Uploading...' : photoFile ? `✅ ${photoFile.name}` : 'Click to upload photo'}
+                                    </label>
+                                </div>
+                                {photoPreview && (
+                                    <div className="mt-2 flex items-center gap-3">
+                                        <img 
+                                            src={photoPreview} 
+                                            alt="Preview" 
+                                            className="w-12 h-12 rounded-lg object-cover border-2 border-lime-300"
+                                        />
+                                        <div className="text-xs text-gray-600">
+                                            <p className="font-medium">Preview</p>
+                                            <p className="text-gray-500">{(photoFile?.size / 1024).toFixed(2)} KB</p>
+                                        </div>
+                                    </div>
+                                )}
+                                <p className="text-xs text-gray-500 font-dm-sans">Supported: JPG, PNG, WebP (Max 2MB)</p>
                             </div>
 
                             {/* Terms & Conditions */}

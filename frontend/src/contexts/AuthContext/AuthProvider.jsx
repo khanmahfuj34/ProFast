@@ -49,6 +49,10 @@ const AuthProvider = ({ children }) => {
             
             console.log('✅ [Token Flow] JWT endpoint response:', response.data);
             console.log('✅ [Token Flow] httpOnly cookie should now be set in browser');
+            
+            // ✅ Save social user data to database
+            await saveSocialUserData(user);
+            
             return true;
         } catch (error) {
             console.error('❌ [Token Flow] Error sending token to backend:');
@@ -56,6 +60,45 @@ const AuthProvider = ({ children }) => {
             console.error('   Message:', error.response?.data?.message || error.message);
             console.error('   Error:', error.response?.data?.error);
             // Non-critical error - don't block auth
+            return false;
+        }
+    };
+
+    // ✅ Save social user data to database (Google, Facebook, etc.)
+    const saveSocialUserData = async (user) => {
+        try {
+            if (!user) return;
+
+            const socialUserData = {
+                email: user.email,
+                displayName: user.displayName || 'User',
+                photoURL: user.photoURL || null,
+                uid: user.uid,
+                provider: user.providerData?.[0]?.providerId || 'firebase',
+                lastLogin: new Date().toISOString()
+            };
+
+            console.log('💾 [Social User] Saving social user data:', socialUserData.email);
+
+            // Get token for authorization
+            const token = await user.getIdToken();
+            const response = await axios.post(
+                'http://localhost:3000/save-social-user',
+                socialUserData,
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            console.log('✅ [Social User] Data saved to database:', response.data);
+            return true;
+        } catch (error) {
+            console.warn('⚠️ [Social User] Warning saving social data (non-critical):', error.response?.data?.message || error.message);
+            // Don't block login even if social data save fails
             return false;
         }
     };

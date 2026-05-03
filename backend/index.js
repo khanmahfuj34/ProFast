@@ -46,6 +46,7 @@ const client = new MongoClient(uri, {
 
 let parcelsCollection;
 let paymentsCollection;
+let usersCollection;
 
 async function run() {
     try {
@@ -53,8 +54,50 @@ async function run() {
         console.log("✅ Connected to MongoDB");
 
         const db = client.db("zep_shift_db");
+        usersCollection = db.collection("users");
         parcelsCollection = db.collection("parcels");
         paymentsCollection = db.collection("payments");
+
+        // ✅ Create UNIQUE index on transactionId to prevent duplicate payments
+        // Use sparse index to handle null values, and ignore if index already exists
+        try {
+            await paymentsCollection.createIndex({ transactionId: 1 }, { unique: true, sparse: true });
+            console.log("✅ Unique index created on payments.transactionId");
+        } catch (indexError) {
+            if (indexError.codeName === 'DuplicateKey' || indexError.code === 11000) {
+                console.log("⚠️  Unique index creation skipped - duplicates exist in collection");
+                console.log("📝 Note: Running cleanup to remove duplicate payments...");
+
+                // ✅ Remove duplicate payments (keep first occurrence)
+                const duplicates = await paymentsCollection.aggregate([
+                    { $group: { _id: "$transactionId", count: { $sum: 1 }, ids: { $push: "$_id" } } },
+                    { $match: { count: { $gt: 1 } } }
+                ]).toArray();
+
+                let deletedCount = 0;
+                for (const dup of duplicates) {
+                    // Keep first id, delete rest
+                    const idsToDelete = dup.ids.slice(1);
+                    const deleteResult = await paymentsCollection.deleteMany({ _id: { $in: idsToDelete } });
+                    deletedCount += deleteResult.deletedCount;
+                }
+                console.log(`✅ Removed ${deletedCount} duplicate payment records`);
+
+                // Now try creating the index again
+                try {
+                    await paymentsCollection.createIndex({ transactionId: 1 }, { unique: true, sparse: true });
+                    console.log("✅ Unique index created on payments.transactionId after cleanup");
+                } catch (retryError) {
+                    console.error("⚠️  Could not create unique index. Continuing without it.", retryError.message);
+                }
+            } else {
+                console.error("⚠️  Index creation error (non-duplicate):", indexError.message);
+            }
+        }
+
+        // ✅ Create index on parcelId and customerEmail for faster queries
+        await paymentsCollection.createIndex({ parcelId: 1, customerEmail: 1 });
+        console.log("✅ Index created on payments.parcelId and customerEmail");
 
         // Start server AFTER MongoDB connects
         app.listen(port, () => {
@@ -80,13 +123,14 @@ const verifyJWT = async(req, res, next) => {
     try {
         // Extract token from cookies first, then from Authorization header
         const cookieToken = req.cookies.token;
-        const headerToken = req.headers.authorization ? req.headers.authorization.split(' ')[1] : null;
+        const authHeader = req.headers.authorization;
+        const headerToken = authHeader ? authHeader.split(' ')[1] : null;
         const token = cookieToken || headerToken;
 
         if (!token) {
             console.log('🔴 [JWT Verify] No token found for:', req.path);
-            console.log('   Cookies available:', Object.keys(req.cookies));
-            console.log('   Authorization header:', req.headers.authorization ? 'present' : 'missing');
+            console.log('   Cookies:', Object.keys(req.cookies));
+            console.log('   Auth Header:', authHeader ? 'present' : 'missing');
             return res.status(401).send({ message: 'Unauthorized: No token provided' });
         }
 
@@ -181,6 +225,16 @@ app.get('/debug/cookies', (req, res) => {
         }
     });
 });
+
+//user related apis
+app.post('/users', async(req, res) => {
+    const user = req.body;
+    user.role = 'user';
+    user.createdAt = new Date();
+    const result = await usersCollection.insertOne(user);
+    res.send(result);
+});
+
 
 // POST /logout - Clear cookie
 app.post('/logout', (req, res) => {
@@ -339,12 +393,11 @@ app.post('/create-payment-intent', verifyJWT, async(req, res) => {
     }
 });
 
-// PATCH /payment-success - Verify payment and update parcel status
+// PATCH /payment-success - Verify payment and update parcel status (ATOMIC)
 app.patch('/payment-success', verifyJWT, async(req, res) => {
     try {
         const sessionId = req.query.session_id;
         const session = await stripe.checkout.sessions.retrieve(sessionId);
-        //console.log('Payment success session details:', session);
         const transactionId = session.payment_intent;
 
         // ✅ Verify user email matches the payment
@@ -352,74 +405,70 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
             return res.status(403).send({ message: 'Forbidden: User email mismatch' });
         }
 
-        const query = { transactionId: transactionId };
-        const paymentExists = await paymentsCollection.findOne(query);
-        if (paymentExists) {
-            // Payment already processed, return existing payment data
-            const parcel = await parcelsCollection.findOne({ _id: new ObjectId(paymentExists.parcelId) });
-            const trackingId = paymentExists.trackingId || (parcel && parcel.trackingId) || 'N/A';
-            const totalPrice = paymentExists.totalPrice || (parcel && parcel.totalPrice) || 0;
-            return res.send({
-                success: true,
-                trackingId: trackingId,
-                transactionId: transactionId,
-                totalPrice: totalPrice,
-                amount: paymentExists.amount || 0,
-                currency: paymentExists.currency || 'usd',
-                message: 'Payment already processed'
-            });
+        // ✅ Only process paid sessions
+        if (session.payment_status !== 'paid') {
+            return res.send({ success: false, message: 'Payment not completed' });
         }
 
-        if (session.payment_status === 'paid') {
-            const parcelId = session.metadata.parcelId;
+        const parcelId = session.metadata.parcelId;
 
-            // ✅ Double-check parcel ownership
-            const parcel = await parcelsCollection.findOne({ _id: new ObjectId(parcelId) });
-            if (!parcel || parcel.senderEmail !== req.user.email) {
-                return res.status(403).send({ message: 'Forbidden: Cannot complete this payment' });
-            }
-
-            const trackingId = generateTrackingId();
-            const query = { _id: new ObjectId(parcelId) };
-            const update = {
-                $set: {
-                    paymentStatus: 'paid',
-                    trackingId: trackingId,
-                    paidAt: new Date()
-                }
-            };
-            const result = await parcelsCollection.updateOne(query, update);
-            const payment = {
-                amount: session.amount_total / 100,
-                currency: session.currency,
-                customerEmail: session.customer_email,
-                parcelId: session.metadata.parcelId,
-                parcelName: session.metadata.parcelName,
-                transactionId: session.payment_intent,
-                paymentStatus: session.payment_status,
-                paidAt: new Date(),
-                trackingId: trackingId,
-                receiverName: parcel.receiverName || 'N/A',
-                receiverPhone: parcel.receiverPhone || 'N/A',
-                receiverAddress: parcel.receiverAddress || 'N/A',
-                parcelType: parcel.parcelType || 'N/A',
-                totalPrice: parcel.totalPrice || 0
-            };
-            if (session.payment_status === 'paid') {
-                const resultPayment = await paymentsCollection.insertOne(payment);
-                return res.send({
-                    success: true,
-                    trackingId: trackingId,
-                    transactionId: session.payment_intent,
-                    totalPrice: payment.totalPrice,
-                    amount: payment.amount,
-                    currency: payment.currency,
-                    modifyParcel: result,
-                    paymentInfo: resultPayment
-                });
-            }
+        // ✅ Double-check parcel ownership
+        const parcel = await parcelsCollection.findOne({ _id: new ObjectId(parcelId) });
+        if (!parcel || parcel.senderEmail !== req.user.email) {
+            return res.status(403).send({ message: 'Forbidden: Cannot complete this payment' });
         }
-        return res.send({ success: false, message: 'Payment not completed' });
+
+        // ✅ Use ATOMIC findOneAndUpdate with upsert to prevent race condition
+        // This ensures only ONE payment is created per transactionId
+        const trackingId = parcel.trackingId || generateTrackingId();
+        const paymentData = {
+            amount: session.amount_total / 100,
+            currency: session.currency,
+            customerEmail: session.customer_email,
+            parcelId: parcelId,
+            parcelName: session.metadata.parcelName,
+            transactionId: transactionId,
+            paymentStatus: session.payment_status,
+            paidAt: new Date(),
+            trackingId: trackingId,
+            receiverName: parcel.receiverName || 'N/A',
+            receiverPhone: parcel.receiverPhone || 'N/A',
+            receiverAddress: parcel.receiverAddress || 'N/A',
+            parcelType: parcel.parcelType || 'N/A',
+            totalPrice: parcel.totalPrice || 0
+        };
+
+        // ✅ Atomic operation: findOneAndUpdate with upsert
+        // Only the FIRST request will insert; subsequent requests will find existing record
+        const resultPayment = await paymentsCollection.findOneAndUpdate({ transactionId: transactionId }, // Filter by unique transactionId
+            { $setOnInsert: paymentData }, // Only set data if inserting
+            {
+                upsert: true, // Insert if doesn't exist
+                returnDocument: 'after' // Return the document after operation
+            }
+        );
+
+        // ✅ Update parcel status to paid (idempotent operation)
+        const parcelUpdate = await parcelsCollection.updateOne({ _id: new ObjectId(parcelId) }, {
+            $set: {
+                paymentStatus: 'paid',
+                trackingId: trackingId,
+                paidAt: new Date()
+            }
+        });
+
+        // Return payment data
+        const finalPaymentData = resultPayment.value || paymentData;
+        return res.send({
+            success: true,
+            trackingId: finalPaymentData.trackingId,
+            transactionId: transactionId,
+            totalPrice: finalPaymentData.totalPrice,
+            amount: finalPaymentData.amount,
+            currency: finalPaymentData.currency,
+            message: 'Payment processed successfully'
+        });
+
     } catch (error) {
         console.error('Payment success error:', error);
         res.status(500).send({ success: false, error: error.message });
@@ -443,4 +492,185 @@ app.patch('/parcels/:id', async(req, res) => {
     };
     const result = await parcelsCollection.updateOne(filter, updateDoc);
     res.send(result);
+});
+
+// ============ USER ROUTES (Protected) ============
+
+// POST /user - Save or update user info during registration (JWT Protected)
+app.post('/user', verifyJWT, async(req, res) => {
+    try {
+        const userInfo = req.body;
+        const email = userInfo.email;
+
+        if (!email) {
+            return res.status(400).send({ message: 'Email is required' });
+        }
+
+        // ✅ Verify user is registering their own email (security check)
+        if (email !== req.user.email) {
+            return res.status(403).send({ message: 'Forbidden: Cannot register other users' });
+        }
+
+        // ✅ Use upsert to prevent duplicates - only creates if doesn't exist
+        const result = await usersCollection.updateOne({ email: email }, {
+            $setOnInsert: {
+                email: email,
+                displayName: userInfo.displayName || 'User',
+                photoURL: userInfo.photoURL || null,
+                createdAt: new Date(),
+                role: 'user'
+            },
+            $set: {
+                lastUpdated: new Date()
+            }
+        }, { upsert: true });
+
+        console.log(`✅ User saved/updated: ${email}`);
+        res.send({
+            success: true,
+            message: 'User registered successfully',
+            matchedCount: result.matchedCount,
+            upsertedCount: result.upsertedCount,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ User registration error:', error.message);
+        res.status(500).send({ message: 'Error saving user', error: error.message });
+    }
+});
+
+// GET /user - Get current user info (Protected)
+app.get('/user', verifyJWT, async(req, res) => {
+    try {
+        const email = req.user.email;
+        const user = await usersCollection.findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        res.send({
+            success: true,
+            user: {
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                role: user.role || 'user',
+                createdAt: user.createdAt
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get user error:', error.message);
+        res.status(500).send({ message: 'Error fetching user', error: error.message });
+    }
+});
+
+// PATCH /user - Update user profile (Protected)
+app.patch('/user', verifyJWT, async(req, res) => {
+    try {
+        const email = req.user.email;
+        const updateData = req.body;
+
+        // ✅ Only allow updating own profile
+        if (updateData.email && updateData.email !== email) {
+            return res.status(403).send({ message: 'Forbidden: Cannot modify email' });
+        }
+
+        // Prepare update object
+        const updateDoc = {
+            $set: {
+                ...updateData,
+                lastUpdated: new Date()
+            }
+        };
+
+        const result = await usersCollection.updateOne({ email: email },
+            updateDoc
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        console.log(`✅ User updated: ${email}`);
+        res.send({
+            success: true,
+            message: 'User profile updated successfully',
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ Update user error:', error.message);
+        res.status(500).send({ message: 'Error updating user', error: error.message });
+    }
+});
+
+// POST /save-social-user - Save or update social user data (Google, Facebook, etc.) (Protected)
+app.post('/save-social-user', verifyJWT, async(req, res) => {
+    try {
+        const socialUserData = req.body;
+        const email = socialUserData.email;
+
+        if (!email) {
+            return res.status(400).send({ message: 'Email is required' });
+        }
+
+        // ✅ Verify user is saving their own data
+        if (email !== req.user.email) {
+            return res.status(403).send({ message: 'Forbidden: Cannot save other users data' });
+        }
+
+        // ✅ Check if user exists
+        const existingUser = await usersCollection.findOne({ email: email });
+
+        if (existingUser) {
+            // User exists - update their data
+            const updateResult = await usersCollection.updateOne({ email: email }, {
+                $set: {
+                    displayName: socialUserData.displayName || 'User',
+                    photoURL: socialUserData.photoURL || null,
+                    lastLogin: new Date(),
+                    lastUpdated: new Date()
+                },
+                $addToSet: {
+                    providers: socialUserData.provider || 'firebase'
+                }
+            });
+
+            console.log(`✅ Social user updated: ${email} (provider: ${socialUserData.provider || 'firebase'})`);
+            res.send({
+                success: true,
+                message: 'Social user data updated successfully',
+                email: email,
+                provider: socialUserData.provider || 'firebase'
+            });
+        } else {
+            // New user - create record
+            const newUserData = {
+                email: email,
+                displayName: socialUserData.displayName || 'User',
+                photoURL: socialUserData.photoURL || null,
+                uid: socialUserData.uid,
+                role: 'user',
+                providers: [socialUserData.provider || 'firebase'],
+                createdAt: new Date(),
+                lastLogin: new Date(),
+                lastUpdated: new Date()
+            };
+
+            const insertResult = await usersCollection.insertOne(newUserData);
+
+            console.log(`✅ New social user created: ${email} (provider: ${socialUserData.provider || 'firebase'})`);
+            res.send({
+                success: true,
+                message: 'Social user data saved successfully',
+                insertedId: insertResult.insertedId,
+                email: email,
+                provider: socialUserData.provider || 'firebase'
+            });
+        }
+    } catch (error) {
+        console.error('❌ Save social user error:', error.message);
+        console.error('❌ Full error:', error);
+        res.status(500).send({ message: 'Error saving social user data', error: error.message });
+    }
 });

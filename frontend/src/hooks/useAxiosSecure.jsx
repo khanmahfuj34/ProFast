@@ -19,6 +19,24 @@ const useAxiosSecure = () => {
         if (hasSetupInterceptor.current) return;
         hasSetupInterceptor.current = true;
 
+        // 🔐 Request Interceptor - Add Firebase token to Authorization header
+        const requestInterceptor = axiosSecure.interceptors.request.use(
+            config => {
+                // Try to get token from localStorage (set during registration/login)
+                const token = localStorage.getItem('authToken');
+                
+                if (token && !config.headers.Authorization) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                    console.log('🔐 [Request Interceptor] Added Authorization header');
+                }
+                
+                return config;
+            },
+            error => {
+                return Promise.reject(error);
+            }
+        );
+
         // 🔐 Response Interceptor - Handle auth errors globally
         const responseInterceptor = axiosSecure.interceptors.response.use(
             response => response,
@@ -57,6 +75,7 @@ const useAxiosSecure = () => {
 
         // Cleanup on unmount
         return () => {
+            axiosSecure.interceptors.request.eject(requestInterceptor);
             axiosSecure.interceptors.response.eject(responseInterceptor);
             isRedirecting.current = false;
         };
