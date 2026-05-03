@@ -333,5 +333,8 @@ const BeRider = () => {
                 </div>
             </div>
         </div>
+        </div>
     );
 };
+
+export default BeRider;
