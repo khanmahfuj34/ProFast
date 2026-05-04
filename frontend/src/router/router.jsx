@@ -11,6 +11,7 @@ import Register from "../pages/Authentication/Register/Register";
 import Coverage from "../pages/Coverage/Coverage";
 import SendParcel from "../pages/SendParcel/SendParcel";
 import BeRider from "../pages/BeRider/BeRider";
+import RiderStatus from "../pages/BeRider/RiderStatus";
 import ParcelConfirmation from "../pages/ParcelConfirmation/ParcelConfirmation";
 import PrivateRoute from "../routes/PrivateRoute";
 import MyParcels from "../pages/Dashboard/MyParcels/MyParcels";
@@ -18,8 +19,21 @@ import Payment from "../pages/Dashboard/Payment/Payment";
 import PaymentSuccess from "../pages/Dashboard/Payment/PaymentSuccess";
 import PaymentFailed from "../pages/Dashboard/Payment/PaymentFailed";
 import PaymentHistory from "../pages/Dashboard/PaymentHistory/PaymentHistory";
+import ApproveRiders from "../pages/Dashboard/ApproveRiders/ApproveRiders";
+import RiderDetailPage from "../pages/Dashboard/ApproveRiders/RiderDetailPage";
+import ManageUsers from "../pages/Dashboard/ManageUsers/ManageUsers";
+import Unauthorized from "../pages/Unauthorized/Unauthorized";
+import Forbidden from "../pages/Forbidden/Forbidden";
+import Services from "../pages/Home/services/Services";
+import AdminDashboard from "../pages/Admin/AdminDashboard";
+import AdminManageUsers from "../pages/Admin/ManageUsers";
+import AdminManageRiders from "../pages/Admin/ManageRiders";
+import AdminParcelOversight from "../pages/Admin/ParcelOversight";
 
-// Not Found component
+/**
+ * 404 Not Found Page
+ * Displayed when user tries to access a non-existent route
+ */
 const NotFound = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
     <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
@@ -52,6 +66,10 @@ export const router = createBrowserRouter([
           Component: Coverage
         },
         {
+          path: 'service',
+          Component: Services
+        },
+        {
           path: 'send-parcel',
           element: <PrivateRoute><SendParcel /></PrivateRoute>
         },
@@ -62,6 +80,10 @@ export const router = createBrowserRouter([
         {
           path: 'be-rider',
           element: <PrivateRoute><BeRider /></PrivateRoute>
+        },
+        {
+          path: 'be-rider-status',
+          element: <PrivateRoute><RiderStatus /></PrivateRoute>
         }
     ]
   },
@@ -78,6 +100,14 @@ export const router = createBrowserRouter([
         Component: Register
       }
     ]
+  },
+  {
+    path: '/401',
+    Component: Unauthorized
+  },
+  {
+    path: '/403',
+    Component: Forbidden
   },
   {
     path:'dashboard',
@@ -106,6 +136,39 @@ export const router = createBrowserRouter([
       {
         path:'payment-history',
         Component:PaymentHistory
+      },
+      {
+        path:'ApproveRiders',
+        Component:ApproveRiders
+      },
+      {
+        path:'ApproveRiders/:riderId',
+        Component:RiderDetailPage
+      },
+      {
+        path:'ManageUsers',
+        Component:ManageUsers
+      }
+    ]
+  },
+  {
+    path: '/admin',
+    children: [
+      {
+        index: true,
+        element: <PrivateRoute><AdminDashboard /></PrivateRoute>
+      },
+      {
+        path: 'users',
+        element: <PrivateRoute><AdminManageUsers /></PrivateRoute>
+      },
+      {
+        path: 'riders',
+        element: <PrivateRoute><AdminManageRiders /></PrivateRoute>
+      },
+      {
+        path: 'parcels',
+        element: <PrivateRoute><AdminParcelOversight /></PrivateRoute>
       }
     ]
   },

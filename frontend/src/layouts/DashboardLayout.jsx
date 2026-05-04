@@ -1,7 +1,11 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
+import useLogout from '../hooks/useLogout';
 
 const DashboardLayout = () => {
+    const { user, isAdmin } = useAuth(); // ✅ Updated to use isAdmin from context
+    const { handleLogout, isLoading: isLoggingOut } = useLogout();
     return (
     <div className="drawer lg:drawer-open min-h-screen">
       <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
@@ -178,6 +182,158 @@ const DashboardLayout = () => {
                 <span className="font-medium is-drawer-close:hidden">Payment History</span>
               </NavLink>
             </li>
+
+            {/* Admin Only: Approve Riders */}
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/dashboard/ApproveRiders"
+                  data-tip="Approve Riders"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-lime-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="2"
+                    fill="none"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path d="M12 5v14M5 12h14"></path>
+                    <circle cx="12" cy="12" r="9"></circle>
+                  </svg>
+                  <span className="font-medium is-drawer-close:hidden">Approve Riders</span>
+                </NavLink>
+              </li>
+            )}
+
+            {/* Admin Only: Manage Users */}
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/dashboard/ManageUsers"
+                  data-tip="Manage Users"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-lime-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="2"
+                    fill="none"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <span className="font-medium is-drawer-close:hidden">Manage Users</span>
+                </NavLink>
+              </li>
+            )}
+
+            {/* Divider for Admin Section */}
+            {isAdmin && (
+              <div className="divider my-2 is-drawer-close:hidden"></div>
+            )}
+
+            {/* Admin Only: Admin Dashboard (NEW) */}
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/admin"
+                  data-tip="Admin Panel"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-purple-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <span className="text-lg">👑</span>
+                  <span className="font-medium is-drawer-close:hidden">Admin Panel</span>
+                </NavLink>
+              </li>
+            )}
+
+            {/* Admin Only: Manage Riders (NEW) */}
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/admin/riders"
+                  data-tip="Manage Riders"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-purple-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <span className="text-lg">🏍️</span>
+                  <span className="font-medium is-drawer-close:hidden">Manage Riders</span>
+                </NavLink>
+              </li>
+            )}
+
+            {/* Admin Only: Parcel Oversight (NEW) */}
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/admin/parcels"
+                  data-tip="Parcel Oversight"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-purple-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <span className="text-lg">📦</span>
+                  <span className="font-medium is-drawer-close:hidden">Parcel Oversight</span>
+                </NavLink>
+              </li>
+            )}
+
+            {/* Admin Only: Manage Users List (NEW) */}
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/admin/users"
+                  data-tip="Manage All Users"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-purple-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <span className="text-lg">👥</span>
+                  <span className="font-medium is-drawer-close:hidden">Manage All Users</span>
+                </NavLink>
+              </li>
+            )}
+
             <li>
               <NavLink
                 to="/settings"
@@ -212,22 +368,35 @@ const DashboardLayout = () => {
 
           {/* Sidebar Footer */}
           <div className="mt-auto border-t border-slate-700 p-4 is-drawer-close:p-2 w-full">
-            <button className="w-full btn btn-sm bg-lime-500 hover:bg-lime-600 text-white border-none rounded-lg transition-all duration-200 flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-4 h-4"
-              >
-                <path d="M18 2h-7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7"></path>
-                <path d="M10 12h10"></path>
-                <path d="m18 8 4 4-4 4"></path>
-              </svg>
-              <span className="ml-2 is-drawer-close:hidden">Logout</span>
+            <button 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full btn btn-sm bg-lime-500 hover:bg-lime-600 text-white border-none rounded-lg transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoggingOut ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  Logging out...
+                </>
+              ) : (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="w-4 h-4"
+                  >
+                    <path d="M18 2h-7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7"></path>
+                    <path d="M10 12h10"></path>
+                    <path d="m18 8 4 4-4 4"></path>
+                  </svg>
+                  <span className="ml-2 is-drawer-close:hidden">Logout</span>
+                </>
+              )}
             </button>
           </div>
         </div>

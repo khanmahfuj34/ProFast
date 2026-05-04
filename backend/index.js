@@ -57,6 +57,7 @@ async function run() {
         usersCollection = db.collection("users");
         parcelsCollection = db.collection("parcels");
         paymentsCollection = db.collection("payments");
+        riderCollection = db.collection("rider");
 
         // ✅ Create UNIQUE index on transactionId to prevent duplicate payments
         // Use sparse index to handle null values, and ignore if index already exists
@@ -136,6 +137,7 @@ const verifyJWT = async(req, res, next) => {
 
         const tokenSource = cookieToken ? 'cookie' : 'header';
         console.log(`🟢 [JWT Verify] Token found in ${tokenSource} for ${req.path}`);
+        // console.log('📝 [JWT Token] Full token:', token);
 
         // Verify token using Firebase Admin SDK
         const decodedUser = await admin.auth().verifyIdToken(token);
@@ -145,6 +147,38 @@ const verifyJWT = async(req, res, next) => {
     } catch (error) {
         console.error('🔴 [JWT Verify] Token verification failed:', error.message);
         res.status(401).send({ message: 'Unauthorized: Invalid token', error: error.message });
+    }
+};
+
+// 🔐 Admin Role Verification Middleware
+// Apply after verifyJWT to check if user has admin role
+const verifyAdmin = async(req, res, next) => {
+    try {
+        if (!req.user || !req.user.email) {
+            console.log('🔴 [Admin Verify] No user in request');
+            return res.status(401).send({ message: 'Unauthorized: No user' });
+        }
+
+        // Check if user has admin role in database
+        const user = await usersCollection.findOne({ email: req.user.email });
+
+        if (!user) {
+            console.log('🔴 [Admin Verify] User not found in database:', req.user.email);
+            return res.status(401).send({ message: 'Unauthorized: User not found' });
+        }
+
+        if (user.role !== 'admin') {
+            console.log('🔴 [Admin Verify] Access denied - user role:', user.role, 'for:', req.user.email);
+            return res.status(403).send({ message: 'Forbidden: Admin access required' });
+        }
+
+        // Attach user role to request for logging
+        req.user.role = user.role;
+        console.log('✅ [Admin Verify] Admin access granted for:', req.user.email);
+        next();
+    } catch (error) {
+        console.error('🔴 [Admin Verify] Admin verification error:', error.message);
+        res.status(500).send({ message: 'Error verifying admin status', error: error.message });
     }
 };
 
@@ -494,6 +528,188 @@ app.patch('/parcels/:id', async(req, res) => {
     res.send(result);
 });
 
+//rider related apis
+// POST /riders - Submit rider application (JWT Protected)
+app.post('/riders', verifyJWT, async(req, res) => {
+    try {
+        const riderData = req.body;
+
+        // ✅ Validate required fields
+        const requiredFields = ['name', 'email', 'phoneNumber', 'nidNo', 'drivingLicense', 'region', 'district', 'bikeBrand', 'bikeRegistration', 'aboutYourself', 'photo'];
+        const missingFields = requiredFields.filter(field => !riderData[field]);
+
+        if (missingFields.length > 0) {
+            return res.status(400).send({ message: `Missing required fields: ${missingFields.join(', ')}` });
+        }
+
+        // ✅ Enforce rider email from token
+        riderData.email = req.user.email;
+        riderData.uid = req.user.uid;
+        riderData.status = 'Pending';
+        riderData.createdAt = new Date();
+
+        // ✅ Check if rider already applied
+        const existingRider = await riderCollection.findOne({ email: req.user.email });
+        if (existingRider) {
+            return res.status(409).send({ message: 'You have already submitted a rider application. Please wait for our response.' });
+        }
+
+        const result = await riderCollection.insertOne(riderData);
+
+        console.log(`✅ Rider application submitted: ${riderData.email} with photo: ${riderData.photo}`);
+        res.send({
+            success: true,
+            message: 'Application submitted successfully! We will review and get back to you soon.',
+            insertedId: result.insertedId,
+            status: 'Pending'
+        });
+    } catch (error) {
+        console.error('❌ Rider application error:', error.message);
+        res.status(500).send({ message: 'Error submitting rider application', error: error.message });
+    }
+});
+
+// GET /riders/:email - Get rider application status (JWT Protected)
+app.get('/riders/:email', verifyJWT, async(req, res) => {
+    try {
+        const email = req.params.email;
+
+        // ✅ Verify user is checking their own data
+        if (email !== req.user.email) {
+            return res.status(403).send({ message: 'Forbidden: Cannot access other riders data' });
+        }
+
+        const rider = await riderCollection.findOne({ email: email });
+
+        if (!rider) {
+            return res.status(404).send({ message: 'No application found for this email' });
+        }
+
+        res.send({
+            success: true,
+            rider: rider
+        });
+    } catch (error) {
+        console.error('❌ Get rider error:', error.message);
+        res.status(500).send({ message: 'Error fetching rider data', error: error.message });
+    }
+});
+
+// GET /riders - Get all rider applications (Admin only)
+app.get('/riders', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const riders = await riderCollection.find({}).sort({ createdAt: -1 }).toArray();
+
+        res.send({
+            success: true,
+            total: riders.length,
+            riders: riders
+        });
+    } catch (error) {
+        console.error('❌ Get riders error:', error.message);
+        res.status(500).send({ message: 'Error fetching riders', error: error.message });
+    }
+});
+
+// PATCH /riders/:id - Update rider status (Admin) OR update rider profile (User)
+app.patch('/riders/:id', verifyJWT, async(req, res) => {
+    try {
+        const riderId = req.params.id;
+        const rider = await riderCollection.findOne({ _id: new ObjectId(riderId) });
+
+        if (!rider) {
+            return res.status(404).send({ message: 'Rider not found' });
+        }
+
+        // ✅ Check if this is an admin status update
+        if (req.body.status) {
+            // Admin-only endpoint for updating rider status
+            // Check if user is admin
+            const user = await usersCollection.findOne({ email: req.user.email });
+            if (!user || user.role !== 'admin') {
+                return res.status(403).send({ message: 'Forbidden: Only admins can update rider status' });
+            }
+
+            const { status } = req.body;
+            const validStatuses = ['Approved', 'Rejected', 'Pending'];
+            if (!validStatuses.includes(status)) {
+                return res.status(400).send({ message: 'Invalid status. Must be Approved, Rejected, or Pending' });
+            }
+
+            // ✅ Update rider status
+            const filter = { _id: new ObjectId(riderId) };
+            const updateDoc = {
+                $set: {
+                    status: status,
+                    updatedAt: new Date()
+                }
+            };
+
+            const result = await riderCollection.updateOne(filter, updateDoc);
+
+            // ✅ If approved, update user role to 'rider'
+            if (status === 'Approved') {
+                await usersCollection.updateOne({ email: rider.email }, { $set: { role: 'rider' } });
+                console.log(`✅ User ${rider.email} role updated to 'rider'`);
+            }
+
+            console.log(`✅ Rider ${riderId} status updated to ${status}`);
+            return res.send({
+                success: true,
+                message: `Rider status updated to ${status}`,
+                modifiedCount: result.modifiedCount,
+                status: status
+            });
+        }
+
+        // ✅ Otherwise, this is a user profile edit request
+        const { name, email, nidNo, drivingLicense, phoneNumber, bikeBrand, bikeRegistration, aboutYourself, region } = req.body;
+
+        // ✅ Verify ownership - user can only edit their own profile
+        if (rider.email !== req.user.email) {
+            return res.status(403).send({ message: 'Forbidden: Cannot edit other riders profile' });
+        }
+
+        // ✅ Prevent editing if already approved or rejected
+        if (rider.status !== 'Pending') {
+            return res.status(400).send({ message: `Cannot edit profile after application is ${rider.status}` });
+        }
+
+        // ✅ Update rider profile details
+        const filter = { _id: new ObjectId(riderId) };
+        const updateDoc = {
+            $set: {
+                name: name || rider.name,
+                email: email || rider.email,
+                nidNo: nidNo || rider.nidNo,
+                drivingLicense: drivingLicense || rider.drivingLicense,
+                phoneNumber: phoneNumber || rider.phoneNumber,
+                bikeBrand: bikeBrand || rider.bikeBrand,
+                bikeRegistration: bikeRegistration || rider.bikeRegistration,
+                aboutYourself: aboutYourself || rider.aboutYourself,
+                region: region || rider.region,
+                updatedAt: new Date()
+            }
+        };
+
+        const result = await riderCollection.updateOne(filter, updateDoc);
+
+        // ✅ Fetch updated rider data to return
+        const updatedRider = await riderCollection.findOne({ _id: new ObjectId(riderId) });
+
+        console.log(`✅ Rider ${riderId} profile updated by ${req.user.email}`);
+        res.send({
+            success: true,
+            message: 'Profile updated successfully',
+            rider: updatedRider,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ Update rider error:', error.message);
+        res.status(500).send({ message: 'Error updating rider', error: error.message });
+    }
+});
+
 // ============ USER ROUTES (Protected) ============
 
 // POST /user - Save or update user info during registration (JWT Protected)
@@ -511,6 +727,10 @@ app.post('/user', verifyJWT, async(req, res) => {
             return res.status(403).send({ message: 'Forbidden: Cannot register other users' });
         }
 
+        // ✅ Determine role: admin for default admin email, user for everyone else
+        const isDefaultAdmin = email === 'mkmahfujkhanms@gmail.com';
+        const userRole = isDefaultAdmin ? 'admin' : 'user';
+
         // ✅ Use upsert to prevent duplicates - only creates if doesn't exist
         const result = await usersCollection.updateOne({ email: email }, {
             $setOnInsert: {
@@ -518,20 +738,21 @@ app.post('/user', verifyJWT, async(req, res) => {
                 displayName: userInfo.displayName || 'User',
                 photoURL: userInfo.photoURL || null,
                 createdAt: new Date(),
-                role: 'user'
+                role: userRole
             },
             $set: {
                 lastUpdated: new Date()
             }
         }, { upsert: true });
 
-        console.log(`✅ User saved/updated: ${email}`);
+        console.log(`✅ User saved/updated: ${email} with role: ${userRole}`);
         res.send({
             success: true,
             message: 'User registered successfully',
             matchedCount: result.matchedCount,
             upsertedCount: result.upsertedCount,
-            modifiedCount: result.modifiedCount
+            modifiedCount: result.modifiedCount,
+            role: userRole
         });
     } catch (error) {
         console.error('❌ User registration error:', error.message);
@@ -590,6 +811,15 @@ app.patch('/user', verifyJWT, async(req, res) => {
 
         if (result.matchedCount === 0) {
             return res.status(404).send({ message: 'User not found' });
+        }
+
+        // ✅ If user has a rider application and photo is being updated, update rider photo
+        if (updateData.photoURL) {
+            const rider = await riderCollection.findOne({ email: email });
+            if (rider) {
+                const riderUpdateResult = await riderCollection.updateOne({ email: email }, { $set: { photo: updateData.photoURL, updatedAt: new Date() } });
+                console.log(`✅ Rider photo automatically updated for ${email}`);
+            }
         }
 
         console.log(`✅ User updated: ${email}`);
@@ -672,5 +902,167 @@ app.post('/save-social-user', verifyJWT, async(req, res) => {
         console.error('❌ Save social user error:', error.message);
         console.error('❌ Full error:', error);
         res.status(500).send({ message: 'Error saving social user data', error: error.message });
+    }
+});
+
+// PATCH /user/role - Update user role (Admin only)
+app.patch('/user/role', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const { email, userId, role } = req.body;
+        const adminEmail = req.user.email;
+
+        // ✅ Validate required fields
+        if (!email || !userId || !role) {
+            return res.status(400).send({ message: 'Email, userId, and role are required' });
+        }
+
+        // ✅ Validate role value
+        const validRoles = ['user', 'rider', 'admin'];
+        if (!validRoles.includes(role)) {
+            return res.status(400).send({ message: `Invalid role. Must be one of: ${validRoles.join(', ')}` });
+        }
+
+        // ✅ Prevent admin from demoting themselves
+        if (adminEmail === email && role === 'user') {
+            return res.status(403).send({ message: 'Forbidden: Cannot demote yourself from admin' });
+        }
+
+        // ✅ Find user and verify exists
+        const user = await usersCollection.findOne({
+            $and: [
+                { email: email },
+                { _id: new ObjectId(userId) }
+            ]
+        });
+
+        if (!user) {
+            return res.status(404).send({ message: 'User not found. Email and ID do not match.' });
+        }
+
+        // ✅ Update user role
+        const result = await usersCollection.updateOne({ _id: new ObjectId(userId) }, { $set: { role: role, lastUpdated: new Date() } });
+
+        if (result.modifiedCount === 0) {
+            return res.status(500).send({ message: 'Failed to update user role' });
+        }
+
+        console.log(`✅ Admin ${adminEmail} updated role for ${email} (ID: ${userId}) to '${role}'`);
+        res.send({
+            success: true,
+            message: `User role updated to '${role}' successfully`,
+            email: email,
+            userId: userId,
+            role: role,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ Update user role error:', error.message);
+        res.status(500).send({ message: 'Error updating user role', error: error.message });
+    }
+});
+
+// GET /users - Get all users (Admin only)
+app.get('/users', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const allUsers = await usersCollection.find({}).toArray();
+
+        console.log(`✅ Retrieved ${allUsers.length} users`);
+        res.send({
+            success: true,
+            message: 'Users retrieved successfully',
+            users: allUsers,
+            total: allUsers.length
+        });
+    } catch (error) {
+        console.error('❌ Get users error:', error.message);
+        res.status(500).send({ message: 'Error fetching users', error: error.message });
+    }
+});
+
+// DELETE /user/:id - Delete a user (Admin only)
+app.delete('/user/:id', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const userId = req.params.id;
+
+        // ✅ Validate user ID
+        if (!ObjectId.isValid(userId)) {
+            return res.status(400).send({ message: 'Invalid user ID' });
+        }
+
+        // ✅ Prevent deleting the logged-in user
+        const userToDelete = await usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (!userToDelete) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        if (userToDelete.email === req.user.email) {
+            return res.status(403).send({ message: 'Forbidden: Cannot delete your own account' });
+        }
+
+        // ✅ Delete the user
+        const result = await usersCollection.deleteOne({ _id: new ObjectId(userId) });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        console.log(`✅ User ${userToDelete.email} (ID: ${userId}) deleted`);
+        res.send({
+            success: true,
+            message: 'User deleted successfully',
+            deletedUser: userToDelete.email,
+            deletedCount: result.deletedCount
+        });
+    } catch (error) {
+        console.error('❌ Delete user error:', error.message);
+        res.status(500).send({ message: 'Error deleting user', error: error.message });
+    }
+});
+
+// GET /admin/parcels - Get all parcels (Admin only)
+app.get('/admin/parcels', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const allParcels = await parcelsCollection.find({}).toArray();
+
+        console.log(`✅ Retrieved ${allParcels.length} parcels for admin`);
+        res.send({
+            success: true,
+            message: 'All parcels retrieved successfully',
+            parcels: allParcels,
+            total: allParcels.length
+        });
+    } catch (error) {
+        console.error('❌ Get admin parcels error:', error.message);
+        res.status(500).send({ message: 'Error fetching parcels', error: error.message });
+    }
+});
+
+// GET /admin/stats - Get admin dashboard statistics (Admin only)
+app.get('/admin/stats', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const totalUsers = await usersCollection.countDocuments({});
+        const totalRiders = await riderCollection.countDocuments({});
+        const totalParcels = await parcelsCollection.countDocuments({});
+        const pendingRiders = await riderCollection.countDocuments({ status: 'Pending' });
+        const approvedRiders = await riderCollection.countDocuments({ status: 'Approved' });
+        const rejectedRiders = await riderCollection.countDocuments({ status: 'Rejected' });
+
+        console.log(`✅ Admin stats retrieved`);
+        res.send({
+            success: true,
+            stats: {
+                totalUsers,
+                totalRiders,
+                totalParcels,
+                riderStats: {
+                    pending: pendingRiders,
+                    approved: approvedRiders,
+                    rejected: rejectedRiders
+                }
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get admin stats error:', error.message);
+        res.status(500).send({ message: 'Error fetching statistics', error: error.message });
     }
 });

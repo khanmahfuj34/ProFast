@@ -15,6 +15,7 @@ const USE_MOCK_AUTH = false; // Set to true for testing without valid Firebase c
 
 const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [userProfile, setUserProfile] = useState(null); // ✅ Backend user profile with role
     const [loading, setLoading] = useState(true);
     const [authError, setAuthError] = useState(null);
     
@@ -53,6 +54,9 @@ const AuthProvider = ({ children }) => {
             // ✅ Save social user data to database
             await saveSocialUserData(user);
             
+            // ✅ NEW: Fetch user profile from backend to get role
+            await fetchUserProfile(user.email);
+            
             return true;
         } catch (error) {
             console.error('❌ [Token Flow] Error sending token to backend:');
@@ -61,6 +65,29 @@ const AuthProvider = ({ children }) => {
             console.error('   Error:', error.response?.data?.error);
             // Non-critical error - don't block auth
             return false;
+        }
+    };
+
+    // ✅ NEW: Fetch user profile from backend with role and other data
+    const fetchUserProfile = async (email) => {
+        try {
+            const response = await axios.get(
+                'http://localhost:3000/user',
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data.success && response.data.user) {
+                console.log('✅ [User Profile] Fetched profile:', response.data.user);
+                setUserProfile(response.data.user);
+            }
+        } catch (error) {
+            console.warn('⚠️ [User Profile] Warning fetching profile:', error.response?.data?.message || error.message);
+            // Non-critical error - don't block auth
         }
     };
 
@@ -194,6 +221,7 @@ const AuthProvider = ({ children }) => {
         
         if (USE_MOCK_AUTH) {
             setUser(null);
+            setUserProfile(null); // ✅ Clear profile
             localStorage.clear();
             sessionStorage.clear();
             setLoading(false);
@@ -214,6 +242,7 @@ const AuthProvider = ({ children }) => {
             
             // Clear user state
             setUser(null);
+            setUserProfile(null); // ✅ Clear profile
             // Clear all storage data
             localStorage.clear();
             sessionStorage.clear();
@@ -355,6 +384,8 @@ const AuthProvider = ({ children }) => {
         createUser,
         signIn,
         user,
+        userProfile, // ✅ NEW: Backend user profile with role
+        isAdmin: userProfile?.role === 'admin', // ✅ NEW: Computed isAdmin property
         loading,
         logOut,
         authError,
