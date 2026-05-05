@@ -66,7 +66,7 @@ const useAxiosSecure = () => {
                     
                     // Redirect to login page
                     setTimeout(() => {
-                        navigate('/authentication/login');
+                        navigate('/auth/login', { replace: true });
                     }, 300);
                 }
                 return Promise.reject(error);

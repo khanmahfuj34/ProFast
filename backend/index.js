@@ -22,13 +22,27 @@ const {
 
 const port = process.env.PORT || 3000;
 
+const allowedOrigins = new Set([
+    process.env.SITE_DOMAIN,
+    'http://localhost:5173',
+    'http://localhost:5174'
+].filter(Boolean));
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.has(origin)) {
+            return callback(null, true);
+        }
+
+        callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
+    credentials: true
+};
+
 // middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
-    origin: process.env.SITE_DOMAIN || 'http://localhost:5173',
-    credentials: true
-}));
+app.use(cors(corsOptions));
 
 // MongoDB URI
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ttnzsdq.mongodb.net/?retryWrites=true&w=majority`;
@@ -230,7 +244,7 @@ app.get('/health', (req, res) => {
         timestamp: new Date().toISOString(),
         message: '✅ Server is running with secure auth enabled',
         cors: {
-            origin: process.env.SITE_DOMAIN || 'http://localhost:5173',
+            origin: Array.from(allowedOrigins),
             credentials: true
         }
     });
@@ -255,7 +269,7 @@ app.get('/debug/cookies', (req, res) => {
             userAgent: req.headers['user-agent'] ? req.headers['user-agent'].substring(0, 50) + '...' : 'unknown'
         },
         frontend: {
-            expectedOrigin: process.env.SITE_DOMAIN || 'http://localhost:5173'
+            expectedOrigin: Array.from(allowedOrigins)
         }
     });
 });
@@ -295,7 +309,7 @@ app.get('/parcels', verifyJWT, async(req, res) => {
         }
 
         query.senderEmail = req.user.email; // Use verified email from token
-        const cursor = parcelsCollection.find(query);
+        const cursor = parcelsCollection.find(query).sort({ createdAt: -1, _id: -1 });
         const result = await cursor.toArray();
         res.send(result);
     } catch (error) {
@@ -311,6 +325,9 @@ app.post('/parcels', verifyJWT, async(req, res) => {
         parcel.createdAt = new Date();
         // ✅ Enforce sender email from token
         parcel.senderEmail = req.user.email;
+        // Default statuses for newly created parcels
+        parcel.paymentStatus = parcel.paymentStatus || 'unpaid';
+        parcel.deliveryStatus = parcel.deliveryStatus || 'awaiting-payment';
 
         const result = await parcelsCollection.insertOne(parcel);
         res.send(result);
@@ -486,6 +503,7 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
         const parcelUpdate = await parcelsCollection.updateOne({ _id: new ObjectId(parcelId) }, {
             $set: {
                 paymentStatus: 'paid',
+                deliveryStatus: 'pending-pickup',
                 trackingId: trackingId,
                 paidAt: new Date()
             }
@@ -592,22 +610,6 @@ app.get('/riders/:email', verifyJWT, async(req, res) => {
     } catch (error) {
         console.error('❌ Get rider error:', error.message);
         res.status(500).send({ message: 'Error fetching rider data', error: error.message });
-    }
-});
-
-// GET /riders - Get all rider applications (Admin only)
-app.get('/riders', verifyJWT, verifyAdmin, async(req, res) => {
-    try {
-        const riders = await riderCollection.find({}).sort({ createdAt: -1 }).toArray();
-
-        res.send({
-            success: true,
-            total: riders.length,
-            riders: riders
-        });
-    } catch (error) {
-        console.error('❌ Get riders error:', error.message);
-        res.status(500).send({ message: 'Error fetching riders', error: error.message });
     }
 });
 
@@ -905,6 +907,52 @@ app.post('/save-social-user', verifyJWT, async(req, res) => {
     }
 });
 
+// GET /admin/stats - Get admin dashboard statistics (Admin only)
+app.get('/admin/stats', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const totalUsers = await usersCollection.countDocuments({});
+        const totalRiders = await riderCollection.countDocuments({});
+        const totalParcels = await parcelsCollection.countDocuments({});
+        const pendingRiders = await riderCollection.countDocuments({ status: 'Pending' });
+        const approvedRiders = await riderCollection.countDocuments({ status: 'Approved' });
+        const rejectedRiders = await riderCollection.countDocuments({ status: 'Rejected' });
+
+        console.log(`✅ Admin stats retrieved`);
+        res.send({
+            success: true,
+            stats: {
+                totalUsers,
+                totalRiders,
+                totalParcels,
+                riderStats: {
+                    pending: pendingRiders,
+                    approved: approvedRiders,
+                    rejected: rejectedRiders
+                }
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get admin stats error:', error.message);
+        res.status(500).send({ message: 'Error fetching statistics', error: error.message });
+    }
+});
+
+// GET /riders - Get all rider applications (Admin only)
+app.get('/riders', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const riders = await riderCollection.find({}).sort({ createdAt: -1 }).toArray();
+
+        res.send({
+            success: true,
+            total: riders.length,
+            riders: riders
+        });
+    } catch (error) {
+        console.error('❌ Get riders error:', error.message);
+        res.status(500).send({ message: 'Error fetching riders', error: error.message });
+    }
+});
+
 // PATCH /user/role - Update user role (Admin only)
 app.patch('/user/role', verifyJWT, verifyAdmin, async(req, res) => {
     try {
@@ -961,17 +1009,42 @@ app.patch('/user/role', verifyJWT, verifyAdmin, async(req, res) => {
     }
 });
 
-// GET /users - Get all users (Admin only)
+// GET /users - Get paginated users (Admin only)
 app.get('/users', verifyJWT, verifyAdmin, async(req, res) => {
     try {
-        const allUsers = await usersCollection.find({}).toArray();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const search = req.query.search || '';
+        const role = req.query.role || 'all';
 
-        console.log(`✅ Retrieved ${allUsers.length} users`);
+        const skip = (page - 1) * limit;
+
+        let query = {};
+
+        if (role !== 'all') {
+            query.role = role;
+        }
+
+        if (search) {
+            query.$or = [
+                { displayName: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const cursor = usersCollection.find(query).sort({ createdAt: -1 });
+        const allUsers = await cursor.skip(skip).limit(limit).toArray();
+        const totalDocuments = await usersCollection.countDocuments(query);
+        const totalPages = Math.ceil(totalDocuments / limit);
+
+        console.log(`✅ Retrieved ${allUsers.length} users (Page ${page}/${totalPages})`);
         res.send({
             success: true,
             message: 'Users retrieved successfully',
             users: allUsers,
-            total: allUsers.length
+            total: totalDocuments,
+            totalPages: totalPages,
+            currentPage: page
         });
     } catch (error) {
         console.error('❌ Get users error:', error.message);
@@ -1034,35 +1107,5 @@ app.get('/admin/parcels', verifyJWT, verifyAdmin, async(req, res) => {
     } catch (error) {
         console.error('❌ Get admin parcels error:', error.message);
         res.status(500).send({ message: 'Error fetching parcels', error: error.message });
-    }
-});
-
-// GET /admin/stats - Get admin dashboard statistics (Admin only)
-app.get('/admin/stats', verifyJWT, verifyAdmin, async(req, res) => {
-    try {
-        const totalUsers = await usersCollection.countDocuments({});
-        const totalRiders = await riderCollection.countDocuments({});
-        const totalParcels = await parcelsCollection.countDocuments({});
-        const pendingRiders = await riderCollection.countDocuments({ status: 'Pending' });
-        const approvedRiders = await riderCollection.countDocuments({ status: 'Approved' });
-        const rejectedRiders = await riderCollection.countDocuments({ status: 'Rejected' });
-
-        console.log(`✅ Admin stats retrieved`);
-        res.send({
-            success: true,
-            stats: {
-                totalUsers,
-                totalRiders,
-                totalParcels,
-                riderStats: {
-                    pending: pendingRiders,
-                    approved: approvedRiders,
-                    rejected: rejectedRiders
-                }
-            }
-        });
-    } catch (error) {
-        console.error('❌ Get admin stats error:', error.message);
-        res.status(500).send({ message: 'Error fetching statistics', error: error.message });
     }
 });

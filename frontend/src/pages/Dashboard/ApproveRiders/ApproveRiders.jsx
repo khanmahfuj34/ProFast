@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 const ApproveRiders = () => {
+    const { isAdmin } = useAuth();
     const axiosSecure = useAxiosSecure();
     const navigate = useNavigate();
     const [riders, setRiders] = useState([]);
@@ -16,8 +18,12 @@ const ApproveRiders = () => {
 
     useEffect(() => {
         AOS.init({ duration: 800, once: true, offset: 50 });
-        fetchRiders();
-    }, []);
+        if (!isAdmin) {
+            navigate('/');
+        } else {
+            fetchRiders();
+        }
+    }, [isAdmin, navigate]);
 
     const fetchRiders = async () => {
         try {
@@ -86,6 +92,9 @@ const ApproveRiders = () => {
                 return <span className="badge badge-warning badge-lg gap-2">⏳ Pending</span>;
         }
     };
+
+    // Prevent non-admin users from seeing this page
+    if (!isAdmin) return null;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">

@@ -130,16 +130,16 @@ const AdminDashboard = () => {
                             <h2 className="text-2xl font-bold text-gray-900 mb-6">⚙️ Management Tools</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <button
-                                    onClick={() => navigate('/admin/users')}
-                                    className="btn btn-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-none w-full"
-                                >
-                                    👥 Manage Users
-                                </button>
-                                <button
-                                    onClick={() => navigate('/admin/riders')}
+                                    onClick={() => navigate('/dashboard/ApproveRiders')}
                                     className="btn btn-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-none w-full"
                                 >
                                     🏍️ Approve Riders
+                                </button>
+                                <button
+                                    onClick={() => navigate('/dashboard/ManageUsers')}
+                                    className="btn btn-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-none w-full"
+                                >
+                                    👥 Manage Users
                                 </button>
                                 <button
                                     onClick={() => navigate('/admin/parcels')}

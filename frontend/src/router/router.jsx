@@ -14,6 +14,7 @@ import BeRider from "../pages/BeRider/BeRider";
 import RiderStatus from "../pages/BeRider/RiderStatus";
 import ParcelConfirmation from "../pages/ParcelConfirmation/ParcelConfirmation";
 import PrivateRoute from "../routes/PrivateRoute";
+import AdminRoute from "../routes/AdminRoute";
 import MyParcels from "../pages/Dashboard/MyParcels/MyParcels";
 import Payment from "../pages/Dashboard/Payment/Payment";
 import PaymentSuccess from "../pages/Dashboard/Payment/PaymentSuccess";
@@ -139,15 +140,15 @@ export const router = createBrowserRouter([
       },
       {
         path:'ApproveRiders',
-        Component:ApproveRiders
+        element: <AdminRoute><ApproveRiders /></AdminRoute>
       },
       {
         path:'ApproveRiders/:riderId',
-        Component:RiderDetailPage
+        element: <AdminRoute><RiderDetailPage /></AdminRoute>
       },
       {
         path:'ManageUsers',
-        Component:ManageUsers
+        element: <AdminRoute><ManageUsers /></AdminRoute>
       }
     ]
   },
@@ -156,19 +157,19 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <PrivateRoute><AdminDashboard /></PrivateRoute>
+        element: <AdminRoute><AdminDashboard /></AdminRoute>
       },
       {
         path: 'users',
-        element: <PrivateRoute><AdminManageUsers /></PrivateRoute>
+        element: <AdminRoute><AdminManageUsers /></AdminRoute>
       },
       {
         path: 'riders',
-        element: <PrivateRoute><AdminManageRiders /></PrivateRoute>
+        element: <AdminRoute><AdminManageRiders /></AdminRoute>
       },
       {
         path: 'parcels',
-        element: <PrivateRoute><AdminParcelOversight /></PrivateRoute>
+        element: <AdminRoute><AdminParcelOversight /></AdminRoute>
       }
     ]
   },

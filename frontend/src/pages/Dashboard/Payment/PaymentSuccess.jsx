@@ -24,16 +24,17 @@ const PaymentSuccess = () => {
                     console.log('Payment success confirmed by backend:', response.data);
                     setPaymentData(response.data);
                     setLoading(false);
+                    navigate('/dashboard/my-parcels', { replace: true });
                 })
                 .catch(error => {
                     console.error('Error confirming payment:', error);
                     setLoading(false);
                 });
         }
-    }, [sessionId, axiosSecure]);
+    }, [sessionId, axiosSecure, navigate]);
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-green-100 flex items-center justify-center px-4">
+        <div className="min-h-screen bg-linear-to-b from-emerald-50 to-green-100 flex items-center justify-center px-4">
             <div className="bg-white rounded-3xl shadow-xl p-10 max-w-2xl w-full">
                 {/* Animated checkmark */}
                 <div className="flex justify-center mb-6">
@@ -59,21 +60,21 @@ const PaymentSuccess = () => {
                 ) : paymentData ? (
                     <div className="space-y-4 mb-8">
                         {/* Tracking ID */}
-                        <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
+                        <div className="bg-linear-to-r from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
                             <p className="text-xs font-semibold text-emerald-700 mb-2">📦 Tracking ID</p>
                             <p className="text-lg font-mono font-bold text-emerald-900 break-all">{paymentData.trackingId || 'N/A'}</p>
                             <p className="text-xs text-emerald-600 mt-2">Use this ID to track your parcel</p>
                         </div>
 
                         {/* Transaction ID */}
-                        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
+                        <div className="bg-linear-to-r from-blue-50 to-cyan-50 rounded-lg p-4 border border-blue-200">
                             <p className="text-xs font-semibold text-blue-700 mb-2">💳 Transaction ID</p>
                             <p className="text-sm font-mono text-blue-900 break-all">{paymentData.transactionId || 'N/A'}</p>
                             <p className="text-xs text-blue-600 mt-2">Receipt reference number</p>
                         </div>
 
                         {/* Payment Status */}
-                        <div className="bg-gradient-to-r from-lime-50 to-green-50 rounded-lg p-4 border border-lime-200">
+                        <div className="bg-linear-to-r from-lime-50 to-green-50 rounded-lg p-4 border border-lime-200">
                             <p className="text-xs font-semibold text-lime-700 mb-2">✓ Payment Status</p>
                             <p className="text-lg font-bold text-lime-900">PAID</p>
                             <p className="text-xs text-lime-600 mt-2">Amount: ৳{paymentData.totalPrice || paymentData.amount || 'N/A'}</p>
@@ -90,10 +91,10 @@ const PaymentSuccess = () => {
                         📦 View My Parcels
                     </button>
                     <button
-                        onClick={() => navigate('/dashboard')}
+                        onClick={() => navigate('/dashboard/my-parcels', { replace: true })}
                         className="btn btn-outline border-slate-300 text-slate-700 hover:border-slate-400 w-full font-semibold"
                     >
-                        📊 Go to Dashboard
+                        📦 Back to My Parcels
                     </button>
                 </div>
             </div>

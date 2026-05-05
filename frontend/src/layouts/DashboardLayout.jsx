@@ -4,7 +4,7 @@ import useAuth from '../hooks/useAuth';
 import useLogout from '../hooks/useLogout';
 
 const DashboardLayout = () => {
-    const { user, isAdmin } = useAuth(); // ✅ Updated to use isAdmin from context
+  const { isAdmin } = useAuth();
     const { handleLogout, isLoading: isLoggingOut } = useLogout();
     return (
     <div className="drawer lg:drawer-open min-h-screen">
@@ -12,7 +12,7 @@ const DashboardLayout = () => {
 
       <div className="drawer-content flex flex-col bg-gray-50">
         {/* Professional Navbar */}
-        <nav className="navbar bg-gradient-to-r from-slate-900 to-slate-800 shadow-lg sticky top-0 z-40">
+        <nav className="navbar bg-linear-to-r from-slate-900 to-slate-800 shadow-lg sticky top-0 z-40">
           <div className="flex-1">
             <label
               htmlFor="my-drawer-4"
@@ -69,9 +69,9 @@ const DashboardLayout = () => {
       <div className="drawer-side is-drawer-close:overflow-visible">
         <label htmlFor="my-drawer-4" aria-label="close sidebar" className="drawer-overlay"></label>
 
-        <div className="flex min-h-full flex-col items-start bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 pt-0 w-64 is-drawer-close:w-14 is-drawer-open:w-64 transition-all duration-200">
+        <div className="flex min-h-full flex-col items-start bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 pt-0 w-64 is-drawer-close:w-14 is-drawer-open:w-64 transition-all duration-200">
           {/* Sidebar Header */}
-          <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 is-drawer-open:p-6 is-drawer-close:p-3 border-b border-slate-700 w-full">
+          <div className="bg-linear-to-r from-slate-900 to-slate-800 p-4 is-drawer-open:p-6 is-drawer-close:p-3 border-b border-slate-700 w-full">
             <div className="flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -183,7 +183,7 @@ const DashboardLayout = () => {
               </NavLink>
             </li>
 
-            {/* Admin Only: Approve Riders */}
+            {/* Approve Riders */}
             {isAdmin && (
               <li>
                 <NavLink
@@ -215,7 +215,7 @@ const DashboardLayout = () => {
               </li>
             )}
 
-            {/* Admin Only: Manage Users */}
+            {/* Manage Users */}
             {isAdmin && (
               <li>
                 <NavLink
@@ -248,91 +248,67 @@ const DashboardLayout = () => {
                 </NavLink>
               </li>
             )}
-
-            {/* Divider for Admin Section */}
-            {isAdmin && (
-              <div className="divider my-2 is-drawer-close:hidden"></div>
-            )}
-
-            {/* Admin Only: Admin Dashboard (NEW) */}
+            {/* Assign Rider */}
             {isAdmin && (
               <li>
                 <NavLink
-                  to="/admin"
-                  data-tip="Admin Panel"
+                  to="/dashboard/AssignRider"
+                  data-tip="Assign Rider"
                   className={({ isActive }) =>
                     `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                       isActive
-                        ? 'bg-purple-500 text-white shadow-lg'
+                        ? 'bg-lime-500 text-white shadow-lg'
                         : 'text-gray-300 hover:bg-slate-700'
                     } is-drawer-close:px-0 is-drawer-close:justify-center`
                   }
                 >
-                  <span className="text-lg">👑</span>
-                  <span className="font-medium is-drawer-close:hidden">Admin Panel</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="2"
+                    fill="none"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <span className="font-medium is-drawer-close:hidden">Assign Rider</span>
                 </NavLink>
               </li>
             )}
-
-            {/* Admin Only: Manage Riders (NEW) */}
-            {isAdmin && (
-              <li>
-                <NavLink
-                  to="/admin/riders"
-                  data-tip="Manage Riders"
                   className={({ isActive }) =>
                     `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                       isActive
-                        ? 'bg-purple-500 text-white shadow-lg'
+                        ? 'bg-lime-500 text-white shadow-lg'
                         : 'text-gray-300 hover:bg-slate-700'
                     } is-drawer-close:px-0 is-drawer-close:justify-center`
                   }
                 >
-                  <span className="text-lg">🏍️</span>
-                  <span className="font-medium is-drawer-close:hidden">Manage Riders</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="2"
+                    fill="none"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <span className="font-medium is-drawer-close:hidden">Manage Users</span>
                 </NavLink>
               </li>
             )}
 
-            {/* Admin Only: Parcel Oversight (NEW) */}
-            {isAdmin && (
-              <li>
-                <NavLink
-                  to="/admin/parcels"
-                  data-tip="Parcel Oversight"
-                  className={({ isActive }) =>
-                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-purple-500 text-white shadow-lg'
-                        : 'text-gray-300 hover:bg-slate-700'
-                    } is-drawer-close:px-0 is-drawer-close:justify-center`
-                  }
-                >
-                  <span className="text-lg">📦</span>
-                  <span className="font-medium is-drawer-close:hidden">Parcel Oversight</span>
-                </NavLink>
-              </li>
-            )}
-
-            {/* Admin Only: Manage Users List (NEW) */}
-            {isAdmin && (
-              <li>
-                <NavLink
-                  to="/admin/users"
-                  data-tip="Manage All Users"
-                  className={({ isActive }) =>
-                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-purple-500 text-white shadow-lg'
-                        : 'text-gray-300 hover:bg-slate-700'
-                    } is-drawer-close:px-0 is-drawer-close:justify-center`
-                  }
-                >
-                  <span className="text-lg">👥</span>
-                  <span className="font-medium is-drawer-close:hidden">Manage All Users</span>
-                </NavLink>
-              </li>
-            )}
 
             <li>
               <NavLink

@@ -253,8 +253,8 @@ const MyParcels = () => {
                             <tr>
                                 <th className="font-semibold">#</th>
                                 <th className="font-semibold">Parcel Name</th>
-                                <th className="font-semibold">Type</th>
-                                <th className="font-semibold">Delivery</th>
+                                <th className="font-semibold">Tracking ID</th>
+                                <th className="font-semibold">Delivery Status</th>
                                 <th className="font-semibold text-right">Cost</th>
                                 <th className="font-semibold">Payment Status</th>
                                 <th className="font-semibold text-center">Action</th>
@@ -265,6 +265,8 @@ const MyParcels = () => {
                                 (() => {
                                     const paymentStatus = parcel.paymentStatus || parcel.payment_status || 'Pay';
                                     const isPaid = paymentStatus.toLowerCase() === 'paid';
+                                    const deliveryStatus = parcel.deliveryStatus || (isPaid ? 'pending-pickup' : 'awaiting-payment');
+                                    const trackingId = parcel.trackingId || 'Not Assigned';
                                     return (
                                 <tr key={parcel._id || index} className="hover:bg-lime-50 transition-colors">
                                     <th className="text-base font-semibold text-slate-500">{index + 1}</th>
@@ -272,13 +274,13 @@ const MyParcels = () => {
                                         {parcel.parcelName || 'N/A'}
                                     </td>
                                     <td>
-                                        <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                                            {formatLabel(parcel.parcelType)}
+                                        <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold font-mono text-slate-700">
+                                            {trackingId}
                                         </span>
                                     </td>
                                     <td>
-                                        <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                                            {formatLabel(parcel.deliveryType)}
+                                        <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                                            {formatLabel(deliveryStatus)}
                                         </span>
                                     </td>
                                     <td className="text-right text-base font-bold text-lime-700">

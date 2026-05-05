@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { AuthContext } from './AuthContext';
 import { auth } from '../../firebase/firebase.init';
 import {
@@ -24,7 +24,31 @@ const AuthProvider = ({ children }) => {
     const tokenSentForUidRef = useRef(null);
 
     // 🔐 Send Firebase ID token to backend for JWT storage in httpOnly cookie
-    const sendTokenToBackend = async (user) => {
+    const fetchUserProfile = useCallback(async () => {
+        try {
+            setUserProfile(null);
+            const response = await axios.get(
+                'http://localhost:3000/user',
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data.success && response.data.user) {
+                console.log('✅ [User Profile] Fetched profile:', response.data.user);
+                setUserProfile(response.data.user);
+            }
+        } catch (error) {
+            console.warn('⚠️ [User Profile] Warning fetching profile:', error.response?.data?.message || error.message);
+            setUserProfile(null);
+            // Non-critical error - don't block auth
+        }
+    }, []);
+
+    const sendTokenToBackend = useCallback(async (user) => {
         try {
             if (!user) {
                 console.warn('⚠️ No user provided to sendTokenToBackend');
@@ -55,7 +79,7 @@ const AuthProvider = ({ children }) => {
             await saveSocialUserData(user);
             
             // ✅ NEW: Fetch user profile from backend to get role
-            await fetchUserProfile(user.email);
+            await fetchUserProfile();
             
             return true;
         } catch (error) {
@@ -66,30 +90,7 @@ const AuthProvider = ({ children }) => {
             // Non-critical error - don't block auth
             return false;
         }
-    };
-
-    // ✅ NEW: Fetch user profile from backend with role and other data
-    const fetchUserProfile = async (email) => {
-        try {
-            const response = await axios.get(
-                'http://localhost:3000/user',
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            if (response.data.success && response.data.user) {
-                console.log('✅ [User Profile] Fetched profile:', response.data.user);
-                setUserProfile(response.data.user);
-            }
-        } catch (error) {
-            console.warn('⚠️ [User Profile] Warning fetching profile:', error.response?.data?.message || error.message);
-            // Non-critical error - don't block auth
-        }
-    };
+    }, [fetchUserProfile]);
 
     // ✅ Save social user data to database (Google, Facebook, etc.)
     const saveSocialUserData = async (user) => {
@@ -329,6 +330,7 @@ const AuthProvider = ({ children }) => {
             const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                 if (currentUser) {
                     console.log('🔐 [onAuthStateChanged] User detected:', currentUser.email);
+                    setUserProfile(null);
                     // Reload to get the latest profile, then update state
                     currentUser.reload().then(() => {
                         setUser({ ...auth.currentUser });
@@ -343,6 +345,7 @@ const AuthProvider = ({ children }) => {
                 } else {
                     console.log('🔐 [onAuthStateChanged] No user logged in');
                     setUser(null);
+                    setUserProfile(null);
                     // ✅ Set loading to false when user is null
                     setLoading(false);
                 }
@@ -378,7 +381,7 @@ const AuthProvider = ({ children }) => {
                 console.log('🔐 [useEffect] Token already sent for this user (uid:', currentUid, '), skipping duplicate send');
             }
         }
-    }, [user]);
+    }, [user, sendTokenToBackend]);
 
     const authInfo = {
         createUser,

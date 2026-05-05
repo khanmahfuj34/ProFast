@@ -1,29 +1,36 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 const ManageUsers = () => {
+    const { isAdmin } = useAuth();
     const axiosSecure = useAxiosSecure();
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
-    const [filteredUsers, setFilteredUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    // Remove local filteredUsers state, handle purely server side
+    const itemsPerPage = 20;
+
+    // UI + query state
+    const [currentPage, setCurrentPage] = useState(1);
     const [filterRole, setFilterRole] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        AOS.init({ duration: 800, once: true, offset: 50 });
-        fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
+    // Fetch users from server (moved above effects so it's callable)
+    async function fetchUsers(page = 1, role = 'all', search = '') {
         try {
             setLoading(true);
-            const response = await axiosSecure.get('/users');
+            const response = await axiosSecure.get(`/users?page=${page}&limit=${itemsPerPage}&role=${role}&search=${search}`);
             if (response.data.success) {
                 setUsers(response.data.users || []);
-                filterUsers(response.data.users || [], filterRole, searchTerm);
+                setTotalUsers(response.data.total || 0);
+                setTotalPages(response.data.totalPages || 1);
             }
         } catch (error) {
             console.error('❌ Error fetching users:', error);
@@ -36,37 +43,37 @@ const ManageUsers = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }
 
-    const filterUsers = (usersList, role, search) => {
-        let filtered = usersList;
-
-        // Filter by role
-        if (role !== 'all') {
-            filtered = filtered.filter(user => user.role === role);
+    useEffect(() => {
+        AOS.init({ duration: 800, once: true, offset: 50 });
+        if (!isAdmin) {
+            navigate('/');
+        } else {
+            fetchUsers(currentPage, filterRole, searchTerm);
         }
+    }, [isAdmin, navigate, currentPage, filterRole]); // Re-fetch when page or role changes
 
-        // Filter by search term
-        if (search.trim()) {
-            filtered = filtered.filter(user =>
-                user.displayName?.toLowerCase().includes(search.toLowerCase()) ||
-                user.email.toLowerCase().includes(search.toLowerCase())
-            );
-        }
+    // We can debounce the search if needed but let's trigger it directly for now or let users press search
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (isAdmin) {
+                setCurrentPage(1); // Reset page to 1 when search term changes
+                fetchUsers(1, filterRole, searchTerm);
+            }
+        }, 500); // 500ms debounce
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
 
-        setFilteredUsers(filtered);
-    };
+    
 
     const handleSearch = (e) => {
-        const search = e.target.value;
-        setSearchTerm(search);
-        filterUsers(users, filterRole, search);
+        setSearchTerm(e.target.value);
     };
 
     const handleFilterRole = (e) => {
-        const role = e.target.value;
-        setFilterRole(role);
-        filterUsers(users, role, searchTerm);
+        setFilterRole(e.target.value);
+        setCurrentPage(1);
     };
 
     const handleChangeRole = async (userId, userEmail, userName, currentRole) => {
@@ -249,6 +256,9 @@ const ManageUsers = () => {
         }
     };
 
+    // Prevent non-admin users from seeing this page
+    if (!isAdmin) return null;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
             {/* Header */}
@@ -264,40 +274,10 @@ const ManageUsers = () => {
                 <div data-aos="zoom-in" className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-gray-600 text-sm font-semibold">Total Users</p>
-                            <p className="text-3xl font-bold text-blue-600">{users.length}</p>
+                            <p className="text-gray-600 text-sm font-semibold">Total Filtered / Searched</p>
+                            <p className="text-3xl font-bold text-blue-600">{totalUsers}</p>
                         </div>
                         <div className="text-blue-500 text-3xl">👥</div>
-                    </div>
-                </div>
-
-                <div data-aos="zoom-in" data-aos-delay="100" className="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-500">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm font-semibold">Regular Users</p>
-                            <p className="text-3xl font-bold text-gray-600">{users.filter(u => u.role === 'user').length}</p>
-                        </div>
-                        <div className="text-gray-500 text-3xl">👤</div>
-                    </div>
-                </div>
-
-                <div data-aos="zoom-in" data-aos-delay="200" className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm font-semibold">Riders</p>
-                            <p className="text-3xl font-bold text-blue-600">{users.filter(u => u.role === 'rider').length}</p>
-                        </div>
-                        <div className="text-blue-600 text-3xl">🏍️</div>
-                    </div>
-                </div>
-
-                <div data-aos="zoom-in" data-aos-delay="300" className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600 text-sm font-semibold">Admins</p>
-                            <p className="text-3xl font-bold text-red-600">{users.filter(u => u.role === 'admin').length}</p>
-                        </div>
-                        <div className="text-red-500 text-3xl">👑</div>
                     </div>
                 </div>
             </div>
@@ -343,7 +323,7 @@ const ManageUsers = () => {
                         </div>
                         <p className="text-gray-600 mt-4">Loading users...</p>
                     </div>
-                ) : filteredUsers.length === 0 ? (
+                ) : users.length === 0 ? (
                     <div className="p-8 text-center">
                         <p className="text-gray-500 text-lg">No users found</p>
                     </div>
@@ -361,13 +341,15 @@ const ManageUsers = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {filteredUsers.map((user, index) => (
-                                    <tr key={user._id} className="hover:bg-gray-50 transition" data-aos="fade-up" data-aos-delay={index * 50}>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 text-white font-bold text-sm">
-                                                {index + 1}
-                                            </span>
-                                        </td>
+                                {users.map((user, index) => {
+                                    const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
+                                    return (
+                                        <tr key={user._id} className="hover:bg-gray-50 transition" data-aos="fade-up" data-aos-delay={index * 50}>
+                                            <td className="px-6 py-4">
+                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 text-white font-bold text-sm">
+                                                    {serialNumber}
+                                                </span>
+                                            </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 {user.photoURL ? (
@@ -417,9 +399,46 @@ const ManageUsers = () => {
                                             </button>
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
+                    </div>
+                )}
+                
+                {/* Pagination */}
+                {totalUsers > itemsPerPage && (
+                    <div className="p-4 bg-white border-t flex items-center justify-between">
+                        <div className="text-sm text-gray-600">Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalUsers)} of {totalUsers} users</div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                className="btn btn-sm"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                ← Prev
+                            </button>
+
+                            <div className="flex gap-1 items-center">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`btn btn-xs ${page === currentPage ? 'btn-active' : ''}`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                className="btn btn-sm"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next →
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

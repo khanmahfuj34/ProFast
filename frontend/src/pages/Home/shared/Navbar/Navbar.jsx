@@ -143,7 +143,7 @@ const Navbar = () => {
                                     {user.displayName || user.email?.split('@')[0]}
                                 </p>
                                 {/* Role badge */}
-                                <p className="text-xs font-medium">
+                                <p className="text-xs text-base-100 font-medium">
                                     {user.role === 'admin' ? (
                                         <span className="badge badge-error">👑 Admin</span>
                                     ) : user.role === 'rider' ? (
