@@ -35,3 +35,9 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+SECURITY.md
+SECURE_PUBLIC_UX_COMPLETE.md
+README.md
+projectdetails.md
+FILE_REFERENCE.md
+DUPLICATE_PAYMENT_FIX.md
