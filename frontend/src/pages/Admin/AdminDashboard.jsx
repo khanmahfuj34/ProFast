@@ -103,6 +103,24 @@ const AdminDashboard = () => {
                             />
                         </div>
 
+                        {/* Payment Stats Row */}
+                        <div
+                            data-aos="fade-up"
+                            className="bg-gradient-to-r from-lime-500 to-green-600 rounded-2xl shadow-lg p-8 mb-12 text-white flex items-center gap-4 hover:shadow-2xl transition-all duration-300"
+                        >
+                            <div className="text-5xl">💳</div>
+                            <div>
+                                <p className="text-sm font-semibold opacity-90">Payments are tracked in real-time</p>
+                                <p className="text-xl font-black">Visit Payment History to see all transactions</p>
+                            </div>
+                            <button
+                                onClick={() => navigate('/admin/payments-history')}
+                                className="ml-auto btn bg-white text-lime-700 hover:bg-lime-50 border-none font-bold"
+                            >
+                                View All Payments →
+                            </button>
+                        </div>
+
                         {/* Rider Status Breakdown */}
                         <div
                             data-aos="fade-up"
@@ -146,6 +164,12 @@ const AdminDashboard = () => {
                                     className="btn btn-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-none w-full"
                                 >
                                     📦 View Parcels
+                                </button>
+                                <button
+                                    onClick={() => navigate('/admin/payments-history')}
+                                    className="btn btn-lg bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white border-none w-full"
+                                >
+                                    💳 Payment History
                                 </button>
                                 <button
                                     onClick={fetchStats}

@@ -7,16 +7,24 @@ import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import useAuth from '../../../hooks/useAuth';
 
 const MyParcels = () => {
-    const {user} = useAuth();
+    const { user, isAdmin } = useAuth();
     const navigate = useNavigate();
     const axiosSecure = useAxiosSecure();
+
+    // ✅ Admin → fetch ALL parcels from DB | User → fetch own parcels only
     const { data: parcels = [], isLoading, isError, refetch } = useQuery({
-        queryKey: ['parcels', user?.email],
+        queryKey: isAdmin ? ['admin-all-parcels'] : ['parcels', user?.email],
         queryFn: async () => {
-            const res = await axiosSecure.get(`/parcels?email=${user.email}`);
-            return res.data;
+            if (isAdmin) {
+                const res = await axiosSecure.get('/admin/parcels');
+                return res.data?.parcels || [];
+            } else {
+                const res = await axiosSecure.get(`/parcels?email=${user.email}`);
+                return res.data;
+            }
         },
-        enabled: !!user?.email
+        enabled: isAdmin ? true : !!user?.email,
+        refetchInterval: isAdmin ? 15000 : false, // Admin: auto-refresh every 15s
     });
 
     const handlePayment = (parcel) => {
@@ -34,10 +42,15 @@ const MyParcels = () => {
                     <p><strong>Name:</strong> ${parcel.parcelName || 'N/A'}</p>
                     <p><strong>Type:</strong> ${formatLabel(parcel.parcelType)}</p>
                     <p><strong>Delivery:</strong> ${formatLabel(parcel.deliveryType)}</p>
+                    ${isAdmin ? `<p><strong>Sender Email:</strong> ${parcel.senderEmail || 'N/A'}</p>` : ''}
                     <p><strong>Sender:</strong> ${parcel.senderName || 'N/A'}</p>
                     <p><strong>Receiver:</strong> ${parcel.receiverName || 'N/A'}</p>
+                    <p><strong>Receiver Phone:</strong> ${parcel.receiverPhone || 'N/A'}</p>
+                    <p><strong>Receiver Address:</strong> ${parcel.receiverAddress || 'N/A'}</p>
                     <p><strong>Cost:</strong> ৳${parcel.totalPrice ?? 0}</p>
-                    <p><strong>Payment:</strong> ${formatLabel(parcel.paymentStatus || parcel.payment_status || 'unpaid')}</p>
+                    <p><strong>Payment:</strong> ${formatLabel(parcel.paymentStatus || 'unpaid')}</p>
+                    <p><strong>Delivery Status:</strong> ${formatLabel(parcel.deliveryStatus || 'awaiting-payment')}</p>
+                    ${parcel.trackingId ? `<p><strong>Tracking ID:</strong> <span style="font-family:monospace;background:#f0fdf4;padding:3px 8px;border-radius:4px;">${parcel.trackingId}</span></p>` : ''}
                 </div>
             `,
             confirmButtonColor: '#65a30d'
@@ -47,7 +60,6 @@ const MyParcels = () => {
     const handleEditParcel = async (parcel) => {
         if (!parcel?._id) return;
 
-        // Show edit form in modal
         const { value: formValues } = await Swal.fire({
             title: 'Edit Parcel Details',
             html: `
@@ -69,7 +81,7 @@ const MyParcels = () => {
                             </div>
                             <div>
                                 <p style="margin:0; color:#666"><strong>Payment:</strong></p>
-                                <p style="margin:4px 0 0 0; color:#333">${formatLabel(parcel.paymentStatus || parcel.payment_status || 'unpaid')}</p>
+                                <p style="margin:4px 0 0 0; color:#333">${formatLabel(parcel.paymentStatus || 'unpaid')}</p>
                             </div>
                         </div>
                     </div>
@@ -132,37 +144,23 @@ const MyParcels = () => {
                 const receiverEmail = document.getElementById('receiverEmail').value.trim();
                 const receiverAddress = document.getElementById('receiverAddress').value.trim();
 
-                // Validation
                 if (!senderName || !senderPhone || !parcelName || !receiverName || !receiverPhone || !receiverAddress) {
                     Swal.showValidationMessage('All required fields must be filled');
                     return false;
                 }
-
                 if (!/^\d{10,}$/.test(senderPhone.replace(/\s|-/g, ''))) {
                     Swal.showValidationMessage('Please enter a valid sender phone number');
                     return false;
                 }
-
                 if (!/^\d{10,}$/.test(receiverPhone.replace(/\s|-/g, ''))) {
                     Swal.showValidationMessage('Please enter a valid receiver phone number');
                     return false;
                 }
-
                 if (receiverEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(receiverEmail)) {
                     Swal.showValidationMessage('Please enter a valid email address');
                     return false;
                 }
-
-                return {
-                    senderName,
-                    senderPhone,
-                    parcelName,
-                    parcelDescription,
-                    receiverName,
-                    receiverPhone,
-                    receiverEmail,
-                    receiverAddress
-                };
+                return { senderName, senderPhone, parcelName, parcelDescription, receiverName, receiverPhone, receiverEmail, receiverAddress };
             },
             showCancelButton: true,
             confirmButtonText: 'Update',
@@ -173,33 +171,22 @@ const MyParcels = () => {
 
         if (!formValues) return;
 
-        // Show loading state
-        Swal.fire({
-            title: 'Updating...',
-            text: 'Please wait while we update your parcel.',
-            didOpen: () => Swal.showLoading(),
-            allowOutsideClick: false,
-            allowEscapeKey: false
-        });
+        Swal.fire({ title: 'Updating...', text: 'Please wait', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
         try {
-            // Send update request to backend with JWT token from useAxiosSecure
             const response = await axiosSecure.patch(`/parcels/${parcel._id}`, formValues);
-
             if (response.data.modifiedCount > 0 || response.data.acknowledged) {
                 await Swal.fire('Success!', 'Parcel updated successfully.', 'success');
-                refetch(); // Refresh the parcels list
+                refetch();
             } else {
                 Swal.fire('Warning', 'No changes were made.', 'info');
             }
         } catch (error) {
             console.error('Error updating parcel:', error);
-            
-            // Security: Handle unauthorized access
             if (error.response?.status === 401 || error.response?.status === 403) {
                 Swal.fire('Unauthorized', 'You do not have permission to edit this parcel.', 'error');
             } else {
-                Swal.fire('Error', error.response?.data?.message || 'Failed to update parcel. Please try again.', 'error');
+                Swal.fire('Error', error.response?.data?.message || 'Failed to update parcel.', 'error');
             }
         }
     };
@@ -224,25 +211,61 @@ const MyParcels = () => {
             await Swal.fire('Deleted!', 'Parcel has been deleted.', 'success');
             refetch();
         } catch {
-            Swal.fire('Error', 'Failed to delete parcel. Please try again.', 'error');
+            Swal.fire('Error', 'Failed to delete parcel.', 'error');
         }
     };
 
+    // ─── Render ──────────────────────────────────────────────────────────────
     return (
         <div className="space-y-5">
-            <div>
-                <h2 className="text-3xl font-bold text-slate-800">All of My Parcels</h2>
-                <p className="text-sm text-slate-500 mt-1">
-                    Track your submitted deliveries and pricing details.
-                </p>
+            {/* Header */}
+            <div className="flex items-start justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold text-slate-800">
+                        {isAdmin ? '📦 All Parcels (Admin View)' : 'All of My Parcels'}
+                    </h2>
+                    <p className="text-sm text-slate-500 mt-1">
+                        {isAdmin
+                            ? `Live view of every parcel from all users · auto-refreshes every 15s`
+                            : 'Track your submitted deliveries and pricing details.'}
+                    </p>
+                </div>
+                {isAdmin && (
+                    <button
+                        onClick={() => refetch()}
+                        className="btn btn-sm bg-lime-600 hover:bg-lime-700 text-white border-none"
+                    >
+                        🔄 Refresh
+                    </button>
+                )}
             </div>
 
+            {/* Stats for admin */}
+            {isAdmin && !isLoading && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                        { label: 'Total', value: parcels.length, color: 'border-l-blue-500 text-blue-700' },
+                        { label: 'Paid', value: parcels.filter(p => p.paymentStatus === 'paid').length, color: 'border-l-emerald-500 text-emerald-700' },
+                        { label: 'Unpaid', value: parcels.filter(p => (p.paymentStatus || 'unpaid') !== 'paid').length, color: 'border-l-amber-500 text-amber-700' },
+                        { label: 'Revenue ৳', value: parcels.reduce((s, p) => s + (p.totalPrice || 0), 0).toLocaleString(), color: 'border-l-lime-500 text-lime-700' },
+                    ].map(stat => (
+                        <div key={stat.label} className={`bg-white rounded-xl border-2 border-l-4 ${stat.color} border-slate-100 p-4 shadow-sm`}>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">{stat.label}</p>
+                            <p className={`text-2xl font-black mt-1 ${stat.color.split(' ')[1]}`}>{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {isLoading && <p className="text-base font-medium text-slate-600">Loading parcels...</p>}
-            {isError && <p className="text-base font-medium text-red-500">Failed to load parcels.</p>}
+            {isError && <p className="text-base font-medium text-red-500">Failed to load parcels. Please refresh.</p>}
+
             {!isLoading && !isError && parcels.length === 0 && (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
                     <p className="text-lg font-semibold text-slate-700">No parcels found.</p>
-                    <p className="text-sm text-slate-500 mt-1">Create your first parcel to see it listed here.</p>
+                    <p className="text-sm text-slate-500 mt-1">
+                        {isAdmin ? 'No users have submitted parcels yet.' : 'Create your first parcel to see it listed here.'}
+                    </p>
                 </div>
             )}
 
@@ -253,6 +276,7 @@ const MyParcels = () => {
                             <tr>
                                 <th className="font-semibold">#</th>
                                 <th className="font-semibold">Parcel Name</th>
+                                {isAdmin && <th className="font-semibold">Sender Email</th>}
                                 <th className="font-semibold">Tracking ID</th>
                                 <th className="font-semibold">Delivery Status</th>
                                 <th className="font-semibold text-right">Cost</th>
@@ -261,78 +285,95 @@ const MyParcels = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {parcels.map((parcel, index) => (
-                                (() => {
-                                    const paymentStatus = parcel.paymentStatus || parcel.payment_status || 'Pay';
-                                    const isPaid = paymentStatus.toLowerCase() === 'paid';
-                                    const deliveryStatus = parcel.deliveryStatus || (isPaid ? 'pending-pickup' : 'awaiting-payment');
-                                    const trackingId = parcel.trackingId || 'Not Assigned';
-                                    return (
-                                <tr key={parcel._id || index} className="hover:bg-lime-50 transition-colors">
-                                    <th className="text-base font-semibold text-slate-500">{index + 1}</th>
-                                    <td className="text-base font-semibold text-slate-800">
-                                        {parcel.parcelName || 'N/A'}
-                                    </td>
-                                    <td>
-                                        <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold font-mono text-slate-700">
-                                            {trackingId}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
-                                            {formatLabel(deliveryStatus)}
-                                        </span>
-                                    </td>
-                                    <td className="text-right text-base font-bold text-lime-700">
-                                        ৳{parcel.totalPrice ?? 0}
-                                    </td>
-                                    <td>
-                                        {isPaid ? (
-                                            <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                                                {formatLabel(paymentStatus)}
-                                            </span>
-                                        ) : (
-                                            <button
-                                                onClick={() => handlePayment(parcel)}
-                                                className="inline-flex items-center justify-center rounded-md bg-lime-100 px-3 py-2 text-xs font-semibold text-lime-700 transition-all duration-200 hover:bg-lime-200"
-                                                title="Pay parcel"
-                                            >
-                                                Pay Now
-                                            </button>
+                            {parcels.map((parcel, index) => {
+                                const paymentStatus = parcel.paymentStatus || 'unpaid';
+                                const isPaid = paymentStatus.toLowerCase() === 'paid';
+                                const deliveryStatus = parcel.deliveryStatus || (isPaid ? 'pending-pickup' : 'awaiting-payment');
+                                const trackingId = parcel.trackingId || 'Not Assigned';
+
+                                return (
+                                    <tr key={parcel._id || index} className="hover:bg-lime-50 transition-colors">
+                                        <th className="text-base font-semibold text-slate-500">{index + 1}</th>
+                                        <td className="text-base font-semibold text-slate-800">
+                                            {parcel.parcelName || 'N/A'}
+                                        </td>
+                                        {isAdmin && (
+                                            <td className="text-sm text-slate-600 font-mono">
+                                                {parcel.senderEmail || 'N/A'}
+                                            </td>
                                         )}
-                                    </td>
-                                    <td className="text-center">
-                                        <div className="flex items-center justify-center gap-2">
-                                            <button
-                                                onClick={() => handleViewDetails(parcel)}
-                                                className="inline-flex items-center justify-center rounded-md bg-blue-100 p-2 text-blue-700 transition-all duration-200 hover:bg-blue-200"
-                                                title="View details"
-                                            >
-                                                <FaMagnifyingGlass className="text-sm" />
-                                            </button>
+                                        <td>
+                                            <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold font-mono text-slate-700">
+                                                {trackingId}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                                                {formatLabel(deliveryStatus)}
+                                            </span>
+                                        </td>
+                                        <td className="text-right text-base font-bold text-lime-700">
+                                            ৳{parcel.totalPrice ?? 0}
+                                        </td>
+                                        <td>
+                                            {isPaid ? (
+                                                <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                                    {formatLabel(paymentStatus)}
+                                                </span>
+                                            ) : (
+                                                // Only non-admin users (or own parcels) can pay
+                                                isAdmin ? (
+                                                    <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                                                        Unpaid
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handlePayment(parcel)}
+                                                        className="inline-flex items-center justify-center rounded-md bg-lime-100 px-3 py-2 text-xs font-semibold text-lime-700 transition-all duration-200 hover:bg-lime-200"
+                                                        title="Pay parcel"
+                                                    >
+                                                        Pay Now
+                                                    </button>
+                                                )
+                                            )}
+                                        </td>
+                                        <td className="text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => handleViewDetails(parcel)}
+                                                    className="inline-flex items-center justify-center rounded-md bg-blue-100 p-2 text-blue-700 transition-all duration-200 hover:bg-blue-200"
+                                                    title="View details"
+                                                >
+                                                    <FaMagnifyingGlass className="text-sm" />
+                                                </button>
 
-                                            <button
-                                                onClick={() => handleEditParcel(parcel)}
-                                                className="inline-flex items-center justify-center rounded-md bg-green-100 p-2 text-green-700 transition-all duration-200 hover:bg-green-200"
-                                                title="Edit parcel"
-                                            >
-                                                <FaPencil className="text-sm" />
-                                            </button>
+                                                {/* Edit: only owner (non-admin) can edit */}
+                                                {!isAdmin && (
+                                                    <button
+                                                        onClick={() => handleEditParcel(parcel)}
+                                                        className="inline-flex items-center justify-center rounded-md bg-green-100 p-2 text-green-700 transition-all duration-200 hover:bg-green-200"
+                                                        title="Edit parcel"
+                                                    >
+                                                        <FaPencil className="text-sm" />
+                                                    </button>
+                                                )}
 
-                                            <button
-                                                onClick={() => handleDeleteParcel(parcel)}
-                                                className="inline-flex items-center justify-center rounded-md bg-red-100 p-2 text-red-700 transition-all duration-200 hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
-                                                title="Delete parcel"
-                                                disabled={!parcel?._id}
-                                            >
-                                                <FaTrashCan className="text-sm" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                    );
-                                })()
-                            ))}
+                                                {/* Delete: only owner (non-admin) can delete */}
+                                                {!isAdmin && (
+                                                    <button
+                                                        onClick={() => handleDeleteParcel(parcel)}
+                                                        className="inline-flex items-center justify-center rounded-md bg-red-100 p-2 text-red-700 transition-all duration-200 hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        title="Delete parcel"
+                                                        disabled={!parcel?._id}
+                                                    >
+                                                        <FaTrashCan className="text-sm" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

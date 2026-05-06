@@ -1,217 +1,249 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import useAuth from '../../hooks/useAuth';
 import useAxiosSecure from '../../hooks/useAxiosSecure';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
 
 const ParcelOversight = () => {
     const { isAdmin } = useAuth();
     const axiosSecure = useAxiosSecure();
     const navigate = useNavigate();
-    const [parcels, setParcels] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('all');
-    const [searchEmail, setSearchEmail] = useState('');
+    const [filterPayment, setFilterPayment] = useState('all');
+    const [filterDelivery, setFilterDelivery] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        AOS.init({ duration: 800, once: true, offset: 50 });
-        if (!isAdmin) {
-            navigate('/');
-        } else {
-            fetchParcels();
-        }
-    }, [isAdmin, navigate]);
+    // ✅ React Query — auto-refetch every 15 seconds for live updates
+    const { data, isLoading, isError, refetch, isFetching } = useQuery({
+        queryKey: ['admin-parcels'],
+        queryFn: async () => {
+            const res = await axiosSecure.get('/admin/parcels');
+            return res.data;
+        },
+        refetchInterval: 15000, // auto-refresh every 15s
+        enabled: !!isAdmin,
+    });
 
-    const fetchParcels = async () => {
-        try {
-            setLoading(true);
-            const response = await axiosSecure.get('/admin/parcels');
-            if (response.data.success) {
-                setParcels(response.data.parcels);
-                setError(null);
-            }
-        } catch (err) {
-            console.error('Error fetching parcels:', err);
-            setError('Failed to load parcels');
-            setParcels([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const parcels = data?.parcels || [];
 
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-            case 'in transit':
-                return 'bg-blue-100 text-blue-800 border-blue-300';
-            case 'delivered':
-                return 'bg-green-100 text-green-800 border-green-300';
-            default:
-                return 'bg-gray-100 text-gray-800 border-gray-300';
-        }
-    };
+    const formatLabel = (value) =>
+        value ? value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'N/A';
 
     const filteredParcels = parcels.filter(parcel => {
-        const statusMatch = filterStatus === 'all' || 
-            parcel.status?.toLowerCase() === filterStatus.toLowerCase();
-        const emailMatch = searchEmail === '' || 
-            parcel.senderEmail?.toLowerCase().includes(searchEmail.toLowerCase()) ||
-            parcel.receiverEmail?.toLowerCase().includes(searchEmail.toLowerCase());
-        return statusMatch && emailMatch;
+        const paymentMatch = filterPayment === 'all' || (parcel.paymentStatus || 'unpaid').toLowerCase() === filterPayment;
+        const deliveryMatch = filterDelivery === 'all' || (parcel.deliveryStatus || '').toLowerCase() === filterDelivery;
+        const searchLower = searchTerm.toLowerCase();
+        const textMatch = !searchTerm ||
+            (parcel.senderEmail || '').toLowerCase().includes(searchLower) ||
+            (parcel.senderName || '').toLowerCase().includes(searchLower) ||
+            (parcel.receiverName || '').toLowerCase().includes(searchLower) ||
+            (parcel.receiverEmail || '').toLowerCase().includes(searchLower) ||
+            (parcel.trackingId || '').toLowerCase().includes(searchLower) ||
+            (parcel.parcelName || '').toLowerCase().includes(searchLower);
+        return paymentMatch && deliveryMatch && textMatch;
     });
+
+    // Stats
+    const totalParcels = parcels.length;
+    const paidParcels = parcels.filter(p => p.paymentStatus === 'paid').length;
+    const unpaidParcels = totalParcels - paidParcels;
+    const totalRevenue = parcels.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
+
+    const paymentBadge = (status) => {
+        if (status === 'paid') return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">✅ Paid</span>;
+        return <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">⏳ Unpaid</span>;
+    };
+
+    const deliveryBadge = (status) => {
+        const map = {
+            'awaiting-payment': 'bg-gray-100 text-gray-700',
+            'pending-pickup': 'bg-yellow-100 text-yellow-800',
+            'in-transit': 'bg-blue-100 text-blue-800',
+            'delivered': 'bg-green-100 text-green-800',
+            'cancelled': 'bg-red-100 text-red-800',
+        };
+        const cls = map[status] || 'bg-gray-100 text-gray-700';
+        return <span className={`inline-flex px-3 py-1 rounded-full text-xs font-bold ${cls}`}>{formatLabel(status)}</span>;
+    };
 
     if (!isAdmin) return null;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 p-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50 p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
+
                 {/* Header */}
-                <div data-aos="fade-down" className="mb-12">
-                    <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600 mb-2">
-                        📦 Parcel Oversight
-                    </h1>
-                    <p className="text-lg text-gray-600">Monitor all parcels in the system</p>
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">
+                            📦 All Parcels
+                        </h1>
+                        <p className="text-gray-500 mt-1">Live view of every parcel request — updates every 15s</p>
+                    </div>
+                    <button
+                        onClick={() => refetch()}
+                        disabled={isFetching}
+                        className="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white border-none gap-2"
+                    >
+                        {isFetching ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
+                        {isFetching ? 'Refreshing...' : 'Refresh Now'}
+                    </button>
                 </div>
 
-                {/* Filters and Search */}
-                <div data-aos="fade-up" className="mb-8 bg-white rounded-xl shadow-md p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Status Filter */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Filter by Status</label>
-                            <div className="flex gap-2 flex-wrap">
-                                {['all', 'pending', 'in transit', 'delivered'].map((status) => (
-                                    <button
-                                        key={status}
-                                        onClick={() => setFilterStatus(status)}
-                                        className={`btn btn-sm ${
-                                            filterStatus === status
-                                                ? 'btn-primary'
-                                                : 'btn-outline'
-                                        }`}
-                                    >
-                                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                {/* Stats Bar */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-blue-500">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Total Parcels</p>
+                        <p className="text-3xl font-black text-blue-600 mt-1">{totalParcels}</p>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-emerald-500">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Paid</p>
+                        <p className="text-3xl font-black text-emerald-600 mt-1">{paidParcels}</p>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-amber-500">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Unpaid</p>
+                        <p className="text-3xl font-black text-amber-600 mt-1">{unpaidParcels}</p>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 border-l-4 border-l-lime-500">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">Total Revenue</p>
+                        <p className="text-2xl font-black text-lime-700 mt-1">৳{totalRevenue.toLocaleString()}</p>
+                    </div>
+                </div>
 
-                        {/* Email Search */}
+                {/* Filters */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Search by Email</label>
+                            <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Search</label>
                             <input
                                 type="text"
-                                placeholder="Search sender or receiver email..."
-                                value={searchEmail}
-                                onChange={(e) => setSearchEmail(e.target.value)}
-                                className="input input-bordered input-md w-full"
+                                placeholder="Name, email, tracking ID, parcel name..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 transition text-slate-800"
                             />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Payment Status</label>
+                            <select
+                                value={filterPayment}
+                                onChange={e => setFilterPayment(e.target.value)}
+                                className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 transition text-slate-800"
+                            >
+                                <option value="all">All</option>
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Delivery Status</label>
+                            <select
+                                value={filterDelivery}
+                                onChange={e => setFilterDelivery(e.target.value)}
+                                className="w-full px-4 py-2.5 text-sm border-2 border-slate-200 rounded-lg focus:outline-none focus:border-emerald-500 transition text-slate-800"
+                            >
+                                <option value="all">All</option>
+                                <option value="awaiting-payment">Awaiting Payment</option>
+                                <option value="pending-pickup">Pending Pickup</option>
+                                <option value="in-transit">In Transit</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                {loading && (
+                {/* Loading */}
+                {isLoading && (
                     <div className="flex justify-center items-center py-20">
-                        <span className="loading loading-spinner loading-lg text-green-600"></span>
-                    </div>
-                )}
-
-                {error && (
-                    <div className="alert alert-error shadow-lg mb-8" data-aos="fade-up">
-                        <div>
-                            <span>⚠️ {error}</span>
+                        <div className="text-center">
+                            <span className="loading loading-spinner loading-lg text-emerald-600"></span>
+                            <p className="text-slate-500 mt-3">Loading all parcels...</p>
                         </div>
                     </div>
                 )}
 
-                {!loading && filteredParcels.length > 0 && (
+                {/* Error */}
+                {isError && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+                        <p className="text-red-700 font-semibold">⚠️ Failed to load parcels. <button onClick={() => refetch()} className="underline">Try again</button></p>
+                    </div>
+                )}
+
+                {/* Table */}
+                {!isLoading && !isError && (
                     <>
-                        <div data-aos="fade-up" className="mb-6 p-4 bg-green-100 rounded-lg border-l-4 border-green-500">
-                            <p className="font-bold text-green-800">
-                                Showing {filteredParcels.length} of {parcels.length} parcels
-                            </p>
+                        <div className="mb-4 flex items-center gap-2">
+                            <span className="text-sm text-slate-500 font-medium">
+                                Showing <strong className="text-slate-800">{filteredParcels.length}</strong> of <strong className="text-slate-800">{totalParcels}</strong> parcels
+                            </span>
+                            {isFetching && <span className="text-xs text-emerald-600 font-semibold animate-pulse">● Updating...</span>}
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {filteredParcels.map((parcel) => (
-                                <div
-                                    key={parcel._id}
-                                    data-aos="fade-up"
-                                    className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-2xl transition-all duration-300"
-                                >
-                                    {/* Status Badge */}
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h3 className="text-lg font-bold text-gray-900">📍 Parcel #{parcel._id.toString().slice(-6)}</h3>
-                                            <p className="text-sm text-gray-500 mt-1">
-                                                Created: {new Date(parcel.createdAt).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                        <span className={`px-3 py-1 rounded-full font-bold text-sm border-2 ${getStatusColor(parcel.status)}`}>
-                                            {parcel.status || 'Pending'}
-                                        </span>
-                                    </div>
-
-                                    {/* Sender Info */}
-                                    <div className="bg-blue-50 p-4 rounded-lg mb-4 border-l-4 border-blue-500">
-                                        <p className="text-xs font-bold text-blue-900 mb-2">📤 FROM (SENDER)</p>
-                                        <p className="font-semibold text-gray-900">{parcel.senderName || 'N/A'}</p>
-                                        <p className="text-sm text-gray-700">{parcel.senderEmail || 'N/A'}</p>
-                                        <p className="text-sm text-gray-700">{parcel.senderPhone || 'N/A'}</p>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            📍 {parcel.senderAddress || 'No address'}
-                                        </p>
-                                    </div>
-
-                                    {/* Receiver Info */}
-                                    <div className="bg-green-50 p-4 rounded-lg mb-4 border-l-4 border-green-500">
-                                        <p className="text-xs font-bold text-green-900 mb-2">📥 TO (RECEIVER)</p>
-                                        <p className="font-semibold text-gray-900">{parcel.receiverName || 'N/A'}</p>
-                                        <p className="text-sm text-gray-700">{parcel.receiverEmail || 'N/A'}</p>
-                                        <p className="text-sm text-gray-700">{parcel.receiverPhone || 'N/A'}</p>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            📍 {parcel.receiverAddress || 'No address'}
-                                        </p>
-                                    </div>
-
-                                    {/* Parcel Details */}
-                                    <div className="grid grid-cols-2 gap-3 mb-4">
-                                        <div className="bg-gray-100 p-3 rounded-lg">
-                                            <p className="text-xs font-bold text-gray-600">Weight</p>
-                                            <p className="text-sm font-bold text-gray-900">{parcel.weight || 'N/A'} kg</p>
-                                        </div>
-                                        <div className="bg-gray-100 p-3 rounded-lg">
-                                            <p className="text-xs font-bold text-gray-600">Type</p>
-                                            <p className="text-sm font-bold text-gray-900">{parcel.type || 'N/A'}</p>
-                                        </div>
-                                        <div className="bg-gray-100 p-3 rounded-lg col-span-2">
-                                            <p className="text-xs font-bold text-gray-600">Price</p>
-                                            <p className="text-lg font-bold text-green-600">৳ {parcel.price || 'N/A'}</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Description */}
-                                    {parcel.description && (
-                                        <div className="bg-purple-50 p-3 rounded-lg border-l-2 border-purple-500">
-                                            <p className="text-xs font-bold text-purple-900">Description</p>
-                                            <p className="text-sm text-gray-800 mt-1">{parcel.description}</p>
-                                        </div>
-                                    )}
+                        {filteredParcels.length === 0 ? (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                                <p className="text-4xl mb-3">📭</p>
+                                <p className="text-slate-500 text-lg">No parcels match your filters</p>
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="bg-gradient-to-r from-slate-800 to-slate-700 text-white">
+                                                <th className="px-5 py-4 text-left font-semibold">#</th>
+                                                <th className="px-5 py-4 text-left font-semibold">Parcel</th>
+                                                <th className="px-5 py-4 text-left font-semibold">Sender</th>
+                                                <th className="px-5 py-4 text-left font-semibold">Receiver</th>
+                                                <th className="px-5 py-4 text-left font-semibold">Tracking ID</th>
+                                                <th className="px-5 py-4 text-right font-semibold">Cost</th>
+                                                <th className="px-5 py-4 text-center font-semibold">Payment</th>
+                                                <th className="px-5 py-4 text-center font-semibold">Delivery</th>
+                                                <th className="px-5 py-4 text-center font-semibold">Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {filteredParcels.map((parcel, index) => (
+                                                <tr key={parcel._id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="px-5 py-4 text-slate-400 font-mono text-xs">{index + 1}</td>
+                                                    <td className="px-5 py-4">
+                                                        <p className="font-semibold text-slate-800">{parcel.parcelName || 'N/A'}</p>
+                                                        <p className="text-xs text-slate-400">{formatLabel(parcel.parcelType)}</p>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <p className="font-semibold text-slate-800">{parcel.senderName || 'N/A'}</p>
+                                                        <p className="text-xs text-slate-500">{parcel.senderEmail || 'N/A'}</p>
+                                                        <p className="text-xs text-slate-400">{parcel.senderPhone || ''}</p>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <p className="font-semibold text-slate-800">{parcel.receiverName || 'N/A'}</p>
+                                                        <p className="text-xs text-slate-500">{parcel.receiverEmail || 'N/A'}</p>
+                                                        <p className="text-xs text-slate-400">{parcel.receiverPhone || ''}</p>
+                                                    </td>
+                                                    <td className="px-5 py-4">
+                                                        <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
+                                                            {parcel.trackingId || 'Not assigned'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-5 py-4 text-right font-bold text-lime-700">
+                                                        ৳{parcel.totalPrice ?? 0}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-center">
+                                                        {paymentBadge(parcel.paymentStatus || 'unpaid')}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-center">
+                                                        {deliveryBadge(parcel.deliveryStatus || 'awaiting-payment')}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-center text-xs text-slate-500">
+                                                        {parcel.createdAt ? new Date(parcel.createdAt).toLocaleDateString('en-BD') : 'N/A'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        )}
                     </>
-                )}
-
-                {!loading && filteredParcels.length === 0 && (
-                    <div className="text-center py-12">
-                        <p className="text-xl text-gray-600">
-                            {parcels.length === 0 ? 'No parcels found' : 'No parcels match your search'}
-                        </p>
-                    </div>
                 )}
             </div>
         </div>

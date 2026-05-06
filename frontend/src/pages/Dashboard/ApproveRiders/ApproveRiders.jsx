@@ -83,13 +83,21 @@ const ApproveRiders = () => {
     };
 
     const getStatusBadge = (status) => {
+        if (!status) return <span className="badge badge-ghost badge-lg gap-2">N/A</span>;
+        
         switch(status) {
             case 'Approved':
-                return <span className="badge badge-success badge-lg gap-2">✅ Approved</span>;
+                return <span className="badge badge-success badge-lg gap-2 font-semibold tracking-widest">✅ Approved</span>;
             case 'Rejected':
-                return <span className="badge badge-error badge-lg gap-2">❌ Rejected</span>;
+                return <span className="badge badge-error badge-lg gap-2 font-semibold tracking-widest">❌ Rejected</span>;
+            case 'Available':
+                return <span className="badge badge-info text-white badge-lg gap-2 font-semibold tracking-widest ">🟢 Available</span>;
+            case 'Unavailable':
+                return <span className="badge badge-ghost badge-lg gap-2 font-semibold tracking-widest text-gray-20">🚫 Unavailable</span>;
+            case 'Pending':
+                return <span className="badge badge-warning badge-lg gap-2 font-semibold tracking-widest">⏳ Pending</span>;
             default:
-                return <span className="badge badge-warning badge-lg gap-2">⏳ Pending</span>;
+                return <span className="badge badge-warning badge-lg gap-2 font-semibold tracking-widest">⏳ {status}</span>;
         }
     };
 
@@ -196,6 +204,7 @@ const ApproveRiders = () => {
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Phone</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Region</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                                    <th className="px-6 py-3 text-left text-sm font-semibold">Work Status</th>  
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
                                 </tr>
                             </thead>
@@ -224,6 +233,9 @@ const ApproveRiders = () => {
                                         <td className="px-6 py-4">
                                             {getStatusBadge(rider.status)}
                                         </td>
+                                        <td className="px-6 py-4">
+                                            {getStatusBadge(rider.status === 'Approved' ? (rider.workStatus || 'Available') : (rider.status === 'Pending' ? 'Unavailable' : rider.workStatus))}
+                                        </td>   
                                         <td className="px-6 py-4">
                                             <div className="flex gap-2 flex-wrap">
                                                 <button

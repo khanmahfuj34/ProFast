@@ -146,7 +146,9 @@ const DashboardLayout = () => {
                   <line x1="21" y1="10" x2="15" y2="14"></line>
                   <line x1="12" y1="6" x2="12" y2="14"></line>
                 </svg>
-                <span className="font-medium is-drawer-close:hidden">My Parcels</span>
+                <span className="font-medium is-drawer-close:hidden">
+                  {isAdmin ? '📦 All Parcels' : 'My Parcels'}
+                </span>
               </NavLink>
             </li>
 
@@ -179,7 +181,9 @@ const DashboardLayout = () => {
                   <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
-                <span className="font-medium is-drawer-close:hidden">Payment History</span>
+                <span className="font-medium is-drawer-close:hidden">
+                  {isAdmin ? '💳 All Payments' : 'Payment History'}
+                </span>
               </NavLink>
             </li>
 
@@ -248,12 +252,13 @@ const DashboardLayout = () => {
                 </NavLink>
               </li>
             )}
-            {/* Assign Rider */}
+            {/* Assign Rider (Admin) */}
             {isAdmin && (
               <li>
                 <NavLink
-                  to="/dashboard/AssignRider"
-                  data-tip="Assign Rider"
+                  to="/dashboard/assign-rider"
+                  data-tip="Assign Rider to Delivery"
+                  aria-label="Assign rider to parcel"
                   className={({ isActive }) =>
                     `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                       isActive
@@ -262,49 +267,14 @@ const DashboardLayout = () => {
                     } is-drawer-close:px-0 is-drawer-close:justify-center`
                   }
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                    strokeWidth="2"
-                    fill="none"
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  {/* Truck / assignment icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <rect x="1" y="3" width="15" height="13"></rect>
+                    <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                    <circle cx="5.5" cy="18.5" r="1.5"></circle>
+                    <circle cx="18.5" cy="18.5" r="1.5"></circle>
                   </svg>
                   <span className="font-medium is-drawer-close:hidden">Assign Rider</span>
-                </NavLink>
-              </li>
-            )}
-                  className={({ isActive }) =>
-                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-lime-500 text-white shadow-lg'
-                        : 'text-gray-300 hover:bg-slate-700'
-                    } is-drawer-close:px-0 is-drawer-close:justify-center`
-                  }
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                    strokeWidth="2"
-                    fill="none"
-                    stroke="currentColor"
-                    className="w-5 h-5"
-                  >
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                  <span className="font-medium is-drawer-close:hidden">Manage Users</span>
                 </NavLink>
               </li>
             )}

@@ -22,6 +22,7 @@ import PaymentFailed from "../pages/Dashboard/Payment/PaymentFailed";
 import PaymentHistory from "../pages/Dashboard/PaymentHistory/PaymentHistory";
 import ApproveRiders from "../pages/Dashboard/ApproveRiders/ApproveRiders";
 import RiderDetailPage from "../pages/Dashboard/ApproveRiders/RiderDetailPage";
+import AssignRider from "../pages/Dashboard/AssignRider/AssignRider";
 import ManageUsers from "../pages/Dashboard/ManageUsers/ManageUsers";
 import Unauthorized from "../pages/Unauthorized/Unauthorized";
 import Forbidden from "../pages/Forbidden/Forbidden";
@@ -30,6 +31,7 @@ import AdminDashboard from "../pages/Admin/AdminDashboard";
 import AdminManageUsers from "../pages/Admin/ManageUsers";
 import AdminManageRiders from "../pages/Admin/ManageRiders";
 import AdminParcelOversight from "../pages/Admin/ParcelOversight";
+import AdminPaymentHistory from "../pages/Admin/AdminPaymentHistory";
 
 /**
  * 404 Not Found Page
@@ -147,6 +149,10 @@ export const router = createBrowserRouter([
         element: <AdminRoute><RiderDetailPage /></AdminRoute>
       },
       {
+        path:'assign-rider',
+        element: <AdminRoute><AssignRider /></AdminRoute>
+      },
+      {
         path:'ManageUsers',
         element: <AdminRoute><ManageUsers /></AdminRoute>
       }
@@ -170,6 +176,10 @@ export const router = createBrowserRouter([
       {
         path: 'parcels',
         element: <AdminRoute><AdminParcelOversight /></AdminRoute>
+      },
+      {
+        path: 'payments-history',
+        element: <AdminRoute><AdminPaymentHistory /></AdminRoute>
       }
     ]
   },

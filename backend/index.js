@@ -643,6 +643,7 @@ app.patch('/riders/:id', verifyJWT, async(req, res) => {
             const updateDoc = {
                 $set: {
                     status: status,
+                    workStatus: 'Available',
                     updatedAt: new Date()
                 }
             };
@@ -1089,6 +1090,46 @@ app.delete('/user/:id', verifyJWT, verifyAdmin, async(req, res) => {
     } catch (error) {
         console.error('❌ Delete user error:', error.message);
         res.status(500).send({ message: 'Error deleting user', error: error.message });
+    }
+});
+
+// GET /admin/payments - Get all payments from all users (Admin only)
+app.get('/admin/payments', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        let allPayments = await paymentsCollection.find({}).sort({ paidAt: -1 }).toArray();
+
+        // Enrich each payment with parcel details if any fields are missing
+        allPayments = await Promise.all(allPayments.map(async(payment) => {
+            if (!payment.receiverName || payment.receiverName === 'N/A' ||
+                !payment.parcelType || !payment.totalPrice) {
+                try {
+                    const parcel = await parcelsCollection.findOne({ _id: new ObjectId(payment.parcelId) });
+                    if (parcel) {
+                        payment.receiverName    = payment.receiverName    || parcel.receiverName    || 'N/A';
+                        payment.receiverPhone   = payment.receiverPhone   || parcel.receiverPhone   || 'N/A';
+                        payment.receiverAddress = payment.receiverAddress || parcel.receiverAddress || 'N/A';
+                        payment.parcelName      = payment.parcelName      || parcel.parcelName      || 'N/A';
+                        payment.parcelType      = payment.parcelType      || parcel.parcelType      || 'N/A';
+                        payment.totalPrice      = payment.totalPrice      || parcel.totalPrice      || payment.amount || 0;
+                        payment.trackingId      = payment.trackingId      || parcel.trackingId      || 'N/A';
+                    }
+                } catch (err) {
+                    console.log('⚠️ Error enriching admin payment data:', err.message);
+                }
+            }
+            return payment;
+        }));
+
+        console.log(`✅ Retrieved ${allPayments.length} payments for admin`);
+        res.send({
+            success: true,
+            message: 'All payments retrieved successfully',
+            payments: allPayments,
+            total: allPayments.length
+        });
+    } catch (error) {
+        console.error('❌ Get admin payments error:', error.message);
+        res.status(500).send({ message: 'Error fetching payments', error: error.message });
     }
 });
 
