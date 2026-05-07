@@ -3,9 +3,12 @@ import { Outlet, NavLink } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useLogout from '../hooks/useLogout';
 
+import { RiTaskLine } from 'react-icons/ri';
+
 const DashboardLayout = () => {
-  const { isAdmin } = useAuth();
-    const { handleLogout, isLoading: isLoggingOut } = useLogout();
+  const { isAdmin, userProfile } = useAuth();
+  const isRider = userProfile?.role === 'rider';
+  const { handleLogout, isLoading: isLoggingOut } = useLogout();
     return (
     <div className="drawer lg:drawer-open min-h-screen">
       <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
@@ -44,7 +47,7 @@ const DashboardLayout = () => {
               >
                 <path d="M6 2a1 1 0 00-1 1v2H3a1 1 0 000 2h1v2H3a1 1 0 000 2h1v2H3a1 1 0 000 2h1v3a1 1 0 001 1h2v1a1 1 0 002 0v-1h2v1a1 1 0 002 0v-1h2v1a1 1 0 002 0v-1h3a1 1 0 001-1v-3h1a1 1 0 000-2h-1v-2h1a1 1 0 000-2h-1V7h1a1 1 0 000-2h-1V3a1 1 0 000-2h-2a1 1 0 00-1 1v1H9V3a1 1 0 00-1-1H6z"></path>
               </svg>
-              Dashboard
+              {isRider ? 'Rider Dashboard' : 'Dashboard'}
             </div>
           </div>
 
@@ -117,39 +120,58 @@ const DashboardLayout = () => {
               </NavLink>
             </li>
 
-            {/* My Parcels */}
+            {/* Dynamic Parcels / Deliveries Menu */}
             <li>
-              <NavLink
-                to="/dashboard/my-parcels"
-                data-tip="My Parcels"
-                className={({ isActive }) =>
-                  `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    isActive
-                      ? 'bg-lime-500 text-white shadow-lg'
-                      : 'text-gray-300 hover:bg-slate-700'
-                  } is-drawer-close:px-0 is-drawer-close:justify-center`
-                }
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  strokeWidth="2"
-                  fill="none"
-                  stroke="currentColor"
-                  className="w-5 h-5"
+              {isRider ? (
+                <NavLink
+                  to="/dashboard/assigned-deliveries"
+                  data-tip="Assigned Deliveries"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-lime-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
                 >
-                  <rect x="3" y="4" width="18" height="14" rx="2"></rect>
-                  <polyline points="3 10 12 6 21 10"></polyline>
-                  <line x1="3" y1="10" x2="9" y2="14"></line>
-                  <line x1="21" y1="10" x2="15" y2="14"></line>
-                  <line x1="12" y1="6" x2="12" y2="14"></line>
-                </svg>
-                <span className="font-medium is-drawer-close:hidden">
-                  {isAdmin ? '📦 All Parcels' : 'My Parcels'}
-                </span>
-              </NavLink>
+                  <RiTaskLine className="w-5 h-5" />
+                  <span className="font-medium is-drawer-close:hidden">
+                    Assigned Deliveries
+                  </span>
+                </NavLink>
+              ) : (
+                <NavLink
+                  to="/dashboard/my-parcels"
+                  data-tip="My Parcels"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-lime-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="2"
+                    fill="none"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <rect x="3" y="4" width="18" height="14" rx="2"></rect>
+                    <polyline points="3 10 12 6 21 10"></polyline>
+                    <line x1="3" y1="10" x2="9" y2="14"></line>
+                    <line x1="21" y1="10" x2="15" y2="14"></line>
+                    <line x1="12" y1="6" x2="12" y2="14"></line>
+                  </svg>
+                  <span className="font-medium is-drawer-close:hidden">
+                    {isAdmin ? '📦 All Parcels' : 'My Parcels'}
+                  </span>
+                </NavLink>
+              )}
             </li>
 
             {/* Payment History */}

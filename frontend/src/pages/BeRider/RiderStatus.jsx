@@ -64,7 +64,7 @@ const RiderStatus = () => {
     };
 
     const handleGoToDashboard = () => {
-        navigate('/dashboard');
+        navigate('/dashboard/assigned-deliveries');
     };
 
     const handleRefresh = () => {

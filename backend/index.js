@@ -296,6 +296,19 @@ app.post('/logout', (req, res) => {
 
 // ============ PARCEL ROUTES (Protected) ============
 
+// GET /parcels/assigned - Get rider's assigned parcels
+app.get('/parcels/assigned', verifyJWT, async(req, res) => {
+    try {
+        const query = { riderEmail: req.user.email };
+        const cursor = parcelsCollection.find(query).sort({ updatedAt: -1, createdAt: -1 });
+        const result = await cursor.toArray();
+        res.send(result);
+    } catch (error) {
+        console.error('Error fetching assigned parcels:', error.message);
+        res.status(500).send({ message: 'Error fetching assigned parcels' });
+    }
+});
+
 // GET /parcels - Get user's parcels
 app.get('/parcels', verifyJWT, async(req, res) => {
     try {

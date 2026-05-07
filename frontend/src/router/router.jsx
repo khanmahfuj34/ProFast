@@ -20,6 +20,7 @@ import Payment from "../pages/Dashboard/Payment/Payment";
 import PaymentSuccess from "../pages/Dashboard/Payment/PaymentSuccess";
 import PaymentFailed from "../pages/Dashboard/Payment/PaymentFailed";
 import PaymentHistory from "../pages/Dashboard/PaymentHistory/PaymentHistory";
+import AssignedDeliveries from "../pages/Dashboard/AssignedDeliveries/AssignedDeliveries";
 import ApproveRiders from "../pages/Dashboard/ApproveRiders/ApproveRiders";
 import RiderDetailPage from "../pages/Dashboard/ApproveRiders/RiderDetailPage";
 import AssignRider from "../pages/Dashboard/AssignRider/AssignRider";
@@ -139,6 +140,10 @@ export const router = createBrowserRouter([
       {
         path:'payment-history',
         Component:PaymentHistory
+      },
+      {
+        path:'assigned-deliveries',
+        element: <PrivateRoute><AssignedDeliveries /></PrivateRoute>
       },
       {
         path:'ApproveRiders',
