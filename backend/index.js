@@ -534,16 +534,46 @@ app.get('/parcels/:id', async(req, res) => {
     res.send(result);
 });
 
-// update parcel (status / fields)
+// PATCH /parcels/:id - Assign rider to parcel & update rider workStatus
 app.patch('/parcels/:id', async(req, res) => {
-    const id = req.params.id;
-    const updatedData = req.body;
-    const filter = { _id: new ObjectId(id) };
-    const updateDoc = {
-        $set: updatedData,
-    };
-    const result = await parcelsCollection.updateOne(filter, updateDoc);
-    res.send(result);
+    try {
+        const id = req.params.id;
+        const { riderId, riderName, riderEmail, deliveryStatus, ...rest } = req.body;
+
+        console.log('📦 PATCH /parcels/:id received:', { riderId, riderName, riderEmail, deliveryStatus });
+
+        const filter = { _id: new ObjectId(id) };
+
+        // Build $set explicitly
+        const setFields = {
+            ...rest,
+            updatedAt: new Date()
+        };
+
+        if (deliveryStatus) setFields.deliveryStatus = deliveryStatus;
+
+        if (riderId) {
+            setFields.riderId = riderId;
+            setFields.riderName = riderName || '';
+            setFields.riderEmail = riderEmail || '';
+        }
+
+        const result = await parcelsCollection.updateOne(filter, { $set: setFields });
+
+        // Update rider workStatus to 'in_delivery'
+        if (riderId) {
+            await riderCollection.updateOne(
+                { _id: new ObjectId(riderId) },
+                { $set: { workStatus: 'in_delivery', updatedAt: new Date() } }
+            );
+            console.log(`✅ Rider ${riderId} (${riderName}) workStatus set to 'in_delivery'`);
+        }
+
+        res.send(result);
+    } catch (error) {
+        console.error('❌ Update parcel error:', error.message);
+        res.status(500).send({ message: 'Error updating parcel', error: error.message });
+    }
 });
 
 //rider related apis
@@ -938,10 +968,30 @@ app.get('/admin/stats', verifyJWT, verifyAdmin, async(req, res) => {
     }
 });
 
-// GET /riders - Get all rider applications (Admin only)
+// GET /riders - Get rider applications with optional filters (Admin only)
+// Query params: ?status=approved&district=Dhaka&workStatus=available
 app.get('/riders', verifyJWT, verifyAdmin, async(req, res) => {
     try {
-        const riders = await riderCollection.find({}).sort({ createdAt: -1 }).toArray();
+        const { status, district, workStatus } = req.query;
+
+        const query = {};
+
+        if (status) {
+            // Support case-insensitive match: 'approved' -> 'Approved'
+            query.status = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+        }
+
+        if (district) {
+            // Case-insensitive district match
+            query.district = { $regex: new RegExp(`^${district}$`, 'i') };
+        }
+
+        if (workStatus) {
+            // Support case-insensitive match: 'available' -> 'Available'
+            query.workStatus = workStatus.charAt(0).toUpperCase() + workStatus.slice(1).toLowerCase();
+        }
+
+        const riders = await riderCollection.find(query).sort({ createdAt: -1 }).toArray();
 
         res.send({
             success: true,
