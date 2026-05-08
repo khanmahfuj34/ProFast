@@ -784,6 +784,356 @@ app.patch('/riders/:id', verifyJWT, async(req, res) => {
     }
 });
 
+// ============ RIDER DASHBOARD APIs (Protected + Rider Role) ============
+
+// Helper: approximate coordinates for Bangladesh districts/areas
+const districtCoords = {
+    'Dhaka': [23.8103, 90.4125],
+    'Mirpur': [23.8223, 90.3654],
+    'Banani': [23.7936, 90.4065],
+    'Gulshan': [23.7925, 90.4078],
+    'Dhanmondi': [23.7465, 90.3760],
+    'Uttara': [23.8740, 90.3944],
+    'Mohammadpur': [23.7572, 90.3613],
+    'Bashundhara': [23.8191, 90.4526],
+    'Khilgaon': [23.7490, 90.4840],
+    'Rampura': [23.7570, 90.4910],
+    'Chittagong': [22.3569, 91.7832],
+    'Sylhet': [24.9045, 91.8611],
+    'Rajshahi': [24.3745, 88.6042],
+    'Khulna': [22.8456, 89.5403],
+    'Barishal': [22.7010, 90.3535],
+    'Rangpur': [25.7460, 89.2500],
+    'Mymensingh': [24.7530, 90.4070],
+    'Narayanganj': [23.6238, 90.5000],
+    'Gazipur': [23.9999, 90.4203]
+};
+
+const getCoords = (districtName) => {
+    if (!districtName) return [23.8103, 90.4125]; // default Dhaka
+    const key = Object.keys(districtCoords).find(k =>
+        districtName.toLowerCase().includes(k.toLowerCase())
+    );
+    return key ? districtCoords[key] : [23.8103, 90.4125];
+};
+
+// GET /rider/dashboard-stats - Rider dashboard statistics
+app.get('/rider/dashboard-stats', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const rider = await riderCollection.findOne({ email: riderEmail });
+        const riderId = rider ? rider._id.toString() : '';
+
+        // Start of today in local time (approximate with UTC+6 for Bangladesh)
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
+
+        const assignedQuery = {
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way'] }
+        };
+        const assignedCount = await parcelsCollection.countDocuments(assignedQuery);
+
+        const pendingQuery = {
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_accepted', 'picked_up'] }
+        };
+        const pendingPickups = await parcelsCollection.countDocuments(pendingQuery);
+
+        const completedQuery = {
+            riderEmail: riderEmail,
+            deliveryStatus: 'delivered',
+            updatedAt: { $gte: startOfToday, $lt: endOfToday }
+        };
+        const completedToday = await parcelsCollection.countDocuments(completedQuery);
+
+        // Calculate today's earnings: 70% commission on delivered parcels today
+        const completedTodayParcels = await parcelsCollection.find(completedQuery).toArray();
+        const todayEarnings = completedTodayParcels.reduce((sum, p) => sum + (p.totalPrice || 0) * 0.7, 0);
+
+        res.send({
+            success: true,
+            stats: {
+                assignedCount,
+                pendingPickups,
+                completedToday,
+                todayEarnings: Math.round(todayEarnings)
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get rider dashboard stats error:', error.message);
+        res.status(500).send({ message: 'Error fetching dashboard stats', error: error.message });
+    }
+});
+
+// GET /rider/assigned-deliveries - Get rider's assigned deliveries
+app.get('/rider/assigned-deliveries', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const query = {
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way'] }
+        };
+        const parcels = await parcelsCollection.find(query).sort({ updatedAt: -1, createdAt: -1 }).toArray();
+
+        // Map to dashboard-friendly format
+        const deliveries = parcels.map(p => ({
+            id: p._id.toString(),
+            name: p.parcelName || 'Unnamed Parcel',
+            category: p.parcelType === 'document' ? 'Documents' : 'Electronics',
+            weight: `${p.parcelWeight || 1} kg`,
+            pickup: `${p.senderDistrict || 'Unknown'}`,
+            pickupAddress: p.senderAddress || '',
+            delivery: `${p.receiverDistrict || 'Unknown'}`,
+            deliveryAddress: p.receiverAddress || '',
+            trackingId: p.trackingId || `ZS-${new Date(p.createdAt).getFullYear()}-${p._id.toString().slice(-4)}`,
+            status: mapDeliveryStatus(p.deliveryStatus),
+            statusRaw: p.deliveryStatus,
+            totalPrice: p.totalPrice || 0,
+            paymentStatus: p.paymentStatus || 'unpaid',
+            senderName: p.senderName || '',
+            senderPhone: p.senderPhone || '',
+            receiverName: p.receiverName || '',
+            receiverPhone: p.receiverPhone || ''
+        }));
+
+        res.send({ success: true, deliveries });
+    } catch (error) {
+        console.error('❌ Get rider assigned deliveries error:', error.message);
+        res.status(500).send({ message: 'Error fetching assigned deliveries', error: error.message });
+    }
+});
+
+// Helper to map internal status to UI status
+function mapDeliveryStatus(status) {
+    const map = {
+        'driver_assigned': 'Assigned',
+        'driver_accepted': 'Pickup Ready',
+        'picked_up': 'On The Way',
+        'on_the_way': 'On The Way',
+        'delivered': 'Delivered',
+        'pending-pickup': 'Pending'
+    };
+    return map[status] || 'Assigned';
+}
+
+// GET /rider/active-delivery - Get rider's most recent active delivery with route
+app.get('/rider/active-delivery', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const query = {
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_accepted', 'picked_up', 'on_the_way'] }
+        };
+        const parcel = await parcelsCollection.findOne(query, { sort: { updatedAt: -1 } });
+
+        if (!parcel) {
+            return res.send({ success: true, activeDelivery: null });
+        }
+
+        const pickupCoords = getCoords(parcel.senderDistrict);
+        const dropCoords = getCoords(parcel.receiverDistrict);
+        // Rider position slightly offset from pickup
+        const riderCoords = [pickupCoords[0] + 0.003, pickupCoords[1] + 0.003];
+
+        const activeDelivery = {
+            id: parcel._id.toString(),
+            name: parcel.parcelName || 'Unnamed Parcel',
+            trackingId: parcel.trackingId || `ZS-${new Date(parcel.createdAt).getFullYear()}-${parcel._id.toString().slice(-4)}`,
+            status: mapDeliveryStatus(parcel.deliveryStatus),
+            statusRaw: parcel.deliveryStatus,
+            pickup: {
+                location: `${parcel.senderDistrict || 'Unknown'}`,
+                address: parcel.senderAddress || '',
+                coords: pickupCoords
+            },
+            drop: {
+                location: `${parcel.receiverDistrict || 'Unknown'}`,
+                address: parcel.receiverAddress || '',
+                coords: dropCoords
+            },
+            route: [riderCoords, pickupCoords, dropCoords],
+            senderName: parcel.senderName || '',
+            senderPhone: parcel.senderPhone || '',
+            receiverName: parcel.receiverName || '',
+            receiverPhone: parcel.receiverPhone || ''
+        };
+
+        res.send({ success: true, activeDelivery });
+    } catch (error) {
+        console.error('❌ Get rider active delivery error:', error.message);
+        res.status(500).send({ message: 'Error fetching active delivery', error: error.message });
+    }
+});
+
+// GET /rider/weekly-earnings - Get last 7 days earnings
+app.get('/rider/weekly-earnings', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const now = new Date();
+        const days = [];
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+            const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+
+            const query = {
+                riderEmail: riderEmail,
+                deliveryStatus: 'delivered',
+                updatedAt: { $gte: start, $lt: end }
+            };
+            const parcels = await parcelsCollection.find(query).toArray();
+            const earnings = parcels.reduce((sum, p) => sum + (p.totalPrice || 0) * 0.7, 0);
+
+            days.push({
+                day: dayNames[d.getDay()],
+                earnings: Math.round(earnings),
+                deliveries: parcels.length,
+                isToday: i === 0
+            });
+        }
+
+        res.send({ success: true, weeklyEarnings: days });
+    } catch (error) {
+        console.error('❌ Get rider weekly earnings error:', error.message);
+        res.status(500).send({ message: 'Error fetching weekly earnings', error: error.message });
+    }
+});
+
+// PATCH /rider/status - Toggle rider online/offline status
+app.patch('/rider/status', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const { isOnline } = req.body;
+
+        if (typeof isOnline !== 'boolean') {
+            return res.status(400).send({ message: 'isOnline boolean is required' });
+        }
+
+        const rider = await riderCollection.findOne({ email: riderEmail });
+        if (!rider) {
+            return res.status(404).send({ message: 'Rider not found' });
+        }
+
+        // Determine workStatus based on online state and current delivery status
+        let workStatus = rider.workStatus || 'Available';
+        const hasActiveDelivery = await parcelsCollection.countDocuments({
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_accepted', 'picked_up', 'on_the_way'] }
+        }) > 0;
+
+        if (isOnline) {
+            workStatus = hasActiveDelivery ? 'in_delivery' : 'Available';
+        } else {
+            workStatus = 'Unavailable';
+        }
+
+        await riderCollection.updateOne(
+            { email: riderEmail },
+            { $set: { isOnline, workStatus, updatedAt: new Date() } }
+        );
+
+        console.log(`✅ Rider ${riderEmail} status updated: isOnline=${isOnline}, workStatus=${workStatus}`);
+        res.send({
+            success: true,
+            message: `Rider is now ${isOnline ? 'online' : 'offline'}`,
+            isOnline,
+            workStatus
+        });
+    } catch (error) {
+        console.error('❌ Update rider status error:', error.message);
+        res.status(500).send({ message: 'Error updating rider status', error: error.message });
+    }
+});
+
+// GET /rider/status - Get rider current status
+app.get('/rider/status', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const rider = await riderCollection.findOne({ email: riderEmail });
+        if (!rider) {
+            return res.status(404).send({ message: 'Rider not found' });
+        }
+
+        res.send({
+            success: true,
+            isOnline: rider.isOnline !== false, // default true for backwards compat
+            workStatus: rider.workStatus || 'Available'
+        });
+    } catch (error) {
+        console.error('❌ Get rider status error:', error.message);
+        res.status(500).send({ message: 'Error fetching rider status', error: error.message });
+    }
+});
+
+// PATCH /rider/delivery/:id/status - Update delivery status by rider
+app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const parcelId = req.params.id;
+        const { deliveryStatus } = req.body;
+        const riderEmail = req.user.email;
+
+        if (!ObjectId.isValid(parcelId)) {
+            return res.status(400).send({ message: 'Invalid parcel ID' });
+        }
+
+        const validStatuses = ['driver_accepted', 'picked_up', 'on_the_way', 'delivered'];
+        if (!validStatuses.includes(deliveryStatus)) {
+            return res.status(400).send({ message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+        }
+
+        const parcel = await parcelsCollection.findOne({ _id: new ObjectId(parcelId) });
+        if (!parcel) {
+            return res.status(404).send({ message: 'Parcel not found' });
+        }
+        if (parcel.riderEmail !== riderEmail) {
+            return res.status(403).send({ message: 'Forbidden: This delivery is not assigned to you' });
+        }
+
+        const setFields = {
+            deliveryStatus,
+            updatedAt: new Date()
+        };
+
+        // If delivered, also set deliveredAt
+        if (deliveryStatus === 'delivered') {
+            setFields.deliveredAt = new Date();
+        }
+
+        const result = await parcelsCollection.updateOne(
+            { _id: new ObjectId(parcelId) },
+            { $set: setFields }
+        );
+
+        // Update rider workStatus based on remaining active deliveries
+        const hasActiveDelivery = await parcelsCollection.countDocuments({
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_accepted', 'picked_up', 'on_the_way'] }
+        }) > 0;
+
+        const rider = await riderCollection.findOne({ email: riderEmail });
+        if (rider && rider.isOnline !== false) {
+            await riderCollection.updateOne(
+                { email: riderEmail },
+                { $set: { workStatus: hasActiveDelivery ? 'in_delivery' : 'Available', updatedAt: new Date() } }
+            );
+        }
+
+        console.log(`✅ Delivery ${parcelId} status updated to ${deliveryStatus} by ${riderEmail}`);
+        res.send({
+            success: true,
+            message: `Delivery status updated to ${deliveryStatus}`,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error('❌ Update delivery status error:', error.message);
+        res.status(500).send({ message: 'Error updating delivery status', error: error.message });
+    }
+});
+
 // ============ USER ROUTES (Protected) ============
 
 // POST /user - Save or update user info during registration (JWT Protected)
