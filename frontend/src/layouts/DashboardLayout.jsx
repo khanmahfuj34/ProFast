@@ -1,14 +1,24 @@
-import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useLogout from '../hooks/useLogout';
 
 import { RiTaskLine } from 'react-icons/ri';
 
 const DashboardLayout = () => {
-  const { isAdmin, userProfile } = useAuth();
+  const { isAdmin, userProfile, loading } = useAuth();
   const isRider = userProfile?.role === 'rider';
   const { handleLogout, isLoading: isLoggingOut } = useLogout();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (location.pathname === '/dashboard' && isRider) {
+      navigate('/dashboard/rider-dashboard', { replace: true });
+    }
+  }, [isRider, loading, location.pathname, navigate]);
     return (
     <div className="drawer lg:drawer-open min-h-screen">
       <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
@@ -119,6 +129,40 @@ const DashboardLayout = () => {
                 <span className="font-medium is-drawer-close:hidden">Homepage</span>
               </NavLink>
             </li>
+
+            {/* Dashboard (Rider only) */}
+            {isRider && (
+              <li>
+                <NavLink
+                  to="/dashboard/rider-dashboard"
+                  data-tip="Dashboard"
+                  className={({ isActive }) =>
+                    `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-lime-500 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-slate-700'
+                    } is-drawer-close:px-0 is-drawer-close:justify-center`
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    strokeWidth="2"
+                    fill="none"
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  <span className="font-medium is-drawer-close:hidden">Dashboard</span>
+                </NavLink>
+              </li>
+            )}
 
             {/* Dynamic Parcels / Deliveries Menu */}
             <li>

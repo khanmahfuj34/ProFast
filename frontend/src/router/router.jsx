@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import Home from "../pages/Home";
 import About from "../pages/About/About";
 import Pricing from "../pages/Pricing/Pricing";
@@ -33,6 +34,23 @@ import AdminManageUsers from "../pages/Admin/ManageUsers";
 import AdminManageRiders from "../pages/Admin/ManageRiders";
 import AdminParcelOversight from "../pages/Admin/ParcelOversight";
 import AdminPaymentHistory from "../pages/Admin/AdminPaymentHistory";
+import RiderDashboard from "../pages/Dashboard/RiderDashboard/RiderDashboard";
+import useAuth from "../hooks/useAuth";
+
+const DashboardIndexRedirect = () => {
+  const { userProfile, loading } = useAuth();
+
+  if (loading || !userProfile) {
+    return null;
+  }
+
+  return (
+    <Navigate
+      to={userProfile?.role === 'rider' ? '/dashboard/rider-dashboard' : '/dashboard/my-parcels'}
+      replace
+    />
+  );
+};
 
 /**
  * 404 Not Found Page
@@ -119,7 +137,7 @@ export const router = createBrowserRouter([
     children:[
       {
         index: true,
-        Component: MyParcels
+        element: <DashboardIndexRedirect />
       },
       {
         path:'my-parcels',
@@ -140,6 +158,10 @@ export const router = createBrowserRouter([
       {
         path:'payment-history',
         Component:PaymentHistory
+      },
+      {
+        path:'rider-dashboard',
+        element: <RiderDashboard />
       },
       {
         path:'assigned-deliveries',

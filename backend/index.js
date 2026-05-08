@@ -196,6 +196,37 @@ const verifyAdmin = async(req, res, next) => {
     }
 };
 
+// 🔐 Verify Rider Middleware
+const verifyRider = async(req, res, next) => {
+    try {
+        if (!req.user || !req.user.email) {
+            console.log('🔴 [Rider Verify] No user in request');
+            return res.status(401).send({ message: 'Unauthorized: No user' });
+        }
+
+        // Check if user has rider role in database
+        const user = await usersCollection.findOne({ email: req.user.email });
+
+        if (!user) {
+            console.log('🔴 [Rider Verify] User not found in database:', req.user.email);
+            return res.status(401).send({ message: 'Unauthorized: User not found' });
+        }
+
+        if (user.role !== 'rider') {
+            console.log('🔴 [Rider Verify] Access denied - user role:', user.role, 'for:', req.user.email);
+            return res.status(403).send({ message: 'Forbidden: Rider access required' });
+        }
+
+        // Attach user role to request for logging
+        req.user.role = user.role;
+        console.log('✅ [Rider Verify] Rider access granted for:', req.user.email);
+        next();
+    } catch (error) {
+        console.error('🔴 [Rider Verify] Rider verification error:', error.message);
+        res.status(500).send({ message: 'Error verifying rider status', error: error.message });
+    }
+};
+
 // 🔐 Generate unique tracking ID
 function generateTrackingId() {
     return 'TRK-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -575,10 +606,7 @@ app.patch('/parcels/:id', async(req, res) => {
 
         // Update rider workStatus to 'in_delivery'
         if (riderId) {
-            await riderCollection.updateOne(
-                { _id: new ObjectId(riderId) },
-                { $set: { workStatus: 'in_delivery', updatedAt: new Date() } }
-            );
+            await riderCollection.updateOne({ _id: new ObjectId(riderId) }, { $set: { workStatus: 'in_delivery', updatedAt: new Date() } });
             console.log(`✅ Rider ${riderId} (${riderName}) workStatus set to 'in_delivery'`);
         }
 
@@ -1168,13 +1196,13 @@ app.get('/admin/payments', verifyJWT, verifyAdmin, async(req, res) => {
                 try {
                     const parcel = await parcelsCollection.findOne({ _id: new ObjectId(payment.parcelId) });
                     if (parcel) {
-                        payment.receiverName    = payment.receiverName    || parcel.receiverName    || 'N/A';
-                        payment.receiverPhone   = payment.receiverPhone   || parcel.receiverPhone   || 'N/A';
+                        payment.receiverName = payment.receiverName || parcel.receiverName || 'N/A';
+                        payment.receiverPhone = payment.receiverPhone || parcel.receiverPhone || 'N/A';
                         payment.receiverAddress = payment.receiverAddress || parcel.receiverAddress || 'N/A';
-                        payment.parcelName      = payment.parcelName      || parcel.parcelName      || 'N/A';
-                        payment.parcelType      = payment.parcelType      || parcel.parcelType      || 'N/A';
-                        payment.totalPrice      = payment.totalPrice      || parcel.totalPrice      || payment.amount || 0;
-                        payment.trackingId      = payment.trackingId      || parcel.trackingId      || 'N/A';
+                        payment.parcelName = payment.parcelName || parcel.parcelName || 'N/A';
+                        payment.parcelType = payment.parcelType || parcel.parcelType || 'N/A';
+                        payment.totalPrice = payment.totalPrice || parcel.totalPrice || payment.amount || 0;
+                        payment.trackingId = payment.trackingId || parcel.trackingId || 'N/A';
                     }
                 } catch (err) {
                     console.log('⚠️ Error enriching admin payment data:', err.message);

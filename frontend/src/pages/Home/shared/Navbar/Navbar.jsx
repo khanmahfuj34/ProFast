@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import ProFastLogo from '../ProFastLogo/ProFastLogo';
 import useAuth from '../../../../hooks/useAuth';
@@ -22,7 +22,7 @@ import ProfileModal from '../../../../components/ProfileModal';
  * - All user items + Approve Riders, Manage Users dashboards
  */
 const Navbar = () => {
-    const { user, loading } = useAuth();
+    const { user, userProfile, loading } = useAuth();
     const { handleLogout, isLoading: isLoggingOut } = useLogout();
     const axiosSecure = useAxiosSecure();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -30,14 +30,7 @@ const Navbar = () => {
     const [hasRiderApplication, setHasRiderApplication] = useState(false);
     const [checkingRiderStatus, setCheckingRiderStatus] = useState(false);
 
-    // Check if user has a rider application when user loads
-    useEffect(() => {
-        if (user?.email && !checkingRiderStatus) {
-            checkRiderApplicationStatus();
-        }
-    }, [user?.email]);
-
-    const checkRiderApplicationStatus = async () => {
+    const checkRiderApplicationStatus = useCallback(async () => {
         try {
             setCheckingRiderStatus(true);
             const response = await axiosSecure.get(`/riders/${user.email}`);
@@ -55,7 +48,14 @@ const Navbar = () => {
         } finally {
             setCheckingRiderStatus(false);
         }
-    };
+    }, [user?.email, axiosSecure]);
+
+    // Check if user has a rider application when user loads
+    useEffect(() => {
+        if (user?.email && !checkingRiderStatus) {
+            checkRiderApplicationStatus();
+        }
+    }, [user?.email, checkingRiderStatus, checkRiderApplicationStatus]);
 
     const handleLogoutClick = () => {
         setShowLogoutModal(true);
@@ -95,19 +95,28 @@ const Navbar = () => {
                 {hasRiderApplication ? '🏍️ Rider Status' : 'Be a Rider'}
             </NavLink>
         </li>   
-        <li><NavLink to="/dashboard/my-parcels" className="text-gray-700 hover:text-lime-600 transition-colors duration-200">My Parcels</NavLink></li>
+        <li><NavLink to="/dashboard" className="text-gray-700 hover:text-lime-600 transition-colors duration-200">{userProfile?.role === 'rider' ? 'Rider Dashboard' : 'My Parcels'}</NavLink></li>
     </>;
 
     // ✅ Admin-specific navigation items
     const adminNavItems = <>
-        {userNavItems}
+        {publicNavItems}
+        <li><NavLink to="/send-parcel" className="text-gray-700 hover:text-lime-600 transition-colors duration-200">Send Parcel</NavLink></li>
+        <li>
+            <NavLink 
+                to={hasRiderApplication ? "/be-rider-status" : "/be-rider"} 
+                className="btn btn-sm bg-lime-500 hover:bg-lime-600 text-white border-none rounded-xl transition-all duration-200 ml-3"
+            >
+                {hasRiderApplication ? '🏍️ Rider Status' : 'Be a Rider'}
+            </NavLink>
+        </li>
         <li className="divider my-2">Admin Panel</li>
         <li><NavLink to="/dashboard/ApproveRiders" className="text-blue-700 hover:text-blue-900 transition-colors duration-200 font-semibold">👮 Approve Riders</NavLink></li>
         <li><NavLink to="/dashboard/ManageUsers" className="text-blue-700 hover:text-blue-900 transition-colors duration-200 font-semibold">👥 Manage Users</NavLink></li>
     </>;
 
     // ✅ Select correct navigation based on user role
-    const navItems = user ? (user.role === 'admin' ? adminNavItems : userNavItems) : publicNavItems;
+    const navItems = user ? (userProfile?.role === 'admin' ? adminNavItems : userNavItems) : publicNavItems;
 
     return (
         <>
@@ -144,9 +153,9 @@ const Navbar = () => {
                                 </p>
                                 {/* Role badge */}
                                 <p className="text-xs text-base-100 font-medium">
-                                    {user.role === 'admin' ? (
+                                    {userProfile?.role === 'admin' ? (
                                         <span className="badge badge-error">👑 Admin</span>
-                                    ) : user.role === 'rider' ? (
+                                    ) : userProfile?.role === 'rider' ? (
                                         <span className="badge badge-info">🏍️ Rider</span>
                                     ) : (
                                         <span className="badge badge-outline">👤 User</span>

@@ -99,7 +99,7 @@ const Payment = () => {
         value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'N/A';
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 py-8 px-4">
+        <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100 py-8 px-4">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-slate-800">Payment</h1>
@@ -125,7 +125,7 @@ const Payment = () => {
                     <div className="space-y-6">
                         {/* Parcel Information Card */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="bg-gradient-to-r from-lime-50 to-emerald-50 px-6 py-4 border-b border-slate-200">
+                            <div className="bg-linear-to-r from-lime-50 to-emerald-50 px-6 py-4 border-b border-slate-200">
                                 <h2 className="text-xl font-bold text-slate-800">Parcel Information</h2>
                             </div>
                             <div className="p-6 space-y-4">
