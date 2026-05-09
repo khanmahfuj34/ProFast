@@ -1134,6 +1134,170 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
     }
 });
 
+// GET /rider/delivery-history - Get rider's complete delivery history with filters & pagination
+app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const {
+            page = 1,
+            limit = 10,
+            search = '',
+            status = 'all',
+            fromDate,
+            toDate
+        } = req.query;
+
+        const pageNum = Math.max(1, parseInt(page));
+        const limitNum = Math.max(1, Math.min(100, parseInt(limit)));
+        const skip = (pageNum - 1) * limitNum;
+
+        // Base query: all parcels ever assigned to this rider (not just active)
+        const baseQuery = { riderEmail: riderEmail };
+
+        // Status filter mapping
+        const statusMap = {
+            'delivered': ['delivered'],
+            'in-transit': ['driver_accepted', 'picked_up', 'on_the_way'],
+            'cancelled': ['pending-pickup'],
+            'all': ['driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way', 'delivered', 'pending-pickup']
+        };
+
+        if (status !== 'all' && statusMap[status]) {
+            baseQuery.deliveryStatus = { $in: statusMap[status] };
+        }
+
+        // Date range filter (use deliveredAt for delivered, updatedAt for others)
+        const dateFilter = {};
+        if (fromDate || toDate) {
+            dateFilter.$or = [];
+            if (fromDate) {
+                const from = new Date(fromDate);
+                if (!isNaN(from)) {
+                    dateFilter.$or.push({ deliveredAt: { $gte: from } });
+                    dateFilter.$or.push({ updatedAt: { $gte: from } });
+                }
+            }
+            if (toDate) {
+                const to = new Date(toDate);
+                to.setDate(to.getDate() + 1); // include full day
+                if (!isNaN(to)) {
+                    dateFilter.$or.push({ deliveredAt: { $lt: to } });
+                    dateFilter.$or.push({ updatedAt: { $lt: to } });
+                }
+            }
+        }
+
+        // Build final query
+        const query = { ...baseQuery };
+        if (dateFilter.$or) {
+            query.$and = [baseQuery, dateFilter];
+        }
+
+        // Search by trackingId, receiverName, or parcelName
+        let searchQuery = {};
+        if (search.trim()) {
+            const regex = { $regex: search.trim(), $options: 'i' };
+            searchQuery = {
+                $or: [
+                    { trackingId: regex },
+                    { receiverName: regex },
+                    { parcelName: regex },
+                    { senderName: regex }
+                ]
+            };
+            if (query.$and) {
+                query.$and.push(searchQuery);
+            } else if (Object.keys(query).length > 0) {
+                query.$and = [baseQuery, searchQuery];
+                delete query.riderEmail;
+            } else {
+                Object.assign(query, searchQuery);
+            }
+        }
+
+        // Stats (count on baseQuery without search)
+        const totalDeliveries = await parcelsCollection.countDocuments({ riderEmail: riderEmail });
+        const completedCount = await parcelsCollection.countDocuments({ riderEmail: riderEmail, deliveryStatus: 'delivered' });
+        const inTransitCount = await parcelsCollection.countDocuments({
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_accepted', 'picked_up', 'on_the_way'] }
+        });
+        const cancelledCount = await parcelsCollection.countDocuments({ riderEmail: riderEmail, deliveryStatus: 'pending-pickup' });
+
+        // Total matching records for pagination
+        const totalRecords = await parcelsCollection.countDocuments(query);
+        const totalPages = Math.ceil(totalRecords / limitNum);
+
+        // Fetch data
+        const parcels = await parcelsCollection
+            .find(query)
+            .sort({ updatedAt: -1, createdAt: -1 })
+            .skip(skip)
+            .limit(limitNum)
+            .toArray();
+
+        const deliveries = parcels.map(p => {
+            const isDelivered = p.deliveryStatus === 'delivered';
+            const isCancelled = p.deliveryStatus === 'pending-pickup';
+            const earning = isDelivered ? Math.round((p.totalPrice || 0) * 0.7) : 0;
+
+            const deliveredDate = p.deliveredAt
+                ? new Date(p.deliveredAt)
+                : (isDelivered ? new Date(p.updatedAt) : null);
+
+            return {
+                id: p._id.toString(),
+                trackingId: p.trackingId || `ZS-${new Date(p.createdAt).getFullYear()}-${p._id.toString().slice(-4)}`,
+                parcelName: p.parcelName || 'Unnamed Parcel',
+                category: p.parcelType === 'document' ? 'Documents' : 'Electronics',
+                weight: `${p.parcelWeight || 1} kg`,
+                pickup: `${p.senderDistrict || 'Unknown'}`,
+                pickupAddress: p.senderAddress || '',
+                delivery: `${p.receiverDistrict || 'Unknown'}`,
+                deliveryAddress: p.receiverAddress || '',
+                receiverName: p.receiverName || '',
+                senderName: p.senderName || '',
+                status: mapDeliveryStatus(p.deliveryStatus),
+                statusRaw: p.deliveryStatus,
+                deliveredDate: deliveredDate ? deliveredDate.toISOString() : null,
+                deliveredDateFormatted: deliveredDate
+                    ? deliveredDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : '—',
+                deliveredTimeFormatted: deliveredDate
+                    ? deliveredDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                    : '',
+                earning,
+                earningFormatted: `৳${earning}`,
+                totalPrice: p.totalPrice || 0
+            };
+        });
+
+        res.send({
+            success: true,
+            stats: {
+                totalDeliveries,
+                completed: completedCount,
+                inTransit: inTransitCount,
+                cancelled: cancelledCount,
+                successRate: totalDeliveries > 0 ? Math.round((completedCount / totalDeliveries) * 100) : 0,
+                cancelledRate: totalDeliveries > 0 ? Math.round((cancelledCount / totalDeliveries) * 100) : 0
+            },
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                totalRecords,
+                totalPages,
+                hasNextPage: pageNum < totalPages,
+                hasPrevPage: pageNum > 1
+            },
+            deliveries
+        });
+    } catch (error) {
+        console.error('❌ Get rider delivery history error:', error.message);
+        res.status(500).send({ message: 'Error fetching delivery history', error: error.message });
+    }
+});
+
 // ============ USER ROUTES (Protected) ============
 
 // POST /user - Save or update user info during registration (JWT Protected)

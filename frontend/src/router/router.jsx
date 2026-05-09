@@ -35,6 +35,7 @@ import AdminManageRiders from "../pages/Admin/ManageRiders";
 import AdminParcelOversight from "../pages/Admin/ParcelOversight";
 import AdminPaymentHistory from "../pages/Admin/AdminPaymentHistory";
 import RiderDashboard from "../pages/Dashboard/RiderDashboard/RiderDashboard";
+import DeliveryHistory from "../pages/Dashboard/DeliveryHistory/DeliveryHistory";
 import useAuth from "../hooks/useAuth";
 
 const DashboardIndexRedirect = () => {
@@ -166,6 +167,10 @@ export const router = createBrowserRouter([
       {
         path:'assigned-deliveries',
         element: <PrivateRoute><AssignedDeliveries /></PrivateRoute>
+      },
+      {
+        path:'delivery-history',
+        element: <PrivateRoute><DeliveryHistory /></PrivateRoute>
       },
       {
         path:'ApproveRiders',
