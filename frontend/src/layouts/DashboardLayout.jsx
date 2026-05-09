@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useLogout from '../hooks/useLogout';
 import logo from '../assets/logo.png';
@@ -141,6 +141,19 @@ const DashboardLayout = () => {
                   <span className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest pointer-events-none">
                     Main
                   </span>
+                </li>
+                <li>
+                  <Link
+                    to="/"
+                    data-tip="Homepage"
+                    className="is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-300 hover:bg-slate-700 is-drawer-close:px-0 is-drawer-close:justify-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="w-5 h-5">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span className="font-medium is-drawer-close:hidden">Homepage</span>
+                  </Link>
                 </li>
                 <li>
                   <NavLink
