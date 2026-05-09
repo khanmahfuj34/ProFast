@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../../hooks/useAuth';
@@ -11,13 +11,13 @@ import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
-    const { signIn, user, loading } = useAuth();
+    const { signIn, user, loading, userProfile } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
     const [resetLoading, setResetLoading] = useState(false);
     const [resetError, setResetError] = useState('');
-
 
     const onSubmit = data => {
         // AuthProvider.signIn handles reload() + emailVerified check internally.
@@ -25,8 +25,8 @@ const Login = () => {
         // .catch() handles all error cases including 'auth/email-not-verified'.
         signIn(data.email, data.password)
             .then(() => {
-                // ✅ Verified user — navigate immediately, no toast needed
-                navigate('/', { replace: true });
+                // ✅ Verified user — AuthProvider will finish token + profile fetch
+                // and clear loading. The early-return <Navigate> below handles redirect.
             })
             .catch(error => {
                 // Handle all authentication errors — no navigation occurs here
@@ -66,11 +66,7 @@ const Login = () => {
             // ✅ Email verified - ONLY proceed from here
             toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 2000 });
             console.log('✅ Google Login successful - Email verified:', result.user.email);
-            
-            // Navigate to home after 2 seconds
-            setTimeout(() => {
-                navigate('/', { replace: true });
-            }, 2000);
+            // AuthProvider will finish token + profile fetch; <Navigate> below handles redirect.
             
         } catch (error) {
             console.error('❌ Google Login Error:', error.message);
@@ -139,8 +135,35 @@ const Login = () => {
     }, []);
 
     // 🔒 All hooks called above — safe to do early return now
-    if (!loading && user) {
-        return <Navigate to="/" replace />;
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-yellow-100 to-yellow-50">
+                <span className="loading loading-spinner loading-lg text-lime-600"></span>
+                <p className="mt-4 text-gray-600 font-medium">Signing you in…</p>
+            </div>
+        );
+    }
+
+    if (user) {
+        let destination = location.state?.from?.pathname;
+        
+        // If user profile hasn't loaded yet but backend is running, it will load shortly.
+        // But since loading is false, userProfile should be available.
+        if (userProfile?.role === 'admin' && (destination === '/' || destination === '/dashboard')) {
+            destination = '/admin'; // Force admins to admin dashboard
+        } else if (userProfile?.role === 'rider' && (destination === '/' || destination === '/dashboard')) {
+            destination = '/dashboard/rider-dashboard'; // Force riders to rider dashboard
+        } else if (!destination || destination === '/dashboard') {
+            if (userProfile?.role === 'admin') {
+                destination = '/admin';
+            } else if (userProfile?.role === 'rider') {
+                destination = '/dashboard/rider-dashboard';
+            } else {
+                destination = '/'; // Normal users go to homepage
+            }
+        }
+        
+        return <Navigate to={destination} replace />;
     }
 
     return (

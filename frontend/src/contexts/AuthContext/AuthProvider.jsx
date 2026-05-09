@@ -325,28 +325,26 @@ const AuthProvider = ({ children }) => {
     };
 
     // ✅ Firebase auth listener - ONLY updates user state (no async work in callback)
+    // loading stays true when user exists; the token effect below will set it false
+    // after the JWT is sent and the backend profile is fetched.
     useEffect(() => {
         if (!USE_MOCK_AUTH) {
             const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                 if (currentUser) {
                     console.log('🔐 [onAuthStateChanged] User detected:', currentUser.email);
                     setUserProfile(null);
-                    // Reload to get the latest profile, then update state
                     currentUser.reload().then(() => {
                         setUser({ ...auth.currentUser });
-                        // ✅ IMPORTANT: Set loading to false AFTER user state is updated
-                        setLoading(false);
+                        // loading remains true until token effect fetches profile
                     }).catch(err => {
                         console.error('🔐 [onAuthStateChanged] Reload error:', err);
                         setUser({ ...currentUser });
-                        // ✅ Set loading to false even if reload fails
-                        setLoading(false);
                     });
                 } else {
                     console.log('🔐 [onAuthStateChanged] No user logged in');
                     setUser(null);
                     setUserProfile(null);
-                    // ✅ Set loading to false when user is null
+                    tokenSentForUidRef.current = null;
                     setLoading(false);
                 }
             });
@@ -360,25 +358,26 @@ const AuthProvider = ({ children }) => {
     // This prevents infinite loops and race conditions
     // NOTE: We use auth.currentUser (actual Firebase object) not the state user (spread object)
     // ✅ KEY FIX: Only send token if this is a NEW user UID (prevents duplicate calls)
+    // loading is cleared here so the app waits until the JWT + profile are ready.
     useEffect(() => {
         if (user && !USE_MOCK_AUTH && auth.currentUser) {
             const currentUid = auth.currentUser.uid;
-            
-            // ✅ Only send token if we haven't sent it for this user yet
+
             if (tokenSentForUidRef.current !== currentUid) {
                 tokenSentForUidRef.current = currentUid;
                 console.log('🔐 [useEffect] New login detected (uid:', currentUid, '), sending token to backend...');
-                
-                // Pass the actual Firebase user object which has getIdToken() method
+
                 sendTokenToBackend(auth.currentUser).then(tokenSent => {
                     if (tokenSent) {
                         console.log('✅ [useEffect] Token sent successfully for uid:', currentUid);
                     } else {
                         console.warn('⚠️ [useEffect] Token sending failed, but continuing');
                     }
-                });
+                    setLoading(false);
+                }).catch(() => setLoading(false));
             } else {
                 console.log('🔐 [useEffect] Token already sent for this user (uid:', currentUid, '), skipping duplicate send');
+                // Do not prematurely set loading to false here, as the initial token request might still be in flight!
             }
         }
     }, [user, sendTokenToBackend]);

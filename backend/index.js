@@ -306,6 +306,32 @@ app.get('/debug/cookies', (req, res) => {
 });
 
 //user related apis
+app.get('/user', verifyJWT, async (req, res) => {
+    try {
+        const user = await usersCollection.findOne({ email: req.user.email });
+        if (user) {
+            res.send({ success: true, user });
+        } else {
+            res.status(404).send({ success: false, message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).send({ success: false, message: 'Server error' });
+    }
+});
+
+app.post('/save-social-user', async(req, res) => {
+    const user = req.body;
+    const existingUser = await usersCollection.findOne({ email: user.email });
+    if (!existingUser) {
+        user.role = 'user';
+        user.createdAt = new Date();
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+    } else {
+        res.send({ message: 'User already exists', insertedId: null });
+    }
+});
+
 app.post('/users', async(req, res) => {
     const user = req.body;
     user.role = 'user';
