@@ -9,6 +9,7 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const { handleLogout } = useLogout();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -18,6 +19,7 @@ const AdminLayout = () => {
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const closeSidebar = () => setSidebarOpen(false);
+  const toggleSidebarCollapse = () => setSidebarCollapsed(!sidebarCollapsed);
 
   if (loading) {
     return (
@@ -40,7 +42,12 @@ const AdminLayout = () => {
       )}
 
       {/* Sidebar */}
-      <AdminSidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+      <AdminSidebar 
+        isOpen={sidebarOpen} 
+        onClose={closeSidebar}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -52,6 +59,7 @@ const AdminLayout = () => {
               <button
                 onClick={toggleSidebar}
                 className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                title="Toggle sidebar"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -65,9 +73,35 @@ const AdminLayout = () => {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d="M4 6h16M4 12h16M4 18h16"
+                    className="transition-all duration-300"
                   />
                 </svg>
               </button>
+              
+              {/* Desktop Collapse Toggle */}
+              <button
+                onClick={toggleSidebarCollapse}
+                className="hidden lg:flex p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-6 w-6 text-white transition-transform duration-300 ${
+                    sidebarCollapsed ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+              
               <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 hidden sm:block">
                 ProFast Admin
               </h1>

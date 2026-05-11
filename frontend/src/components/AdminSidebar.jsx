@@ -15,7 +15,7 @@ import {
   MdLocationOn,
 } from 'react-icons/md';
 
-const AdminSidebar = ({ isOpen, onClose }) => {
+const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse = () => {} }) => {
   const location = useLocation();
   const [expandedSection, setExpandedSection] = useState(null);
 
@@ -140,11 +140,12 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     return (
       <NavLink
         to={item.path}
+        title={isCollapsed ? item.label : ''}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group relative overflow-hidden ${
           active
             ? 'bg-gradient-to-r from-[#10B981] to-[#059669] text-white shadow-lg shadow-emerald-500/50'
             : 'text-gray-300 hover:text-white hover:bg-slate-700/50'
-        }`}
+        } ${isCollapsed ? 'justify-center' : ''}`}
       >
         {/* Glow effect for active items */}
         {active && (
@@ -154,13 +155,15 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         {/* Icon */}
         <Icon className={`w-5 h-5 transition-transform duration-300 flex-shrink-0 ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
 
-        {/* Label */}
-        <span className={`text-sm flex-1 transition-all duration-300 ${active ? 'font-bold text-white' : 'font-semibold text-gray-300 group-hover:text-white group-hover:translate-x-0.5'}`}>
-          {item.label}
-        </span>
+        {/* Label - Hidden when collapsed */}
+        {!isCollapsed && (
+          <span className={`text-sm flex-1 transition-all duration-300 ${active ? 'font-bold text-white' : 'font-semibold text-gray-300 group-hover:text-white group-hover:translate-x-0.5'}`}>
+            {item.label}
+          </span>
+        )}
 
-        {/* Badge */}
-        {item.badge && (
+        {/* Badge - Hidden when collapsed */}
+        {!isCollapsed && item.badge && (
           <span
             className={`px-2.5 py-0.5 rounded-full text-xs font-bold transition-all duration-300 ${
               active
@@ -176,52 +179,92 @@ const AdminSidebar = ({ isOpen, onClose }) => {
   };
 
   const SectionTitle = ({ title }) => (
-    <div className="px-4 py-3 mt-2 first:mt-0">
-      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest letter-spacing">
-        {title}
-      </h3>
-    </div>
+    !isCollapsed && (
+      <div className="px-4 py-3 mt-2 first:mt-0">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest letter-spacing">
+          {title}
+        </h3>
+      </div>
+    )
   );
 
   return (
     <div
-      className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 shadow-2xl transform transition-transform duration-300 lg:translate-x-0 ${
+      className={`fixed lg:static inset-y-0 left-0 z-40 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 shadow-2xl transform transition-all duration-300 lg:translate-x-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } overflow-y-auto`}
+      } ${isCollapsed ? 'w-20 lg:w-20' : 'w-64 lg:w-64'} overflow-y-auto`}
     >
       {/* Header */}
       <div className="sticky top-0 bg-gradient-to-b from-slate-900 via-slate-800/95 to-slate-800/50 backdrop-blur-sm p-6 border-b border-slate-700/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/50">
+          {!isCollapsed && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/50">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="w-6 h-6"
+                >
+                  <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-2l-4 4v-4z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">ProFast</h1>
+                <p className="text-xs text-emerald-400 font-medium">Admin Panel</p>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-1 ml-auto">
+            {isCollapsed ? (
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/50">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="w-5 h-5"
+                >
+                  <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-2l-4 4v-4z" />
+                </svg>
+              </div>
+            ) : null}
+            
+            {/* Desktop Collapse Button */}
+            <button
+              onClick={onToggleCollapse}
+              className="hidden lg:p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
+                className={`h-5 w-5 text-gray-300 transition-transform duration-300 ${
+                  isCollapsed ? 'rotate-180' : ''
+                }`}
+                fill="none"
                 viewBox="0 0 24 24"
-                fill="white"
-                className="w-6 h-6"
+                stroke="currentColor"
               >
-                <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2h-2l-4 4v-4z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-white">ProFast</h1>
-              <p className="text-xs text-emerald-400 font-medium">Admin Panel</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-300"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+            </button>
+            
+            {/* Mobile Close Button */}
+            <button
+              onClick={onClose}
+              className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-gray-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
