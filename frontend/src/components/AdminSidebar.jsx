@@ -152,10 +152,10 @@ const AdminSidebar = ({ isOpen, onClose }) => {
         )}
 
         {/* Icon */}
-        <Icon className={`w-5 h-5 transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
+        <Icon className={`w-5 h-5 transition-transform duration-300 flex-shrink-0 ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
 
         {/* Label */}
-        <span className={`font-semibold text-sm flex-1 ${active ? 'font-bold' : 'group-hover:translate-x-0.5 transition-transform'}`}>
+        <span className={`text-sm flex-1 transition-all duration-300 ${active ? 'font-bold text-white' : 'font-semibold text-gray-300 group-hover:text-white group-hover:translate-x-0.5'}`}>
           {item.label}
         </span>
 
