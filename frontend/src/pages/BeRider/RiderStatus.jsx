@@ -7,7 +7,7 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 const RiderStatus = () => {
-    const { user } = useAuth();
+    const { user, tokenReady } = useAuth();
     const axiosSecure = useAxiosSecure();
     const navigate = useNavigate();
     const [riderData, setRiderData] = useState(null);
@@ -19,8 +19,15 @@ const RiderStatus = () => {
 
     useEffect(() => {
         AOS.init({ duration: 800, once: true, offset: 50 });
-        fetchRiderStatus();
-    }, [user?.email]);
+    }, []);
+
+    // ✅ Only fetch rider status after JWT cookie is confirmed ready
+    // Prevents 401 errors during the initial login flow
+    useEffect(() => {
+        if (tokenReady && user?.email) {
+            fetchRiderStatus();
+        }
+    }, [tokenReady, user?.email]);
 
     const fetchRiderStatus = async () => {
         try {

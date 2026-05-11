@@ -22,7 +22,7 @@ import ProfileModal from '../../../../components/ProfileModal';
  * - All user items + Approve Riders, Manage Users dashboards
  */
 const Navbar = () => {
-    const { user, userProfile, loading } = useAuth();
+    const { user, userProfile, loading, tokenReady } = useAuth();
     const { handleLogout, isLoading: isLoggingOut } = useLogout();
     const axiosSecure = useAxiosSecure();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -50,12 +50,13 @@ const Navbar = () => {
         }
     }, [user?.email, axiosSecure]);
 
-    // Check if user has a rider application when user loads
+    // ✅ Only check rider application status after JWT cookie is confirmed ready
+    // Prevents 401 errors during the initial login flow
     useEffect(() => {
-        if (user?.email && !checkingRiderStatus) {
+        if (user?.email && tokenReady && !checkingRiderStatus) {
             checkRiderApplicationStatus();
         }
-    }, [user?.email, checkingRiderStatus, checkRiderApplicationStatus]);
+    }, [user?.email, tokenReady]);
 
     const handleLogoutClick = () => {
         setShowLogoutModal(true);

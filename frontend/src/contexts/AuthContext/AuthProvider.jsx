@@ -18,7 +18,11 @@ const AuthProvider = ({ children }) => {
     const [userProfile, setUserProfile] = useState(null); // ✅ Backend user profile with role
     const [loading, setLoading] = useState(true);
     const [authError, setAuthError] = useState(null);
-    
+
+    // ✅ tokenReady: true only after /jwt POST succeeds and cookie is stored in browser.
+    // All protected API calls (e.g. /riders/:email, /user) must wait for this flag.
+    const [tokenReady, setTokenReady] = useState(false);
+
     // ✅ Track the user UID for which we've already sent token
     // This prevents sending token multiple times for the same user
     const tokenSentForUidRef = useRef(null);
@@ -58,36 +62,39 @@ const AuthProvider = ({ children }) => {
             console.log('🔐 [Token Flow] Getting Firebase ID token for:', user.email);
             const token = await user.getIdToken(true); // Force refresh to get latest token
             console.log('🔐 [Token Flow] Token obtained, length:', token.length);
-            
-            
+
             console.log('🔐 [Token Flow] POSTing token to /jwt endpoint...');
             const response = await axios.post(
                 'http://localhost:3000/jwt',
                 { token },
-                { 
+                {
                     withCredentials: true, // ✅ CRITICAL: Send cookies
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 }
             );
-            
+
             console.log('✅ [Token Flow] JWT endpoint response:', response.data);
             console.log('✅ [Token Flow] httpOnly cookie should now be set in browser');
-            
+
+            // ✅ Mark token as ready BEFORE fetching profile so protected API calls can proceed
+            setTokenReady(true);
+
             // ✅ Save social user data to database
             await saveSocialUserData(user);
-            
-            // ✅ NEW: Fetch user profile from backend to get role
+
+            // ✅ Fetch user profile from backend to get role
             await fetchUserProfile();
-            
+
             return true;
         } catch (error) {
             console.error('❌ [Token Flow] Error sending token to backend:');
             console.error('   Status:', error.response?.status);
             console.error('   Message:', error.response?.data?.message || error.message);
             console.error('   Error:', error.response?.data?.error);
-            // Non-critical error - don't block auth
+            // Token failed — keep tokenReady false so interceptor won't log out prematurely
+            setTokenReady(false);
             return false;
         }
     }, [fetchUserProfile]);
@@ -176,7 +183,9 @@ const AuthProvider = ({ children }) => {
     const signIn = (email, password) => {
         setLoading(true);
         setAuthError(null);
-        
+        // Reset tokenReady on each new sign-in attempt
+        setTokenReady(false);
+
         if (USE_MOCK_AUTH) {
             return new Promise((resolve) => {
                 setTimeout(() => {
@@ -186,7 +195,7 @@ const AuthProvider = ({ children }) => {
                 }, 500);
             });
         }
-        
+
         return signInWithEmailAndPassword(auth, email, password)
             .then(async result => {
                 // Reload user to get the latest emailVerified status from Firebase
@@ -200,7 +209,7 @@ const AuthProvider = ({ children }) => {
                     error.code = 'auth/email-not-verified';
                     throw error;
                 }
-                
+
                 // ✅ Token will be sent by separate useEffect when user state updates
                 // This prevents infinite loops from double-sending
                 console.log('🔐 [SignIn] Token will be sent when user state updates');
@@ -216,10 +225,11 @@ const AuthProvider = ({ children }) => {
     const logOut = async () => {
         setLoading(true);
         setAuthError(null);
-        
-        // ✅ Reset token flag when logging out
+
+        // ✅ Reset token flags when logging out
         tokenSentForUidRef.current = null;
-        
+        setTokenReady(false);
+
         if (USE_MOCK_AUTH) {
             setUser(null);
             setUserProfile(null); // ✅ Clear profile
@@ -228,7 +238,7 @@ const AuthProvider = ({ children }) => {
             setLoading(false);
             return Promise.resolve();
         }
-        
+
         try {
             // 🔐 Call backend logout endpoint to clear cookie
             await axios.post(
@@ -237,10 +247,10 @@ const AuthProvider = ({ children }) => {
                 { withCredentials: true }
             );
             console.log('🔐 Logged out - cookie cleared');
-            
+
             // Sign out from Firebase
             await signOut(auth);
-            
+
             // Clear user state
             setUser(null);
             setUserProfile(null); // ✅ Clear profile
@@ -333,6 +343,8 @@ const AuthProvider = ({ children }) => {
                 if (currentUser) {
                     console.log('🔐 [onAuthStateChanged] User detected:', currentUser.email);
                     setUserProfile(null);
+                    // Reset tokenReady when auth state changes to a new user
+                    setTokenReady(false);
                     currentUser.reload().then(() => {
                         setUser({ ...auth.currentUser });
                         // loading remains true until token effect fetches profile
@@ -344,6 +356,7 @@ const AuthProvider = ({ children }) => {
                     console.log('🔐 [onAuthStateChanged] No user logged in');
                     setUser(null);
                     setUserProfile(null);
+                    setTokenReady(false);
                     tokenSentForUidRef.current = null;
                     setLoading(false);
                 }
@@ -374,7 +387,10 @@ const AuthProvider = ({ children }) => {
                         console.warn('⚠️ [useEffect] Token sending failed, but continuing');
                     }
                     setLoading(false);
-                }).catch(() => setLoading(false));
+                }).catch(() => {
+                    setTokenReady(false);
+                    setLoading(false);
+                });
             } else {
                 console.log('🔐 [useEffect] Token already sent for this user (uid:', currentUid, '), skipping duplicate send');
                 // Do not prematurely set loading to false here, as the initial token request might still be in flight!
@@ -386,9 +402,10 @@ const AuthProvider = ({ children }) => {
         createUser,
         signIn,
         user,
-        userProfile, // ✅ NEW: Backend user profile with role
-        isAdmin: userProfile?.role === 'admin', // ✅ NEW: Computed isAdmin property
+        userProfile, // ✅ Backend user profile with role
+        isAdmin: userProfile?.role === 'admin', // ✅ Computed isAdmin property
         loading,
+        tokenReady, // ✅ NEW: true only after /jwt POST succeeds — gate all protected API calls on this
         logOut,
         authError,
         resendVerificationEmail,

@@ -96,7 +96,7 @@ const formatStatusLabel = (status) => {
 };
 
 /* ─── Delivery Detail Card ─── */
-const DeliveryCard = ({ parcel, onAccept, onReject, isUpdating }) => {
+const DeliveryCard = ({ parcel, onAccept, onReject, onUpdateProgress, isUpdating }) => {
     const [expanded, setExpanded] = useState(false);
     const pickupCoords = getCoords(parcel.senderDistrict);
     const dropCoords = getCoords(parcel.receiverDistrict);
@@ -297,12 +297,77 @@ const DeliveryCard = ({ parcel, onAccept, onReject, isUpdating }) => {
                                     </button>
                                 </div>
                             )}
-                            {parcel.deliveryStatus !== 'driver_assigned' && (
-                                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 text-sm">✓</div>
+
+                            {/* Delivery Progress Buttons — shown after accepted */}
+                            {parcel.deliveryStatus === 'driver_accepted' && (
+                                <div className="pt-2">
+                                    <p className="text-xs font-semibold text-slate-500 mb-2">Update delivery status:</p>
+                                    <button
+                                        onClick={() => onUpdateProgress(parcel, 'picked_up')}
+                                        disabled={isUpdating}
+                                        className="w-full py-3 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2 mb-2"
+                                    >
+                                        📦 Mark as Picked Up
+                                    </button>
+                                </div>
+                            )}
+                            {parcel.deliveryStatus === 'picked_up' && (
+                                <div className="pt-2">
+                                    <p className="text-xs font-semibold text-slate-500 mb-2">Update delivery status:</p>
+                                    <button
+                                        onClick={() => onUpdateProgress(parcel, 'on_the_way')}
+                                        disabled={isUpdating}
+                                        className="w-full py-3 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2 mb-2"
+                                    >
+                                        🛵 Mark as On The Way
+                                    </button>
+                                </div>
+                            )}
+                            {parcel.deliveryStatus === 'on_the_way' && (
+                                <div className="pt-2 space-y-2">
+                                    <p className="text-xs font-semibold text-slate-500">Finalize delivery:</p>
+                                    <button
+                                        onClick={() => onUpdateProgress(parcel, 'delivered')}
+                                        disabled={isUpdating}
+                                        className="w-full py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        ✅ Mark as Delivered
+                                    </button>
+                                    <button
+                                        onClick={() => onUpdateProgress(parcel, 'delivery_failed')}
+                                        disabled={isUpdating}
+                                        className="w-full py-3 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        ✕ Delivery Failed
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Completed state */}
+                            {['delivered', 'delivery_failed', 'cancelled'].includes(parcel.deliveryStatus) && (
+                                <div className={`rounded-xl p-4 flex items-center gap-3 border ${
+                                    parcel.deliveryStatus === 'delivered'
+                                        ? 'bg-emerald-50 border-emerald-100'
+                                        : 'bg-red-50 border-red-100'
+                                }`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                                        parcel.deliveryStatus === 'delivered'
+                                            ? 'bg-emerald-100 text-emerald-600'
+                                            : 'bg-red-100 text-red-500'
+                                    }`}>
+                                        {parcel.deliveryStatus === 'delivered' ? '✓' : '✕'}
+                                    </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-emerald-800">You have accepted this delivery</p>
-                                        <p className="text-xs text-emerald-600">Status: {formatStatusLabel(parcel.deliveryStatus)}</p>
+                                        <p className={`text-sm font-semibold ${
+                                            parcel.deliveryStatus === 'delivered' ? 'text-emerald-800' : 'text-red-700'
+                                        }`}>
+                                            {parcel.deliveryStatus === 'delivered' ? 'Delivery completed!' : 'Delivery not completed'}
+                                        </p>
+                                        <p className={`text-xs ${
+                                            parcel.deliveryStatus === 'delivered' ? 'text-emerald-600' : 'text-red-500'
+                                        }`}>
+                                            Final status: {formatStatusLabel(parcel.deliveryStatus)}
+                                        </p>
                                     </div>
                                 </div>
                             )}
@@ -494,6 +559,36 @@ const AssignedDeliveries = () => {
         });
     };
 
+    const handleUpdateProgress = (parcel, status) => {
+        let title = 'Update Status?';
+        let text = `Mark this parcel as ${formatStatusLabel(status)}?`;
+        
+        if (status === 'delivered') {
+            title = 'Complete Delivery?';
+            text = 'Mark this parcel as successfully delivered? This cannot be undone.';
+        } else if (status === 'delivery_failed') {
+            title = 'Delivery Failed?';
+            text = 'Mark this delivery as failed? This will return the parcel to the admin. This cannot be undone.';
+        }
+
+        Swal.fire({
+            title,
+            text,
+            icon: status === 'delivery_failed' ? 'warning' : 'question',
+            showCancelButton: true,
+            confirmButtonColor: status === 'delivery_failed' ? '#ef4444' : '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, update it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateDeliveryStatusMutation.mutate({
+                    parcelId: parcel._id,
+                    deliveryStatus: status
+                });
+            }
+        });
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl mx-auto space-y-6">
@@ -550,6 +645,7 @@ const AssignedDeliveries = () => {
                                 parcel={parcel}
                                 onAccept={handleAccept}
                                 onReject={handleReject}
+                                onUpdateProgress={handleUpdateProgress}
                                 isUpdating={updateDeliveryStatusMutation.isPending}
                             />
                         ))}

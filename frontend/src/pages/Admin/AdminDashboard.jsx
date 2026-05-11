@@ -42,12 +42,12 @@ const AdminDashboard = () => {
     const StatCard = ({ title, value, icon, bgColor }) => (
         <div
             data-aos="zoom-in"
-            className={`${bgColor} rounded-2xl shadow-lg p-8 text-white flex items-center gap-4 hover:shadow-2xl transition-all duration-300`}
+            className={`${bgColor} rounded-xl shadow-lg p-6 text-white flex items-center gap-4 hover:shadow-2xl transition-all duration-300 border border-slate-600/30`}
         >
-            <div className="text-5xl">{icon}</div>
+            <div className="text-4xl">{icon}</div>
             <div>
                 <p className="text-sm font-semibold opacity-90">{title}</p>
-                <p className="text-4xl font-black">{value}</p>
+                <p className="text-3xl font-bold mt-1">{value}</p>
             </div>
         </div>
     );
@@ -55,133 +55,124 @@ const AdminDashboard = () => {
     if (!isAdmin) return null;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 p-8">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div data-aos="fade-down" className="mb-12">
-                    <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-600 mb-2">
-                        👑 Admin Dashboard
-                    </h1>
-                    <p className="text-xl text-gray-600">Welcome, {user?.displayName || 'Admin'}!</p>
-                </div>
+        <div>
+            <div className="mb-8">
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 mb-2">
+                    Welcome back, {user?.displayName || 'Admin'}!
+                </h1>
+                <p className="text-slate-400">Here's what's happening with your business today</p>
+            </div>
 
                 {loading && (
                     <div className="flex justify-center items-center py-20">
-                        <span className="loading loading-spinner loading-lg text-blue-600"></span>
+                    <span className="loading loading-spinner loading-lg text-emerald-500"></span>
+                </div>
+            )}
+
+            {error && (
+                <div className="bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg p-4 mb-8">
+                    <p className="font-semibold">⚠️ {error}</p>
+                </div>
+            )}
+
+            {stats && (
+                <>
+                    {/* Main Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <StatCard
+                            title="Total Users"
+                            value={stats.totalUsers}
+                            icon="👥"
+                            bgColor="bg-gradient-to-br from-blue-600 to-blue-700"
+                        />
+                        <StatCard
+                            title="Total Riders"
+                            value={stats.totalRiders}
+                            icon="🏍️"
+                            bgColor="bg-gradient-to-br from-orange-600 to-orange-700"
+                        />
+                        <StatCard
+                            title="Total Parcels"
+                            value={stats.totalParcels}
+                            icon="📦"
+                            bgColor="bg-gradient-to-br from-emerald-600 to-emerald-700"
+                        />
                     </div>
-                )}
 
-                {error && (
-                    <div className="alert alert-error shadow-lg mb-8" data-aos="fade-up">
-                        <div>
-                            <span>⚠️ {error}</span>
-                        </div>
-                    </div>
-                )}
-
-                {stats && (
-                    <>
-                        {/* Main Stats */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                            <StatCard
-                                title="Total Users"
-                                value={stats.totalUsers}
-                                icon="👥"
-                                bgColor="bg-gradient-to-r from-blue-500 to-blue-600"
-                            />
-                            <StatCard
-                                title="Total Riders"
-                                value={stats.totalRiders}
-                                icon="🏍️"
-                                bgColor="bg-gradient-to-r from-orange-500 to-orange-600"
-                            />
-                            <StatCard
-                                title="Total Parcels"
-                                value={stats.totalParcels}
-                                icon="📦"
-                                bgColor="bg-gradient-to-r from-green-500 to-green-600"
-                            />
-                        </div>
-
-                        {/* Payment Stats Row */}
-                        <div
-                            data-aos="fade-up"
-                            className="bg-gradient-to-r from-lime-500 to-green-600 rounded-2xl shadow-lg p-8 mb-12 text-white flex items-center gap-4 hover:shadow-2xl transition-all duration-300"
-                        >
-                            <div className="text-5xl">💳</div>
+                    {/* Payment Stats */}
+                    <div
+                        data-aos="fade-up"
+                        className="bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-600/50 rounded-xl shadow-lg p-6 mb-8 text-white flex items-center justify-between hover:shadow-2xl transition-all duration-300"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="text-4xl">💳</div>
                             <div>
-                                <p className="text-sm font-semibold opacity-90">Payments are tracked in real-time</p>
-                                <p className="text-xl font-black">Visit Payment History to see all transactions</p>
+                                <p className="text-sm font-semibold opacity-90">Payment Transactions</p>
+                                <p className="text-lg font-bold mt-1">Tracking real-time payments</p>
                             </div>
+                        </div>
+                        <button
+                            onClick={() => navigate('/admin/payments-history')}
+                            className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-lg hover:shadow-emerald-500/50 text-white font-semibold rounded-lg transition-all"
+                        >
+                            View All →
+                        </button>
+                    </div>
+
+                    {/* Rider Status Breakdown */}
+                    <div
+                        data-aos="fade-up"
+                        className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-lg p-6 mb-8"
+                    >
+                        <h2 className="text-2xl font-bold text-white mb-6">📋 Rider Applications</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-slate-700/50 border border-amber-500/30 rounded-lg p-6">
+                                <p className="text-sm font-semibold text-amber-300">Pending Review</p>
+                                <p className="text-3xl font-bold text-amber-400 mt-2">{stats.riderStats.pending}</p>
+                            </div>
+                            <div className="bg-slate-700/50 border border-emerald-500/30 rounded-lg p-6">
+                                <p className="text-sm font-semibold text-emerald-300">Approved</p>
+                                <p className="text-3xl font-bold text-emerald-400 mt-2">{stats.riderStats.approved}</p>
+                            </div>
+                            <div className="bg-slate-700/50 border border-red-500/30 rounded-lg p-6">
+                                <p className="text-sm font-semibold text-red-300">Rejected</p>
+                                <p className="text-3xl font-bold text-red-400 mt-2">{stats.riderStats.rejected}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div data-aos="fade-up" className="bg-slate-800/50 border border-slate-700/50 rounded-xl shadow-lg p-6">
+                        <h2 className="text-2xl font-bold text-white mb-6">⚙️ Management Tools</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button
+                                onClick={() => navigate('/admin/approve-riders')}
+                                className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:shadow-lg hover:shadow-orange-500/50 text-white font-semibold rounded-lg transition-all"
+                            >
+                                🏍️ Approve Riders
+                            </button>
+                            <button
+                                onClick={() => navigate('/admin/users')}
+                                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:shadow-lg hover:shadow-blue-500/50 text-white font-semibold rounded-lg transition-all"
+                            >
+                                👥 Manage Users
+                            </button>
+                            <button
+                                onClick={() => navigate('/admin/parcels')}
+                                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:shadow-lg hover:shadow-emerald-500/50 text-white font-semibold rounded-lg transition-all"
+                            >
+                                📦 View Parcels
+                            </button>
                             <button
                                 onClick={() => navigate('/admin/payments-history')}
-                                className="ml-auto btn bg-white text-lime-700 hover:bg-lime-50 border-none font-bold"
+                                className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 hover:shadow-lg hover:shadow-teal-500/50 text-white font-semibold rounded-lg transition-all"
                             >
-                                View All Payments →
+                                💳 Payment History
                             </button>
                         </div>
-
-                        {/* Rider Status Breakdown */}
-                        <div
-                            data-aos="fade-up"
-                            className="bg-white rounded-2xl shadow-lg p-8 mb-12 border-l-4 border-yellow-500"
-                        >
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">📋 Rider Applications Status</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="bg-yellow-50 rounded-lg p-6 border-l-4 border-yellow-500">
-                                    <p className="text-sm font-semibold text-yellow-800">Pending Review</p>
-                                    <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.riderStats.pending}</p>
-                                </div>
-                                <div className="bg-green-50 rounded-lg p-6 border-l-4 border-green-500">
-                                    <p className="text-sm font-semibold text-green-800">Approved</p>
-                                    <p className="text-3xl font-bold text-green-600 mt-2">{stats.riderStats.approved}</p>
-                                </div>
-                                <div className="bg-red-50 rounded-lg p-6 border-l-4 border-red-500">
-                                    <p className="text-sm font-semibold text-red-800">Rejected</p>
-                                    <p className="text-3xl font-bold text-red-600 mt-2">{stats.riderStats.rejected}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div data-aos="fade-up" className="bg-white rounded-2xl shadow-lg p-8 border-t-4 border-blue-600">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">⚙️ Management Tools</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <button
-                                    onClick={() => navigate('/dashboard/ApproveRiders')}
-                                    className="btn btn-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-none w-full"
-                                >
-                                    🏍️ Approve Riders
-                                </button>
-                                <button
-                                    onClick={() => navigate('/dashboard/ManageUsers')}
-                                    className="btn btn-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-none w-full"
-                                >
-                                    👥 Manage Users
-                                </button>
-                                <button
-                                    onClick={() => navigate('/admin/parcels')}
-                                    className="btn btn-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-none w-full"
-                                >
-                                    📦 View Parcels
-                                </button>
-                                <button
-                                    onClick={() => navigate('/admin/payments-history')}
-                                    className="btn btn-lg bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white border-none w-full"
-                                >
-                                    💳 Payment History
-                                </button>
-                                <button
-                                    onClick={fetchStats}
-                                    className="btn btn-lg bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-none w-full"
-                                >
-                                    🔄 Refresh Stats
-                                </button>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

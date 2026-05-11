@@ -7,6 +7,7 @@ import Pricing from "../pages/Pricing/Pricing";
 import Rootlayout from "../layouts/Rootlayout";
 import AuthLayout from "../layouts/AuthLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
+import AdminLayout from "../layouts/AdminLayout";
 import Login from "../pages/Authentication/Login/Login";
 import Register from "../pages/Authentication/Register/Register";
 import Coverage from "../pages/Coverage/Coverage";
@@ -34,8 +35,16 @@ import AdminManageUsers from "../pages/Admin/ManageUsers";
 import AdminManageRiders from "../pages/Admin/ManageRiders";
 import AdminParcelOversight from "../pages/Admin/ParcelOversight";
 import AdminPaymentHistory from "../pages/Admin/AdminPaymentHistory";
+import AdminPayments from "../pages/Admin/AllPayments";
+import AdminNotifications from "../pages/Admin/Notifications";
+import AdminSupportTickets from "../pages/Admin/SupportTickets";
+import AdminSettings from "../pages/Admin/Settings";
+import AdminZoneManager from "../pages/Admin/ZoneManager";
+import AdminLiveTracking from "../pages/Admin/LiveTracking";
+import AdminReports from "../pages/Admin/Reports";
 import RiderDashboard from "../pages/Dashboard/RiderDashboard/RiderDashboard";
 import DeliveryHistory from "../pages/Dashboard/DeliveryHistory/DeliveryHistory";
+import TrackParcel from "../pages/TrackParcel/TrackParcel";
 import useAuth from "../hooks/useAuth";
 
 const DashboardIndexRedirect = () => {
@@ -145,6 +154,10 @@ export const router = createBrowserRouter([
         Component:MyParcels
       },
       {
+        path:'track-parcel',
+        Component:TrackParcel
+      },
+      {
         path:'payment',
         Component:Payment
       },
@@ -192,26 +205,63 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin',
+    element: <AdminRoute><AdminLayout /></AdminRoute>,
     children: [
       {
         index: true,
-        element: <AdminRoute><AdminDashboard /></AdminRoute>
+        element: <AdminDashboard />
       },
       {
         path: 'users',
-        element: <AdminRoute><AdminManageUsers /></AdminRoute>
+        element: <AdminManageUsers />
       },
       {
         path: 'riders',
-        element: <AdminRoute><AdminManageRiders /></AdminRoute>
+        element: <AdminManageRiders />
       },
       {
         path: 'parcels',
-        element: <AdminRoute><AdminParcelOversight /></AdminRoute>
+        element: <AdminParcelOversight />
+      },
+      {
+        path: 'payments',
+        element: <AdminPayments />
       },
       {
         path: 'payments-history',
-        element: <AdminRoute><AdminPaymentHistory /></AdminRoute>
+        element: <AdminPaymentHistory />
+      },
+      {
+        path: 'assign-rider',
+        element: <AssignRider />
+      },
+      {
+        path: 'approve-riders',
+        element: <ApproveRiders />
+      },
+      {
+        path: 'reports',
+        element: <AdminReports />
+      },
+      {
+        path: 'notifications',
+        element: <AdminNotifications />
+      },
+      {
+        path: 'support-tickets',
+        element: <AdminSupportTickets />
+      },
+      {
+        path: 'settings',
+        element: <AdminSettings />
+      },
+      {
+        path: 'zone-manager',
+        element: <AdminZoneManager />
+      },
+      {
+        path: 'live-tracking',
+        element: <AdminLiveTracking />
       }
     ]
   },

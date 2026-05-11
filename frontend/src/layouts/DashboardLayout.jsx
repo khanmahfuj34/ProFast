@@ -7,7 +7,7 @@ import logo from '../assets/logo.png';
 import { RiTaskLine } from 'react-icons/ri';
 
 const DashboardLayout = () => {
-  const { isAdmin, userProfile, loading } = useAuth();
+  const { user, isAdmin, userProfile, loading } = useAuth();
   const isRider = userProfile?.role === 'rider';
   const { handleLogout, isLoading: isLoggingOut } = useLogout();
   const location = useLocation();
@@ -16,10 +16,16 @@ const DashboardLayout = () => {
   useEffect(() => {
     if (loading) return;
 
+    // Redirect admins to new admin layout
+    if (isAdmin) {
+      navigate('/admin', { replace: true });
+      return;
+    }
+
     if (location.pathname === '/dashboard' && isRider) {
       navigate('/dashboard/rider-dashboard', { replace: true });
     }
-  }, [isRider, loading, location.pathname, navigate]);
+  }, [isAdmin, isRider, loading, location.pathname, navigate]);
     return (
     <div className="drawer lg:drawer-open min-h-screen">
       <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
@@ -303,6 +309,32 @@ const DashboardLayout = () => {
                     <span className="font-medium is-drawer-close:hidden">{isAdmin ? '📦 All Parcels' : 'My Parcels'}</span>
                   </NavLink>
                 </li>
+
+                {!isAdmin && (
+                  <li>
+                    <NavLink
+                      to="/dashboard/track-parcel"
+                      data-tip="Track Parcel"
+                      className={({ isActive }) =>
+                        `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? 'bg-lime-500 text-white shadow-lg'
+                            : 'text-gray-300 hover:bg-slate-700'
+                        } is-drawer-close:px-0 is-drawer-close:justify-center`
+                      }
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="w-5 h-5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <line x1="12" y1="2" x2="12" y2="5"></line>
+                        <line x1="12" y1="19" x2="12" y2="22"></line>
+                        <line x1="2" y1="12" x2="5" y2="12"></line>
+                        <line x1="19" y1="12" x2="22" y2="12"></line>
+                      </svg>
+                      <span className="font-medium is-drawer-close:hidden">Track Parcel</span>
+                    </NavLink>
+                  </li>
+                )}
 
                 <li>
                   <NavLink

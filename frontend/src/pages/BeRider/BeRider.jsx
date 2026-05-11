@@ -31,20 +31,25 @@ const BeRider = () => {
     const [photoUploading, setPhotoUploading] = useState(false);
     const selectedRegion = watch('region');
     const axiosSecure = useAxiosSecure();
-    const { user } = useAuth();
+    const { user, tokenReady } = useAuth();
     const { uploadImage } = useImageUpload();
     const navigate = useNavigate();
 
     useEffect(() => {
         AOS.init({ duration: 800, once: true, offset: 50 });
-        // Check if user already has a rider application
+    }, []);
+
+    // ✅ Only check rider application after JWT cookie is confirmed ready
+    // Prevents 401 errors during initial login flow
+    useEffect(() => {
+        if (!tokenReady || !user?.email) return;
         checkExistingApplication();
-        
+
         // Set user's profile photo if available
         if (user?.photoURL) {
             setPhotoURL(user.photoURL);
         }
-    }, [user?.email]);
+    }, [tokenReady, user?.email]);
 
     const checkExistingApplication = async () => {
         try {

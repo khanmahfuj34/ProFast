@@ -604,11 +604,64 @@ app.get('/parcels/:id', async(req, res) => {
     res.send(result);
 });
 
-// PATCH /parcels/:id - Assign rider to parcel & update rider workStatus
-app.patch('/parcels/:id', async(req, res) => {
+// ============ 🔍 PUBLIC TRACKING ROUTE ============
+// GET /track/:trackingId - Public, no auth required
+app.get('/track/:trackingId', async(req, res) => {
+    try {
+        const { trackingId } = req.params;
+        if (!trackingId) return res.status(400).send({ success: false, message: 'Tracking ID required' });
+
+        const parcel = await parcelsCollection.findOne({ trackingId });
+
+        if (!parcel) {
+            return res.status(404).send({ success: false, message: 'No parcel found with this tracking ID' });
+        }
+
+        // Return parcel info (omit sensitive internal fields)
+        res.send({
+            success: true,
+            parcel: {
+                _id: parcel._id,
+                parcelName: parcel.parcelName,
+                parcelType: parcel.parcelType,
+                parcelDescription: parcel.parcelDescription,
+                trackingId: parcel.trackingId,
+                deliveryStatus: parcel.deliveryStatus,
+                paymentStatus: parcel.paymentStatus,
+                totalPrice: parcel.totalPrice,
+                deliveryType: parcel.deliveryType,
+                // Sender (partial)
+                senderName: parcel.senderName,
+                senderDistrict: parcel.senderDistrict,
+                senderAddress: parcel.senderAddress,
+                // Receiver
+                receiverName: parcel.receiverName,
+                receiverPhone: parcel.receiverPhone,
+                receiverAddress: parcel.receiverAddress,
+                receiverDistrict: parcel.receiverDistrict,
+                // Rider info (if assigned)
+                riderName: parcel.riderName || null,
+                riderEmail: parcel.riderEmail || null,
+                // Timestamps
+                createdAt: parcel.createdAt,
+                updatedAt: parcel.updatedAt,
+                paidAt: parcel.paidAt,
+                estimatedDelivery: parcel.estimatedDelivery || null,
+                // Activity log
+                activityLog: parcel.activityLog || []
+            }
+        });
+    } catch (error) {
+        console.error('❌ Track parcel error:', error.message);
+        res.status(500).send({ success: false, message: 'Error fetching tracking data' });
+    }
+});
+
+// PATCH /parcels/:id - Update parcel (assign rider, update status, log activity)
+app.patch('/parcels/:id', verifyJWT, async(req, res) => {
     try {
         const id = req.params.id;
-        const { riderId, riderName, riderEmail, deliveryStatus, ...rest } = req.body;
+        const { riderId, riderName, riderEmail, deliveryStatus, clearRider, ...rest } = req.body;
 
         console.log('📦 PATCH /parcels/:id received:', { riderId, riderName, riderEmail, deliveryStatus });
 
@@ -628,12 +681,48 @@ app.patch('/parcels/:id', async(req, res) => {
             setFields.riderEmail = riderEmail || '';
         }
 
-        const result = await parcelsCollection.updateOne(filter, { $set: setFields });
+        // If clearRider (rejection)
+        if (clearRider) {
+            setFields.riderId = null;
+            setFields.riderName = '';
+            setFields.riderEmail = '';
+        }
 
-        // Update rider workStatus to 'in_delivery'
+        const updateOp = { $set: setFields };
+
+        // ✅ Push activity log when status changes
+        if (deliveryStatus) {
+            const logEntry = {
+                status: deliveryStatus,
+                timestamp: new Date(),
+                updatedBy: req.user?.email || 'system',
+                role: req.user?.role || 'unknown'
+            };
+            updateOp.$push = { activityLog: logEntry };
+        }
+
+        const result = await parcelsCollection.updateOne(filter, updateOp);
+
+        // Update rider workStatus
         if (riderId) {
-            await riderCollection.updateOne({ _id: new ObjectId(riderId) }, { $set: { workStatus: 'in_delivery', updatedAt: new Date() } });
+            await riderCollection.updateOne(
+                { _id: new ObjectId(riderId) },
+                { $set: { workStatus: 'in_delivery', updatedAt: new Date() } }
+            );
             console.log(`✅ Rider ${riderId} (${riderName}) workStatus set to 'in_delivery'`);
+        }
+
+        // If delivered/cancelled, set rider back to available
+        if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
+            const parcel = await parcelsCollection.findOne(filter);
+            if (parcel?.riderId) {
+                try {
+                    await riderCollection.updateOne(
+                        { _id: new ObjectId(parcel.riderId) },
+                        { $set: { workStatus: 'available', updatedAt: new Date() } }
+                    );
+                } catch(_) {}
+            }
         }
 
         res.send(result);
