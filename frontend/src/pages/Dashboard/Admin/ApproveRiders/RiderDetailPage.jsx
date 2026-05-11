@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import useAxiosSecure from '../../../../hooks/useAxiosSecure';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 

@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const http = require('http');
+const { Server: SocketIOServer } = require('socket.io');
 require('dotenv').config(); // ✅ MUST load before anything that reads process.env
 
 // 🔐 Firebase Admin SDK initialization
@@ -12,6 +14,14 @@ admin.initializeApp({
 });
 
 const app = express();
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+    cors: {
+        origin: process.env.SITE_DOMAIN || ['http://localhost:5173', 'http://localhost:5174'],
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+});
 const stripe = require('stripe')(process.env.STRIPE_SECRET); // ✅ Now STRIPE_SECRET is defined
 
 const {
@@ -115,15 +125,25 @@ async function run() {
         console.log("✅ Index created on payments.parcelId and customerEmail");
 
         // Start server AFTER MongoDB connects
-        app.listen(port, () => {
+        server.listen(port, () => {
             console.log(`
 ╔════════════════════════════════════════════╗
 ║  🔐 Secure Auth Server Running             ║
 ║  Port: ${port}                               ║
 ║  JWT Verification: ACTIVE                  ║
 ║  Firebase Admin SDK: INITIALIZED            ║
+║  Socket.IO: ENABLED (Real-time Updates)    ║
 ╚════════════════════════════════════════════╝
             `);
+        });
+
+        // Socket.IO connection handling
+        io.on('connection', (socket) => {
+            console.log(`✅ Client connected: ${socket.id}`);
+
+            socket.on('disconnect', () => {
+                console.log(`❌ Client disconnected: ${socket.id}`);
+            });
         });
 
     } catch (error) {
@@ -306,7 +326,7 @@ app.get('/debug/cookies', (req, res) => {
 });
 
 //user related apis
-app.get('/user', verifyJWT, async (req, res) => {
+app.get('/user', verifyJWT, async(req, res) => {
     try {
         const user = await usersCollection.findOne({ email: req.user.email });
         if (user) {
@@ -581,6 +601,22 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
 
         // Return payment data
         const finalPaymentData = resultPayment.value || paymentData;
+
+        // 🔔 Emit real-time update via Socket.IO
+        io.emit('payment_received', {
+            transactionId: transactionId,
+            parcelId: parcelId,
+            amount: finalPaymentData.amount,
+            timestamp: new Date()
+        });
+        console.log(`📡 Emitted: payment_received - ${transactionId} for parcel ${parcelId}`);
+
+        io.emit('dashboard_stats_updated', {
+            event: 'payment_completed',
+            timestamp: new Date()
+        });
+        console.log(`📡 Emitted: dashboard_stats_updated - Payment completed`);
+
         return res.send({
             success: true,
             trackingId: finalPaymentData.trackingId,
@@ -695,8 +731,8 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
             const logEntry = {
                 status: deliveryStatus,
                 timestamp: new Date(),
-                updatedBy: req.user?.email || 'system',
-                role: req.user?.role || 'unknown'
+                updatedBy: req.user ?.email || 'system',
+                role: req.user ?.role || 'unknown'
             };
             updateOp.$push = { activityLog: logEntry };
         }
@@ -705,24 +741,47 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
 
         // Update rider workStatus
         if (riderId) {
-            await riderCollection.updateOne(
-                { _id: new ObjectId(riderId) },
-                { $set: { workStatus: 'in_delivery', updatedAt: new Date() } }
-            );
+            await riderCollection.updateOne({ _id: new ObjectId(riderId) }, { $set: { workStatus: 'in_delivery', updatedAt: new Date() } });
             console.log(`✅ Rider ${riderId} (${riderName}) workStatus set to 'in_delivery'`);
         }
 
         // If delivered/cancelled, set rider back to available
         if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
             const parcel = await parcelsCollection.findOne(filter);
-            if (parcel?.riderId) {
+            if (parcel ?.riderId) {
                 try {
-                    await riderCollection.updateOne(
-                        { _id: new ObjectId(parcel.riderId) },
-                        { $set: { workStatus: 'available', updatedAt: new Date() } }
-                    );
-                } catch(_) {}
+                    await riderCollection.updateOne({ _id: new ObjectId(parcel.riderId) }, { $set: { workStatus: 'available', updatedAt: new Date() } });
+                } catch (_) {}
             }
+        }
+
+        // 🔔 Emit real-time update events via Socket.IO
+        if (deliveryStatus) {
+            io.emit('parcel_status_updated', {
+                parcelId: id,
+                status: deliveryStatus,
+                timestamp: new Date()
+            });
+            console.log(`📡 Emitted: parcel_status_updated - ${id} -> ${deliveryStatus}`);
+        }
+
+        if (riderId) {
+            io.emit('parcel_rider_assigned', {
+                parcelId: id,
+                riderId,
+                riderName,
+                timestamp: new Date()
+            });
+            console.log(`📡 Emitted: parcel_rider_assigned - Rider ${riderName} assigned to ${id}`);
+        }
+
+        if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
+            io.emit('rider_status_changed', {
+                riderId: (await parcelsCollection.findOne(filter)) ?.riderId,
+                workStatus: 'available',
+                timestamp: new Date()
+            });
+            console.log(`📡 Emitted: rider_status_changed - Rider back to available`);
         }
 
         res.send(result);
@@ -1146,10 +1205,23 @@ app.patch('/rider/status', verifyJWT, verifyRider, async(req, res) => {
             workStatus = 'Unavailable';
         }
 
-        await riderCollection.updateOne(
-            { email: riderEmail },
-            { $set: { isOnline, workStatus, updatedAt: new Date() } }
-        );
+        await riderCollection.updateOne({ email: riderEmail }, { $set: { isOnline, workStatus, updatedAt: new Date() } });
+
+        // 🔔 Emit real-time update via Socket.IO
+        io.emit('rider_status_changed', {
+            riderId: rider._id.toString(),
+            riderEmail: riderEmail,
+            isOnline: isOnline,
+            workStatus: workStatus,
+            timestamp: new Date()
+        });
+        console.log(`📡 Emitted: rider_status_changed - ${riderEmail} is now ${isOnline ? 'online' : 'offline'}`);
+
+        io.emit('dashboard_stats_updated', {
+            event: 'rider_status_changed',
+            timestamp: new Date()
+        });
+        console.log(`📡 Emitted: dashboard_stats_updated - Rider status changed`);
 
         console.log(`✅ Rider ${riderEmail} status updated: isOnline=${isOnline}, workStatus=${workStatus}`);
         res.send({
@@ -1218,10 +1290,7 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
             setFields.deliveredAt = new Date();
         }
 
-        const result = await parcelsCollection.updateOne(
-            { _id: new ObjectId(parcelId) },
-            { $set: setFields }
-        );
+        const result = await parcelsCollection.updateOne({ _id: new ObjectId(parcelId) }, { $set: setFields });
 
         // Update rider workStatus based on remaining active deliveries
         const hasActiveDelivery = await parcelsCollection.countDocuments({
@@ -1231,10 +1300,7 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
 
         const rider = await riderCollection.findOne({ email: riderEmail });
         if (rider && rider.isOnline !== false) {
-            await riderCollection.updateOne(
-                { email: riderEmail },
-                { $set: { workStatus: hasActiveDelivery ? 'in_delivery' : 'Available', updatedAt: new Date() } }
-            );
+            await riderCollection.updateOne({ email: riderEmail }, { $set: { workStatus: hasActiveDelivery ? 'in_delivery' : 'Available', updatedAt: new Date() } });
         }
 
         console.log(`✅ Delivery ${parcelId} status updated to ${deliveryStatus} by ${riderEmail}`);
@@ -1255,11 +1321,11 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
         const riderEmail = req.user.email;
         const {
             page = 1,
-            limit = 10,
-            search = '',
-            status = 'all',
-            fromDate,
-            toDate
+                limit = 10,
+                search = '',
+                status = 'all',
+                fromDate,
+                toDate
         } = req.query;
 
         const pageNum = Math.max(1, parseInt(page));
@@ -1303,7 +1369,7 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
         }
 
         // Build final query
-        const query = { ...baseQuery };
+        const query = {...baseQuery };
         if (dateFilter.$or) {
             query.$and = [baseQuery, dateFilter];
         }
@@ -1356,9 +1422,9 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
             const isCancelled = p.deliveryStatus === 'pending-pickup';
             const earning = isDelivered ? Math.round((p.totalPrice || 0) * 0.7) : 0;
 
-            const deliveredDate = p.deliveredAt
-                ? new Date(p.deliveredAt)
-                : (isDelivered ? new Date(p.updatedAt) : null);
+            const deliveredDate = p.deliveredAt ?
+                new Date(p.deliveredAt) :
+                (isDelivered ? new Date(p.updatedAt) : null);
 
             return {
                 id: p._id.toString(),
@@ -1375,12 +1441,10 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
                 status: mapDeliveryStatus(p.deliveryStatus),
                 statusRaw: p.deliveryStatus,
                 deliveredDate: deliveredDate ? deliveredDate.toISOString() : null,
-                deliveredDateFormatted: deliveredDate
-                    ? deliveredDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : '—',
-                deliveredTimeFormatted: deliveredDate
-                    ? deliveredDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                    : '',
+                deliveredDateFormatted: deliveredDate ?
+                    deliveredDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
+                deliveredTimeFormatted: deliveredDate ?
+                    deliveredDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
                 earning,
                 earningFormatted: `৳${earning}`,
                 totalPrice: p.totalPrice || 0
@@ -1638,6 +1702,115 @@ app.get('/admin/stats', verifyJWT, verifyAdmin, async(req, res) => {
     }
 });
 
+// GET /admin/dashboard-stats - Get comprehensive dashboard statistics (Admin only)
+app.get('/admin/dashboard-stats', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        // Parcel stats
+        const totalParcels = await parcelsCollection.countDocuments({});
+        const deliveredParcels = await parcelsCollection.countDocuments({ deliveryStatus: 'delivered' });
+        const pendingParcels = await parcelsCollection.countDocuments({
+            deliveryStatus: {
+                $in: ['pending-pickup', 'driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way']
+            }
+        });
+        const cancelledParcels = await parcelsCollection.countDocuments({
+            deliveryStatus: { $in: ['cancelled', 'delivery_failed'] }
+        });
+
+        // Revenue stats
+        const revenueData = await paymentsCollection.aggregate([{
+            $group: {
+                _id: null,
+                totalRevenue: { $sum: '$amount' },
+                completedPayments: {
+                    $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+                },
+                pendingPayments: {
+                    $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] }
+                }
+            }
+        }]).toArray();
+
+        const totalRevenue = revenueData[0] ?.totalRevenue || 0;
+        const completedPayments = revenueData[0] ?.completedPayments || 0;
+        const pendingPayments = revenueData[0] ?.pendingPayments || 0;
+
+        // Rider stats
+        const totalRiders = await riderCollection.countDocuments({});
+        const activeRiders = await riderCollection.countDocuments({ workStatus: 'in_delivery' });
+        const onlineRiders = await riderCollection.countDocuments({ workStatus: { $in: ['available', 'in_delivery'] } });
+        const offlineRiders = await riderCollection.countDocuments({ workStatus: 'offline' });
+
+        // User stats
+        const totalUsers = await usersCollection.countDocuments({});
+        const todayUsers = await usersCollection.countDocuments({
+            createdAt: {
+                $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                $lte: new Date()
+            }
+        });
+
+        // Today's stats
+        const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+        const todayEnd = new Date();
+        const todayDeliveries = await parcelsCollection.countDocuments({
+            deliveryStatus: 'delivered',
+            updatedAt: { $gte: todayStart, $lte: todayEnd }
+        });
+
+        console.log(`✅ Comprehensive dashboard stats retrieved`);
+        res.send({
+            success: true,
+            stats: {
+                // Parcel Stats
+                totalParcels,
+                deliveredParcels,
+                pendingParcels,
+                cancelledParcels,
+
+                // Revenue Stats
+                totalRevenue: Math.round(totalRevenue),
+                completedPayments,
+                pendingPayments,
+
+                // Rider Stats
+                totalRiders,
+                activeRiders,
+                onlineRiders,
+                offlineRiders,
+
+                // User Stats
+                totalUsers,
+                todayUsers,
+
+                // Today's Performance
+                todayDeliveries,
+
+                // Summary Stats (derived)
+                parcelStats: {
+                    delivered: deliveredParcels,
+                    pending: pendingParcels,
+                    cancelled: cancelledParcels
+                },
+                riderStats: {
+                    total: totalRiders,
+                    active: activeRiders,
+                    online: onlineRiders,
+                    offline: offlineRiders
+                },
+                paymentStats: {
+                    completed: completedPayments,
+                    pending: pendingPayments,
+                    total: totalRevenue
+                }
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get comprehensive dashboard stats error:', error.message);
+        res.status(500).send({ message: 'Error fetching dashboard statistics', error: error.message });
+    }
+});
+
 // GET /riders - Get rider applications with optional filters (Admin only)
 // Query params: ?status=approved&district=Dhaka&workStatus=available
 app.get('/riders', verifyJWT, verifyAdmin, async(req, res) => {
@@ -1868,5 +2041,116 @@ app.get('/admin/parcels', verifyJWT, verifyAdmin, async(req, res) => {
     } catch (error) {
         console.error('❌ Get admin parcels error:', error.message);
         res.status(500).send({ message: 'Error fetching parcels', error: error.message });
+    }
+});
+
+// GET /admin/analytics - Get analytics data for admin dashboard (Admin only)
+app.get('/admin/analytics', verifyJWT, verifyAdmin, async(req, res) => {
+    try {
+        const { range = '7d' } = req.query;
+        const now = new Date();
+
+        // Calculate date range based on filter
+        let startDate = new Date();
+        if (range === '7d') {
+            startDate.setDate(now.getDate() - 7);
+        } else if (range === '30d') {
+            startDate.setDate(now.getDate() - 30);
+        } else if (range === '3m') {
+            startDate.setMonth(now.getMonth() - 3);
+        } else if (range === '1y') {
+            startDate.setFullYear(now.getFullYear() - 1);
+        }
+
+        // Fetch all parcels in range
+        const parcels = await parcelsCollection.find({
+            createdAt: { $gte: startDate, $lte: now }
+        }).toArray();
+
+        // Group by date and status
+        const deliveryTrendMap = {};
+        const dateFormat = (date) => {
+            const d = new Date(date);
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${month}/${day}`;
+        };
+
+        parcels.forEach(parcel => {
+            const date = dateFormat(parcel.createdAt);
+            if (!deliveryTrendMap[date]) {
+                deliveryTrendMap[date] = { date, delivered: 0, pending: 0, cancelled: 0, revenue: 0 };
+            }
+
+            if (parcel.deliveryStatus === 'delivered') {
+                deliveryTrendMap[date].delivered += 1;
+                deliveryTrendMap[date].revenue += parcel.totalPrice || 0;
+            } else if (['pending-pickup', 'driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way'].includes(parcel.deliveryStatus)) {
+                deliveryTrendMap[date].pending += 1;
+            } else if (parcel.deliveryStatus === 'cancelled' || parcel.deliveryStatus === 'delivery_failed') {
+                deliveryTrendMap[date].cancelled += 1;
+            }
+        });
+
+        const deliveryTrend = Object.values(deliveryTrendMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        // Parcel status distribution
+        const statusCounts = {
+            delivered: 0,
+            onWay: 0,
+            pending: 0,
+            cancelled: 0
+        };
+
+        parcels.forEach(p => {
+            if (p.deliveryStatus === 'delivered') statusCounts.delivered += 1;
+            else if (p.deliveryStatus === 'on_the_way') statusCounts.onWay += 1;
+            else if (['pending-pickup', 'driver_assigned', 'driver_accepted', 'picked_up'].includes(p.deliveryStatus)) statusCounts.pending += 1;
+            else if (p.deliveryStatus === 'cancelled' || p.deliveryStatus === 'delivery_failed') statusCounts.cancelled += 1;
+        });
+
+        const parcelStatus = [
+            { name: 'Delivered', value: statusCounts.delivered, fill: '#10B981' },
+            { name: 'On Way', value: statusCounts.onWay, fill: '#3B82F6' },
+            { name: 'Pending', value: statusCounts.pending, fill: '#F59E0B' },
+            { name: 'Cancelled', value: statusCounts.cancelled, fill: '#EF4444' }
+        ];
+
+        // Revenue by day
+        const revenueByDayMap = {};
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+            const dayName = dayNames[d.getDay()];
+            const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+
+            const dayParcels = parcels.filter(p => {
+                const pDate = new Date(p.createdAt);
+                return pDate >= startOfDay && pDate < endOfDay && p.deliveryStatus === 'delivered';
+            });
+
+            const dayRevenue = dayParcels.reduce((sum, p) => sum + (p.totalPrice || 0), 0);
+            revenueByDayMap[dayName] = dayRevenue;
+        }
+
+        const revenueByDay = Object.keys(revenueByDayMap).map(day => ({
+            day,
+            revenue: Math.round(revenueByDayMap[day])
+        }));
+
+        console.log(`✅ Admin analytics retrieved for range: ${range}`);
+        res.send({
+            success: true,
+            analytics: {
+                deliveryTrend,
+                parcelStatus,
+                revenueByDay
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get admin analytics error:', error.message);
+        res.status(500).send({ message: 'Error fetching analytics', error: error.message });
     }
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MdSearch, MdNotifications, MdLogout } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
-import useLogout from '../../../hooks/useLogout';
+import useLogout from '../../../../hooks/useLogout';
 
 const AdminTopNavbar = ({ userProfile, unreadNotifications = 0 }) => {
   const [searchQuery, setSearchQuery] = useState('');

@@ -23,25 +23,25 @@ import PaymentSuccess from "../pages/Dashboard/Payment/PaymentSuccess";
 import PaymentFailed from "../pages/Dashboard/Payment/PaymentFailed";
 import PaymentHistory from "../pages/Dashboard/PaymentHistory/PaymentHistory";
 import AssignedDeliveries from "../pages/Dashboard/AssignedDeliveries/AssignedDeliveries";
-import ApproveRiders from "../pages/Dashboard/ApproveRiders/ApproveRiders";
-import RiderDetailPage from "../pages/Dashboard/ApproveRiders/RiderDetailPage";
-import AssignRider from "../pages/Dashboard/AssignRider/AssignRider";
-import ManageUsers from "../pages/Dashboard/ManageUsers/ManageUsers";
 import Unauthorized from "../pages/Unauthorized/Unauthorized";
 import Forbidden from "../pages/Forbidden/Forbidden";
 import Services from "../pages/Home/services/Services";
-import AdminDashboard from "../pages/Admin/AdminDashboard";
-import AdminManageUsers from "../pages/Admin/ManageUsers";
-import AdminManageRiders from "../pages/Admin/ManageRiders";
-import AdminParcelOversight from "../pages/Admin/ParcelOversight";
-import AdminPaymentHistory from "../pages/Admin/AdminPaymentHistory";
-import AdminPayments from "../pages/Admin/AllPayments";
-import AdminNotifications from "../pages/Admin/Notifications";
-import AdminSupportTickets from "../pages/Admin/SupportTickets";
-import AdminSettings from "../pages/Admin/Settings";
-import AdminZoneManager from "../pages/Admin/ZoneManager";
-import AdminLiveTracking from "../pages/Admin/LiveTracking";
-import AdminReports from "../pages/Admin/Reports";
+import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard";
+import AdminManageUsers from "../pages/Dashboard/Admin/ManageUsers/ManageUsers";
+import AdminManageRiders from "../pages/Dashboard/Admin/ManageRiders";
+import AdminParcelOversight from "../pages/Dashboard/Admin/ParcelOversight";
+import AdminPaymentHistory from "../pages/Dashboard/Admin/AdminPaymentHistory";
+import AdminPayments from "../pages/Dashboard/Admin/AllPayments";
+import AdminNotifications from "../pages/Dashboard/Admin/Notifications";
+import AdminSupportTickets from "../pages/Dashboard/Admin/SupportTickets";
+import AdminSettings from "../pages/Dashboard/Admin/Settings";
+import AdminZoneManager from "../pages/Dashboard/Admin/ZoneManager";
+import AdminLiveTracking from "../pages/Dashboard/Admin/LiveTracking";
+import AdminReports from "../pages/Dashboard/Admin/Reports";
+import AssignRider from "../pages/Dashboard/Admin/AssignRider/AssignRider";
+// Admin-only pages imported for /admin routes
+import ApproveRiders from "../pages/Dashboard/Admin/ApproveRiders/ApproveRiders";
+import RiderDetailPage from "../pages/Dashboard/Admin/ApproveRiders/RiderDetailPage";
 import RiderDashboard from "../pages/Dashboard/RiderDashboard/RiderDashboard";
 import DeliveryHistory from "../pages/Dashboard/DeliveryHistory/DeliveryHistory";
 import TrackParcel from "../pages/TrackParcel/TrackParcel";
@@ -185,22 +185,7 @@ export const router = createBrowserRouter([
         path:'delivery-history',
         element: <PrivateRoute><DeliveryHistory /></PrivateRoute>
       },
-      {
-        path:'ApproveRiders',
-        element: <AdminRoute><ApproveRiders /></AdminRoute>
-      },
-      {
-        path:'ApproveRiders/:riderId',
-        element: <AdminRoute><RiderDetailPage /></AdminRoute>
-      },
-      {
-        path:'assign-rider',
-        element: <AdminRoute><AssignRider /></AdminRoute>
-      },
-      {
-        path:'ManageUsers',
-        element: <AdminRoute><ManageUsers /></AdminRoute>
-      }
+
     ]
   },
   {
@@ -238,6 +223,10 @@ export const router = createBrowserRouter([
       {
         path: 'approve-riders',
         element: <ApproveRiders />
+      },
+      {
+        path: 'approve-riders/:riderId',
+        element: <RiderDetailPage />
       },
       {
         path: 'reports',
