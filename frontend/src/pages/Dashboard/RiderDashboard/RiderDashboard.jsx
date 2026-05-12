@@ -10,19 +10,47 @@ import RiderActiveDeliveries from './components/RiderActiveDeliveries';
 import RiderAnalytics from './components/RiderAnalytics';
 import RiderActivityFeed from './components/RiderActivityFeed';
 import RiderPerformance from './components/RiderPerformance';
-import {
-  mockRiderDashboardStats,
-  mockRiderDeliveries,
-  mockRiderAnalytics,
-  mockRiderActivityFeed,
-  mockRiderPerformance
-} from './mockData';
 
 const RiderDashboard = () => {
   const { user, userProfile } = useAuth();
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
   const [isOnline, setIsOnline] = useState(true);
+
+  // ✅ Inline mock data constants for fallback when backend is unavailable
+  const mockRiderDashboardStats = {
+    totalDeliveries: 0,
+    completedDeliveries: 0,
+    inProgressDeliveries: 0,
+    cancelledDeliveries: 0,
+    totalEarnings: 0,
+    weeklyEarnings: 0,
+    averageDeliveryTime: 0,
+    successRate: 0
+  };
+
+  const mockRiderDeliveries = [];
+
+  const mockRiderAnalytics = {
+    totalDeliveries: 0,
+    delivered: 0,
+    cancelled: 0,
+    pending: 0,
+    successRate: 0,
+    totalEarnings: 0
+  };
+
+  const mockRiderActivityFeed = [];
+
+  const mockRiderPerformance = {
+    totalDeliveries: 0,
+    completedDeliveries: 0,
+    cancelledDeliveries: 0,
+    successRate: 0,
+    cancelRate: 0,
+    averageRating: 0,
+    weeklyDeliveries: 0
+  };
 
   // Initialize WebSocket connection for real-time updates
   useEffect(() => {
@@ -71,92 +99,97 @@ const RiderDashboard = () => {
 
   // Fetch dashboard overview stats
   const { data: stats = mockRiderDashboardStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['rider-dashboard-stats'],
+    queryKey: ['rider-dashboard-stats', user?.email],
     queryFn: async () => {
       try {
         const res = await axiosSecure.get('/rider/dashboard-stats');
-        return res.data;
+        // Backend returns { success: true, stats: {...} }
+        return res.data?.stats || mockRiderDashboardStats;
       } catch (error) {
-        console.warn('Using mock data for dashboard stats');
+        console.error('❌ Dashboard stats error:', error.message);
         return mockRiderDashboardStats;
       }
     },
     enabled: !!user?.email,
     refetchInterval: 30000,
     staleTime: 10000,
-    initialData: mockRiderDashboardStats
+    retry: 1
   });
 
-  // Fetch active deliveries
+  // Fetch active deliveries - now using /rider/deliveries endpoint
   const { data: deliveriesData = { deliveries: mockRiderDeliveries }, isLoading: deliveriesLoading } = useQuery({
-    queryKey: ['rider-deliveries'],
+    queryKey: ['rider-deliveries', user?.email],
     queryFn: async () => {
       try {
         const res = await axiosSecure.get('/rider/deliveries');
-        return res.data || { deliveries: mockRiderDeliveries };
+        // Backend returns { success: true, deliveries: [...] }
+        return { deliveries: res.data?.deliveries || mockRiderDeliveries };
       } catch (error) {
-        console.warn('Using mock data for deliveries');
+        console.error('❌ Deliveries error:', error.message);
         return { deliveries: mockRiderDeliveries };
       }
     },
     enabled: !!user?.email,
     refetchInterval: 15000,
     staleTime: 5000,
-    initialData: { deliveries: mockRiderDeliveries }
+    retry: 1
   });
 
-  // Fetch analytics data for charts
+  // Fetch analytics data - now using /rider/analytics endpoint
   const { data: analyticsData = mockRiderAnalytics, isLoading: analyticsLoading } = useQuery({
-    queryKey: ['rider-analytics'],
+    queryKey: ['rider-analytics', user?.email],
     queryFn: async () => {
       try {
         const res = await axiosSecure.get('/rider/analytics');
-        return res.data;
+        // Backend returns { success: true, analytics: {...} }
+        return res.data?.analytics || mockRiderAnalytics;
       } catch (error) {
-        console.warn('Using mock data for analytics');
+        console.error('❌ Analytics error:', error.message);
         return mockRiderAnalytics;
       }
     },
     enabled: !!user?.email,
     refetchInterval: 60000,
     staleTime: 30000,
-    initialData: mockRiderAnalytics
+    retry: 1
   });
 
-  // Fetch activity feed
+  // Fetch activity feed - now using /rider/activity-feed endpoint
   const { data: activityFeed = mockRiderActivityFeed, isLoading: activityLoading } = useQuery({
-    queryKey: ['rider-activity'],
+    queryKey: ['rider-activity', user?.email],
     queryFn: async () => {
       try {
         const res = await axiosSecure.get('/rider/activity-feed');
+        // Backend returns { success: true, activities: [...] }
         return res.data?.activities || mockRiderActivityFeed;
       } catch (error) {
-        console.warn('Using mock data for activity feed');
+        console.error('❌ Activity feed error:', error.message);
         return mockRiderActivityFeed;
       }
     },
     enabled: !!user?.email,
     refetchInterval: 10000,
     staleTime: 3000,
-    initialData: mockRiderActivityFeed
+    retry: 1
   });
 
-  // Fetch rider performance metrics
+  // Fetch rider performance metrics - now using /rider/performance endpoint
   const { data: performance = mockRiderPerformance, isLoading: performanceLoading } = useQuery({
-    queryKey: ['rider-performance'],
+    queryKey: ['rider-performance', user?.email],
     queryFn: async () => {
       try {
         const res = await axiosSecure.get('/rider/performance');
-        return res.data;
+        // Backend returns { success: true, performance: {...} }
+        return res.data?.performance || mockRiderPerformance;
       } catch (error) {
-        console.warn('Using mock data for performance');
+        console.error('❌ Performance error:', error.message);
         return mockRiderPerformance;
       }
     },
     enabled: !!user?.email,
     refetchInterval: 45000,
     staleTime: 20000,
-    initialData: mockRiderPerformance
+    retry: 1
   });
 
   return (

@@ -112,8 +112,9 @@ const Navbar = () => {
             </NavLink>
         </li>
         <li className="divider my-2">Admin Panel</li>
-        <li><NavLink to="/dashboard/ApproveRiders" className="text-blue-700 hover:text-blue-900 transition-colors duration-200 font-semibold">👮 Approve Riders</NavLink></li>
-        <li><NavLink to="/dashboard/ManageUsers" className="text-blue-700 hover:text-blue-900 transition-colors duration-200 font-semibold">👥 Manage Users</NavLink></li>
+        <li><NavLink to="/admin/approve-riders" className="text-blue-700 hover:text-blue-900 transition-colors duration-200 font-semibold">👮 Approve Riders</NavLink></li>
+        <li><NavLink to="/admin/users" className="text-blue-700 hover:text-blue-900 transition-colors duration-200 font-semibold">👥 Manage Users</NavLink></li>
+        <li><NavLink to="/admin" className="text-blue-700 hover:text-blue-900 transition-colors duration-200 font-semibold">📊 Admin Dashboard</NavLink></li>
     </>;
 
     // ✅ Select correct navigation based on user role

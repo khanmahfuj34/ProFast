@@ -70,7 +70,7 @@ const AdminDashboard = () => {
   });
 
   // Fetch analytics data with time filter from backend
-  const { data: analyticsData = { deliveryTrend: [], parcelStatus: [], revenueByDay: [] }, isLoading: analyticsLoading, refetch: refetchAnalytics } = useQuery({
+  const { data: analyticsData = { deliveryTrend: [], parcelStatus: [], revenueByDay: [] }, isLoading: analyticsLoading, isFetching: analyticsFetching, refetch: refetchAnalytics } = useQuery({
     queryKey: ['admin-analytics', analyticsFilter],
     queryFn: async () => {
       try {
@@ -81,8 +81,9 @@ const AdminDashboard = () => {
         return { deliveryTrend: [], parcelStatus: [], revenueByDay: [] };
       }
     },
-    refetchInterval: 60000,
-    staleTime: 30000
+    refetchInterval: 10000, // ✅ Refetch every 10 seconds for near real-time updates
+    staleTime: 3000, // Data is considered stale after 3 seconds
+    retry: 2
   });
 
   // Handle analytics filter change
@@ -147,18 +148,21 @@ const AdminDashboard = () => {
         console.log('📡 Received: payment_received event', data);
         queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
         queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
+        // ✅ Trigger immediate analytics refetch with force
+        queryClient.invalidateQueries({ queryKey: ['admin-analytics'], exact: false });
       });
 
       socket.on('parcel_status_updated', (data) => {
-        console.log('📡 Received: parcel_status_updated event', data);
+        console.log('📡 Received: parcel_status_updated event - Delivered:', data.delivered, 'Pending:', data.pending, 'Cancelled:', data.cancelled);
+        // ✅ Immediately invalidate analytics to trigger instant graph update
         queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-analytics'], exact: false });
       });
 
       socket.on('parcel_rider_assigned', (data) => {
         console.log('📡 Received: parcel_rider_assigned event', data);
         queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-analytics'], exact: false });
       });
 
       socket.on('rider_status_changed', (data) => {
@@ -212,6 +216,7 @@ const AdminDashboard = () => {
             <AdminAnalytics 
               analyticsData={analyticsData} 
               isLoading={analyticsLoading}
+              isFetching={analyticsFetching}
               onFilterChange={handleAnalyticsFilterChange}
             />
           </div>

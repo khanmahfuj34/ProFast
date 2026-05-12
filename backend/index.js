@@ -1477,6 +1477,197 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
     }
 });
 
+// GET /rider/deliveries - Alias for assigned-deliveries (frontend compatibility)
+app.get('/rider/deliveries', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const query = {
+            riderEmail: riderEmail,
+            deliveryStatus: { $in: ['driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way'] }
+        };
+        const parcels = await parcelsCollection.find(query).sort({ updatedAt: -1, createdAt: -1 }).toArray();
+
+        // Map to dashboard-friendly format (reuse assigned-deliveries logic)
+        const deliveries = parcels.map(p => ({
+            id: p._id.toString(),
+            name: p.parcelName || 'Unnamed Parcel',
+            category: p.parcelType === 'document' ? 'Documents' : 'Electronics',
+            weight: `${p.parcelWeight || 1} kg`,
+            pickup: `${p.senderDistrict || 'Unknown'}`,
+            pickupAddress: p.senderAddress || '',
+            delivery: `${p.receiverDistrict || 'Unknown'}`,
+            deliveryAddress: p.receiverAddress || '',
+            trackingId: p.trackingId || `ZS-${new Date(p.createdAt).getFullYear()}-${p._id.toString().slice(-4)}`,
+            status: mapDeliveryStatus(p.deliveryStatus),
+            statusRaw: p.deliveryStatus,
+            totalPrice: p.totalPrice || 0,
+            paymentStatus: p.paymentStatus || 'unpaid',
+            senderName: p.senderName || '',
+            senderPhone: p.senderPhone || '',
+            receiverName: p.receiverName || '',
+            receiverPhone: p.receiverPhone || ''
+        }));
+
+        res.send({ success: true, deliveries });
+    } catch (error) {
+        console.error('❌ Get rider deliveries error:', error.message);
+        res.status(500).send({ message: 'Error fetching deliveries', error: error.message });
+    }
+});
+
+// GET /rider/activity-feed - Get rider's recent delivery activity logs
+app.get('/rider/activity-feed', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const limit = parseInt(req.query.limit) || 20;
+
+        // Fetch recent parcels sorted by update time
+        const parcels = await parcelsCollection
+            .find({ riderEmail: riderEmail })
+            .sort({ updatedAt: -1, createdAt: -1 })
+            .limit(limit)
+            .toArray();
+
+        // Map to activity feed format
+        const activities = parcels.map(p => {
+            const status = p.deliveryStatus;
+            return {
+                id: p._id.toString(),
+                type: mapActivityType(status),
+                title: mapActivityTitle(status),
+                description: `${p.parcelName || 'Parcel'} - ${p.senderName || 'Sender'} → ${p.receiverName || 'Receiver'}`,
+                timestamp: p.updatedAt || p.createdAt,
+                status: mapDeliveryStatus(status),
+                icon: mapActivityIcon(status),
+                parcelId: p._id.toString(),
+                trackingId: p.trackingId || `ZS-${new Date(p.createdAt).getFullYear()}-${p._id.toString().slice(-4)}`
+            };
+        });
+
+        res.send({ success: true, activities });
+    } catch (error) {
+        console.error('❌ Get rider activity feed error:', error.message);
+        res.status(500).send({ message: 'Error fetching activity feed', error: error.message });
+    }
+});
+
+// GET /rider/analytics - Get rider's delivery analytics and stats
+app.get('/rider/analytics', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        const range = req.query.range || '7d';
+
+        // Calculate date range
+        let fromDate = new Date();
+        if (range === '7d') fromDate.setDate(fromDate.getDate() - 7);
+        else if (range === '30d') fromDate.setDate(fromDate.getDate() - 30);
+        else if (range === '3m') fromDate.setMonth(fromDate.getMonth() - 3);
+        else if (range === '1y') fromDate.setFullYear(fromDate.getFullYear() - 1);
+
+        const query = {
+            riderEmail: riderEmail,
+            updatedAt: { $gte: fromDate }
+        };
+
+        const parcels = await parcelsCollection.find(query).toArray();
+
+        // Calculate stats
+        const totalDeliveries = parcels.length;
+        const delivered = parcels.filter(p => p.deliveryStatus === 'delivered').length;
+        const cancelled = parcels.filter(p => p.deliveryStatus === 'pending-pickup' || p.deliveryStatus === 'cancelled').length;
+        const pending = parcels.filter(p => ['driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way'].includes(p.deliveryStatus)).length;
+
+        res.send({
+            success: true,
+            analytics: {
+                totalDeliveries,
+                delivered,
+                cancelled,
+                pending,
+                successRate: totalDeliveries > 0 ? Math.round((delivered / totalDeliveries) * 100) : 0,
+                cancelRate: totalDeliveries > 0 ? Math.round((cancelled / totalDeliveries) * 100) : 0
+            }
+        });
+    } catch (error) {
+        console.error('❌ Get rider analytics error:', error.message);
+        res.status(500).send({ message: 'Error fetching analytics', error: error.message });
+    }
+});
+
+// GET /rider/performance - Get rider's performance metrics
+app.get('/rider/performance', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+
+        // Fetch all deliveries for performance calculation
+        const allDeliveries = await parcelsCollection.find({ riderEmail: riderEmail }).toArray();
+
+        const delivered = allDeliveries.filter(p => p.deliveryStatus === 'delivered').length;
+        const cancelled = allDeliveries.filter(p => p.deliveryStatus === 'pending-pickup' || p.deliveryStatus === 'cancelled').length;
+        const total = allDeliveries.length;
+
+        // Weekly deliveries (last 7 days)
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weeklyDeliveries = allDeliveries.filter(p => new Date(p.updatedAt || p.createdAt) >= weekAgo).length;
+
+        const performance = {
+            totalDeliveries: total,
+            completedDeliveries: delivered,
+            cancelledDeliveries: cancelled,
+            successRate: total > 0 ? Math.round((delivered / total) * 100) : 0,
+            cancelRate: total > 0 ? Math.round((cancelled / total) * 100) : 0,
+            averageRating: 4.8, // Placeholder - implement rating system in future
+            weeklyDeliveries: weeklyDeliveries
+        };
+
+        res.send({ success: true, performance });
+    } catch (error) {
+        console.error('❌ Get rider performance error:', error.message);
+        res.status(500).send({ message: 'Error fetching performance', error: error.message });
+    }
+});
+
+// ============ HELPER FUNCTIONS FOR ACTIVITY FEED ============
+function mapActivityType(status) {
+    const types = {
+        'driver_assigned': 'assigned',
+        'driver_accepted': 'accepted',
+        'picked_up': 'pickup',
+        'on_the_way': 'delivery',
+        'delivered': 'completed',
+        'pending-pickup': 'pending',
+        'cancelled': 'cancelled'
+    };
+    return types[status] || 'update';
+}
+
+function mapActivityTitle(status) {
+    const titles = {
+        'driver_assigned': 'Delivery Assigned',
+        'driver_accepted': 'Pickup Ready',
+        'picked_up': 'Picked Up',
+        'on_the_way': 'On The Way',
+        'delivered': 'Delivered Successfully',
+        'pending-pickup': 'Pending Pickup',
+        'cancelled': 'Delivery Cancelled'
+    };
+    return titles[status] || 'Activity Updated';
+}
+
+function mapActivityIcon(status) {
+    const icons = {
+        'driver_assigned': '📋',
+        'driver_accepted': '✓',
+        'picked_up': '📦',
+        'on_the_way': '🚗',
+        'delivered': '✓✓',
+        'pending-pickup': '⏳',
+        'cancelled': '✗'
+    };
+    return icons[status] || '•';
+}
+
 // ============ USER ROUTES (Protected) ============
 
 // POST /user - Save or update user info during registration (JWT Protected)

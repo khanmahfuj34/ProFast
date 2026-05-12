@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   LineChart,
   Line,
@@ -17,9 +17,12 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-const AdminAnalytics = ({ analyticsData = {}, isLoading = false, onFilterChange = null }) => {
+const AdminAnalytics = ({ analyticsData = {}, isLoading = false, onFilterChange = null, isFetching = false }) => {
   const [timeFilter, setTimeFilter] = useState('7d');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(new Date());
+  const [updatePulse, setUpdatePulse] = useState(false);
+  const prevFetchingRef = useRef(false);
 
   const deliveryTrendData = analyticsData.deliveryTrend || [];
   const parcelStatusData = analyticsData.parcelStatus || [];
@@ -37,6 +40,34 @@ const AdminAnalytics = ({ analyticsData = {}, isLoading = false, onFilterChange 
     // Simulate transition
     setTimeout(() => setIsTransitioning(false), 300);
   }, [onFilterChange]);
+
+  // ✅ Show update pulse when data is being fetched in real-time
+  useEffect(() => {
+    let pulseTimer;
+    let updateTimer;
+    
+    // Only trigger when isFetching transitions from false to true
+    if (isFetching && !prevFetchingRef.current) {
+      // ✅ Defer state updates to next event loop to avoid cascading renders
+      updateTimer = setTimeout(() => {
+        setUpdatePulse(true);
+        setLastUpdateTime(new Date());
+      }, 0);
+      
+      // Remove pulse animation after it completes
+      pulseTimer = setTimeout(() => {
+        setUpdatePulse(false);
+      }, 1500);
+    }
+    
+    prevFetchingRef.current = isFetching;
+    
+    // Cleanup function
+    return () => {
+      if (pulseTimer) clearTimeout(pulseTimer);
+      if (updateTimer) clearTimeout(updateTimer);
+    };
+  }, [isFetching]);
 
 
   // Custom tooltip for modern look
@@ -120,10 +151,23 @@ const AdminAnalytics = ({ analyticsData = {}, isLoading = false, onFilterChange 
             <div>
               <h3 className="text-2xl font-bold text-gray-900">Delivery Trend</h3>
               <p className="text-sm text-gray-500 mt-1">Parcel delivery overview</p>
+              {/* ✅ Real-time update indicator */}
+              <p className="text-xs text-gray-400 mt-2 flex items-center gap-2">
+                <span className={`inline-block w-2 h-2 rounded-full transition-all ${updatePulse ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}></span>
+                Last updated: {lastUpdateTime.toLocaleTimeString()}
+              </p>
             </div>
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
-              {timeFilter === '7d' ? '7 Days' : timeFilter === '30d' ? '30 Days' : timeFilter === '3m' ? 'This Month' : 'This Year'}
-            </span>
+            <div className="flex items-center gap-3">
+              {isFetching && (
+                <span className="flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full animate-pulse">
+                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-bounce"></span>
+                  Updating...
+                </span>
+              )}
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                {timeFilter === '7d' ? '7 Days' : timeFilter === '30d' ? '30 Days' : timeFilter === '3m' ? 'This Month' : 'This Year'}
+              </span>
+            </div>
           </div>
 
           <ResponsiveContainer width="100%" height={400}>
@@ -162,13 +206,15 @@ const AdminAnalytics = ({ analyticsData = {}, isLoading = false, onFilterChange 
                 stroke="#999"
                 style={{ fontSize: '12px' }}
                 tick={{ fill: '#666' }}
+                domain={[0, 'dataMax + 50']}
+                label={{ value: 'Parcels', angle: -90, position: 'insideLeft' }}
               />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend content={<CustomLegend />} />
+              <Tooltip content={CustomTooltip} />
+              <Legend content={CustomLegend} />
               
               {/* Delivered Line with Gradient */}
               <Area
-                type="natural"
+                type="monotone"
                 dataKey="delivered"
                 stroke="#10B981"
                 strokeWidth={3}
@@ -182,7 +228,7 @@ const AdminAnalytics = ({ analyticsData = {}, isLoading = false, onFilterChange 
               
               {/* Pending Line with Gradient */}
               <Area
-                type="natural"
+                type="monotone"
                 dataKey="pending"
                 stroke="#F59E0B"
                 strokeWidth={3}
@@ -196,7 +242,7 @@ const AdminAnalytics = ({ analyticsData = {}, isLoading = false, onFilterChange 
               
               {/* Cancelled Line with Gradient */}
               <Area
-                type="natural"
+                type="monotone"
                 dataKey="cancelled"
                 stroke="#EF4444"
                 strokeWidth={3}

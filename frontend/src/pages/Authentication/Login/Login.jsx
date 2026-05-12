@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
-import { useNavigate, Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../../hooks/useAuth';
@@ -12,7 +12,6 @@ import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { signIn, user, loading, userProfile } = useAuth();
-    const navigate = useNavigate();
     const location = useLocation();
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [resetEmail, setResetEmail] = useState('');
@@ -145,23 +144,32 @@ const Login = () => {
     }
 
     if (user) {
+        // ✅ If user exists but userProfile hasn't loaded yet, wait for it
+        // This ensures we have role information before redirecting
+        if (!userProfile) {
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-yellow-100 to-yellow-50">
+                    <span className="loading loading-spinner loading-lg text-lime-600"></span>
+                    <p className="mt-4 text-gray-600 font-medium">Loading your profile…</p>
+                </div>
+            );
+        }
+
         let destination = location.state?.from?.pathname;
         
-        // If user profile hasn't loaded yet but backend is running, it will load shortly.
-        // But since loading is false, userProfile should be available.
-        if (userProfile?.role === 'admin' && (destination === '/' || destination === '/dashboard')) {
-            destination = '/admin'; // Force admins to admin dashboard
-        } else if (userProfile?.role === 'rider' && (destination === '/' || destination === '/dashboard')) {
-            destination = '/dashboard/rider-dashboard'; // Force riders to rider dashboard
-        } else if (!destination || destination === '/dashboard') {
-            if (userProfile?.role === 'admin') {
-                destination = '/admin';
-            } else if (userProfile?.role === 'rider') {
-                destination = '/dashboard/rider-dashboard';
-            } else {
-                destination = '/'; // Normal users go to homepage
-            }
+        // ✅ ADMIN REDIRECT: Always redirect admins directly to /admin dashboard
+        if (userProfile.role === 'admin') {
+            destination = '/admin';
         }
+        // ✅ RIDER REDIRECT: Redirect riders to their dashboard
+        else if (userProfile.role === 'rider') {
+            destination = '/dashboard/rider-dashboard';
+        }
+        // ✅ DEFAULT: If no role or coming from a specific page
+        else if (!destination || destination === '/' || destination === '/dashboard') {
+            destination = '/'; // Normal users go to homepage
+        }
+        // ✅ Otherwise keep the original destination (from protected route redirect)
         
         return <Navigate to={destination} replace />;
     }
