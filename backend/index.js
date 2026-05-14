@@ -731,14 +731,14 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
             const logEntry = {
                 status: deliveryStatus,
                 timestamp: new Date(),
-                updatedBy: req.user ?.email || 'system',
-                role: req.user ?.role || 'unknown'
+                updatedBy: req.user ? .email || 'system',
+                role: req.user ? .role || 'unknown'
             };
             updateOp.$push = { activityLog: logEntry };
         }
 
         const result = await parcelsCollection.updateOne(filter, updateOp);
-
+        git
         // Update rider workStatus
         if (riderId) {
             await riderCollection.updateOne({ _id: new ObjectId(riderId) }, { $set: { workStatus: 'in_delivery', updatedAt: new Date() } });
@@ -748,7 +748,7 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
         // If delivered/cancelled, set rider back to available
         if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
             const parcel = await parcelsCollection.findOne(filter);
-            if (parcel ?.riderId) {
+            if (parcel ? .riderId) {
                 try {
                     await riderCollection.updateOne({ _id: new ObjectId(parcel.riderId) }, { $set: { workStatus: 'available', updatedAt: new Date() } });
                 } catch (_) {}
@@ -777,7 +777,7 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
 
         if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
             io.emit('rider_status_changed', {
-                riderId: (await parcelsCollection.findOne(filter)) ?.riderId,
+                riderId: (await parcelsCollection.findOne(filter)) ? .riderId,
                 workStatus: 'available',
                 timestamp: new Date()
             });
@@ -1922,9 +1922,9 @@ app.get('/admin/dashboard-stats', verifyJWT, verifyAdmin, async(req, res) => {
             }
         }]).toArray();
 
-        const totalRevenue = revenueData[0] ?.totalRevenue || 0;
-        const completedPayments = revenueData[0] ?.completedPayments || 0;
-        const pendingPayments = revenueData[0] ?.pendingPayments || 0;
+        const totalRevenue = revenueData[0] ? .totalRevenue || 0;
+        const completedPayments = revenueData[0] ? .completedPayments || 0;
+        const pendingPayments = revenueData[0] ? .pendingPayments || 0;
 
         // Rider stats
         const totalRiders = await riderCollection.countDocuments({});
