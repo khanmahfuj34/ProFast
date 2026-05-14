@@ -4,6 +4,9 @@ const cookieParser = require('cookie-parser');
 const http = require('http');
 const { Server: SocketIOServer } = require('socket.io');
 require('dotenv').config(); // ✅ MUST load before anything that reads process.env
+const notificationRoutes = require('./routes/notificationRoutes');
+const notificationService = require('./services/notificationService');
+const setupNotificationSocket = require('./socket/notificationSocket');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
@@ -146,6 +149,10 @@ async function run() {
             });
         });
 
+        // Initialize Notification Module
+        notificationService.init(db, io);
+        setupNotificationSocket(io);
+
     } catch (error) {
         console.log(error);
         process.exit(1); // Exit if connection fails
@@ -251,6 +258,9 @@ const verifyRider = async(req, res, next) => {
 function generateTrackingId() {
     return 'TRK-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 }
+
+// ============ 🔔 NOTIFICATION ROUTES ============
+app.use('/notifications', verifyJWT, notificationRoutes);
 
 // ============ 🔐 AUTH ROUTES ============
 
@@ -419,7 +429,27 @@ app.post('/parcels', verifyJWT, async(req, res) => {
         parcel.paymentStatus = parcel.paymentStatus || 'unpaid';
         parcel.deliveryStatus = parcel.deliveryStatus || 'awaiting-payment';
 
+        // ✅ Generate unique trackingId
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+        parcel.trackingId = `TRK-${timestamp}-${random}`;
+
         const result = await parcelsCollection.insertOne(parcel);
+        
+        // 🔔 Notify User: Parcel Created
+        try {
+            await notificationService.createNotification({
+                recipientEmail: parcel.senderEmail,
+                type: 'parcel',
+                title: 'Parcel Registered',
+                message: `Your parcel "${parcel.parcelName || 'New Parcel'}" has been successfully registered. Tracking ID: ${parcel.trackingId}`,
+                relatedId: result.insertedId,
+                metadata: { trackingId: parcel.trackingId }
+            });
+        } catch (nError) {
+            console.error('Failed to create notification:', nError.message);
+        }
+
         res.send(result);
     } catch (error) {
         console.error('Error creating parcel:', error.message);
@@ -599,6 +629,20 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
             }
         });
 
+        // 🔔 Notify User: Payment Success
+        try {
+            await notificationService.createNotification({
+                recipientEmail: session.customer_email,
+                type: 'payment',
+                title: 'Payment Successful',
+                message: `Payment of ৳${session.amount_total / 100} for parcel "${session.metadata.parcelName}" was successful.`,
+                relatedId: parcelId,
+                metadata: { transactionId: transactionId, amount: session.amount_total / 100, trackingId: trackingId }
+            });
+        } catch (nError) {
+            console.error('Failed to create notification:', nError.message);
+        }
+
         // Return payment data
         const finalPaymentData = resultPayment.value || paymentData;
 
@@ -731,14 +775,39 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
             const logEntry = {
                 status: deliveryStatus,
                 timestamp: new Date(),
-                updatedBy: req.user ? .email || 'system',
-                role: req.user ? .role || 'unknown'
+                updatedBy: req.user?.email || 'system',
+                role: req.user?.role || 'unknown'
             };
             updateOp.$push = { activityLog: logEntry };
         }
 
         const result = await parcelsCollection.updateOne(filter, updateOp);
-        git
+
+        // 🔔 Notify User: Status Update / Rider Assignment
+        if (deliveryStatus || riderId) {
+            try {
+                const currentParcel = await parcelsCollection.findOne(filter);
+                let title = 'Parcel Update';
+                let message = `Your parcel status has been updated to ${deliveryStatus || 'Pending'}.`;
+
+                if (riderId) {
+                    title = 'Rider Assigned';
+                    message = `Rider ${riderName} has been assigned to your parcel.`;
+                }
+
+                await notificationService.createNotification({
+                    recipientEmail: currentParcel.senderEmail,
+                    type: 'parcel',
+                    title: title,
+                    message: message,
+                    relatedId: id,
+                    metadata: { status: deliveryStatus, riderName, trackingId: currentParcel.trackingId }
+                });
+            } catch (nError) {
+                console.error('Failed to create notification:', nError.message);
+            }
+        }
+
         // Update rider workStatus
         if (riderId) {
             await riderCollection.updateOne({ _id: new ObjectId(riderId) }, { $set: { workStatus: 'in_delivery', updatedAt: new Date() } });
@@ -748,7 +817,7 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
         // If delivered/cancelled, set rider back to available
         if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
             const parcel = await parcelsCollection.findOne(filter);
-            if (parcel ? .riderId) {
+            if (parcel?.riderId) {
                 try {
                     await riderCollection.updateOne({ _id: new ObjectId(parcel.riderId) }, { $set: { workStatus: 'available', updatedAt: new Date() } });
                 } catch (_) {}
@@ -777,7 +846,7 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
 
         if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
             io.emit('rider_status_changed', {
-                riderId: (await parcelsCollection.findOne(filter)) ? .riderId,
+                riderId: (await parcelsCollection.findOne(filter))?.riderId,
                 workStatus: 'available',
                 timestamp: new Date()
             });
@@ -1291,6 +1360,20 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
         }
 
         const result = await parcelsCollection.updateOne({ _id: new ObjectId(parcelId) }, { $set: setFields });
+
+        // 🔔 Notify User: Status Update by Rider
+        try {
+            await notificationService.createNotification({
+                recipientEmail: parcel.senderEmail,
+                type: 'parcel',
+                title: 'Delivery Status Updated',
+                message: `Your parcel "${parcel.parcelName}" is now: ${deliveryStatus.replace(/_/g, ' ')}`,
+                relatedId: parcelId,
+                metadata: { status: deliveryStatus, trackingId: parcel.trackingId }
+            });
+        } catch (nError) {
+            console.error('Failed to create notification:', nError.message);
+        }
 
         // Update rider workStatus based on remaining active deliveries
         const hasActiveDelivery = await parcelsCollection.countDocuments({
@@ -1922,9 +2005,9 @@ app.get('/admin/dashboard-stats', verifyJWT, verifyAdmin, async(req, res) => {
             }
         }]).toArray();
 
-        const totalRevenue = revenueData[0] ? .totalRevenue || 0;
-        const completedPayments = revenueData[0] ? .completedPayments || 0;
-        const pendingPayments = revenueData[0] ? .pendingPayments || 0;
+        const totalRevenue = revenueData[0]?.totalRevenue || 0;
+        const completedPayments = revenueData[0]?.completedPayments || 0;
+        const pendingPayments = revenueData[0]?.pendingPayments || 0;
 
         // Rider stats
         const totalRiders = await riderCollection.countDocuments({});

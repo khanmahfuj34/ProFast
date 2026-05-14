@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Outlet, Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useLogout from '../hooks/useLogout';
+import { useNotifications } from '../contexts/NotificationContext';
 import logo from '../assets/logo.png';
 
 import { RiTaskLine } from 'react-icons/ri';
@@ -12,6 +13,7 @@ const DashboardLayout = () => {
   const { handleLogout, isLoading: isLoggingOut } = useLogout();
   const location = useLocation();
   const navigate = useNavigate();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     if (loading) return;
@@ -356,6 +358,37 @@ const DashboardLayout = () => {
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                     <span className="font-medium is-drawer-close:hidden">{isAdmin ? '💳 All Payments' : 'Payment History'}</span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/dashboard/notifications"
+                    data-tip="Notifications"
+                    className={({ isActive }) =>
+                      `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-lime-500 text-white shadow-lg'
+                          : 'text-gray-300 hover:bg-slate-700'
+                      } is-drawer-close:px-0 is-drawer-close:justify-center`
+                    }
+                  >
+                    <div className="relative">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="w-5 h-5">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                      </svg>
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-slate-900">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-medium is-drawer-close:hidden flex-1 text-left">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="is-drawer-close:hidden px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-black rounded-full border border-red-500/30 ml-auto">
+                        NEW
+                      </span>
+                    )}
                   </NavLink>
                 </li>
 

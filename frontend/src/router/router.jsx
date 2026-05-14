@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createBrowserRouter } from "react-router-dom";
-import { Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
+import { NotificationProvider } from "../contexts/NotificationContext";
 import Home from "../pages/Home";
 import About from "../pages/About/About";
 import Pricing from "../pages/Pricing/Pricing";
@@ -45,6 +45,7 @@ import RiderDetailPage from "../pages/Dashboard/Admin/ApproveRiders/RiderDetailP
 import RiderDashboard from "../pages/Dashboard/RiderDashboard/RiderDashboard";
 import DeliveryHistory from "../pages/Dashboard/DeliveryHistory/DeliveryHistory";
 import TrackParcel from "../pages/TrackParcel/TrackParcel";
+import Notifications from "../pages/Dashboard/Notifications/Notification";
 import useAuth from "../hooks/useAuth";
 
 const DashboardIndexRedirect = () => {
@@ -76,186 +77,201 @@ const NotFound = () => (
   </div>
 );
 
+const MainLayout = () => (
+  <NotificationProvider>
+    <Outlet />
+  </NotificationProvider>
+);
+
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: Rootlayout,
+    element: <MainLayout />,
     children: [
-        {
+      {
+        path: "/",
+        Component: Rootlayout,
+        children: [
+          {
             index: true,
             Component: Home
-        },
-        {
-          path: 'about',
-          Component: About
-        },
-        {
-          path: 'pricing',
-          Component: Pricing
-        },
-        {
-          path: 'coverage',
-          Component: Coverage
-        },
-        {
-          path: 'service',
-          Component: Services
-        },
-        {
-          path: 'send-parcel',
-          element: <PrivateRoute><SendParcel /></PrivateRoute>
-        },
-        {
-          path: 'parcel-confirmation',
-          element: <PrivateRoute><ParcelConfirmation /></PrivateRoute>
-        },
-        {
-          path: 'be-rider',
-          element: <PrivateRoute><BeRider /></PrivateRoute>
-        },
-        {
-          path: 'be-rider-status',
-          element: <PrivateRoute><RiderStatus /></PrivateRoute>
-        }
-    ]
-  },
-  {
-    path: '/auth',
-    Component: AuthLayout,
-    children: [
-      {
-        path: 'login',
-        Component: Login
+          },
+          {
+            path: 'about',
+            Component: About
+          },
+          {
+            path: 'pricing',
+            Component: Pricing
+          },
+          {
+            path: 'coverage',
+            Component: Coverage
+          },
+          {
+            path: 'service',
+            Component: Services
+          },
+          {
+            path: 'send-parcel',
+            element: <PrivateRoute><SendParcel /></PrivateRoute>
+          },
+          {
+            path: 'parcel-confirmation',
+            element: <PrivateRoute><ParcelConfirmation /></PrivateRoute>
+          },
+          {
+            path: 'be-rider',
+            element: <PrivateRoute><BeRider /></PrivateRoute>
+          },
+          {
+            path: 'be-rider-status',
+            element: <PrivateRoute><RiderStatus /></PrivateRoute>
+          }
+        ]
       },
       {
-        path: 'register',
-        Component: Register
+        path: '/auth',
+        Component: AuthLayout,
+        children: [
+          {
+            path: 'login',
+            Component: Login
+          },
+          {
+            path: 'register',
+            Component: Register
+          }
+        ]
+      },
+      {
+        path: '/401',
+        Component: Unauthorized
+      },
+      {
+        path: '/403',
+        Component: Forbidden
+      },
+      {
+        path: 'dashboard',
+        element: <PrivateRoute><DashboardLayout /></PrivateRoute>,
+        children: [
+          {
+            index: true,
+            element: <DashboardIndexRedirect />
+          },
+          {
+            path: 'my-parcels',
+            Component: MyParcels
+          },
+          {
+            path: 'track-parcel',
+            Component: TrackParcel
+          },
+          {
+            path: 'payment',
+            Component: Payment
+          },
+          {
+            path: 'payment-success',
+            Component: PaymentSuccess
+          },
+          {
+            path: 'payment-failed',
+            Component: PaymentFailed
+          },
+          {
+            path: 'payment-history',
+            Component: PaymentHistory
+          },
+          {
+            path: 'rider-dashboard',
+            element: <RiderDashboard />
+          },
+          {
+            path: 'assigned-deliveries',
+            element: <PrivateRoute><AssignedDeliveries /></PrivateRoute>
+          },
+          {
+            path: 'delivery-history',
+            element: <PrivateRoute><DeliveryHistory /></PrivateRoute>
+          },
+          {
+            path: 'notifications',
+            element: <PrivateRoute><Notifications /></PrivateRoute>
+          }
+        ]
+      },
+      {
+        path: '/admin',
+        element: <AdminRoute><AdminLayout /></AdminRoute>,
+        children: [
+          {
+            index: true,
+            element: <AdminDashboard />
+          },
+          {
+            path: 'users',
+            element: <AdminManageUsers />
+          },
+          {
+            path: 'riders',
+            element: <AdminManageRiders />
+          },
+          {
+            path: 'parcels',
+            element: <AdminParcelOversight />
+          },
+          {
+            path: 'payments',
+            element: <AdminPayments />
+          },
+          {
+            path: 'payments-history',
+            element: <AdminPaymentHistory />
+          },
+          {
+            path: 'assign-rider',
+            element: <AssignRider />
+          },
+          {
+            path: 'approve-riders',
+            element: <ApproveRiders />
+          },
+          {
+            path: 'approve-riders/:riderId',
+            element: <RiderDetailPage />
+          },
+          {
+            path: 'reports',
+            element: <AdminReports />
+          },
+          {
+            path: 'notifications',
+            element: <AdminNotifications />
+          },
+          {
+            path: 'support-tickets',
+            element: <AdminSupportTickets />
+          },
+          {
+            path: 'settings',
+            element: <AdminSettings />
+          },
+          {
+            path: 'zone-manager',
+            element: <AdminZoneManager />
+          },
+          {
+            path: 'live-tracking',
+            element: <AdminLiveTracking />
+          }
+        ]
+      },
+      {
+        path: '*',
+        Component: NotFound
       }
     ]
-  },
-  {
-    path: '/401',
-    Component: Unauthorized
-  },
-  {
-    path: '/403',
-    Component: Forbidden
-  },
-  {
-    path:'dashboard',
-    element: <PrivateRoute><DashboardLayout /></PrivateRoute>,
-    children:[
-      {
-        index: true,
-        element: <DashboardIndexRedirect />
-      },
-      {
-        path:'my-parcels',
-        Component:MyParcels
-      },
-      {
-        path:'track-parcel',
-        Component:TrackParcel
-      },
-      {
-        path:'payment',
-        Component:Payment
-      },
-      {
-        path:'payment-success',
-        Component:PaymentSuccess
-      },
-      {
-        path:'payment-failed',
-        Component:PaymentFailed
-      },
-      {
-        path:'payment-history',
-        Component:PaymentHistory
-      },
-      {
-        path:'rider-dashboard',
-        element: <RiderDashboard />
-      },
-      {
-        path:'assigned-deliveries',
-        element: <PrivateRoute><AssignedDeliveries /></PrivateRoute>
-      },
-      {
-        path:'delivery-history',
-        element: <PrivateRoute><DeliveryHistory /></PrivateRoute>
-      },
-
-    ]
-  },
-  {
-    path: '/admin',
-    element: <AdminRoute><AdminLayout /></AdminRoute>,
-    children: [
-      {
-        index: true,
-        element: <AdminDashboard />
-      },
-      {
-        path: 'users',
-        element: <AdminManageUsers />
-      },
-      {
-        path: 'riders',
-        element: <AdminManageRiders />
-      },
-      {
-        path: 'parcels',
-        element: <AdminParcelOversight />
-      },
-      {
-        path: 'payments',
-        element: <AdminPayments />
-      },
-      {
-        path: 'payments-history',
-        element: <AdminPaymentHistory />
-      },
-      {
-        path: 'assign-rider',
-        element: <AssignRider />
-      },
-      {
-        path: 'approve-riders',
-        element: <ApproveRiders />
-      },
-      {
-        path: 'approve-riders/:riderId',
-        element: <RiderDetailPage />
-      },
-      {
-        path: 'reports',
-        element: <AdminReports />
-      },
-      {
-        path: 'notifications',
-        element: <AdminNotifications />
-      },
-      {
-        path: 'support-tickets',
-        element: <AdminSupportTickets />
-      },
-      {
-        path: 'settings',
-        element: <AdminSettings />
-      },
-      {
-        path: 'zone-manager',
-        element: <AdminZoneManager />
-      },
-      {
-        path: 'live-tracking',
-        element: <AdminLiveTracking />
-      }
-    ]
-  },
-  {
-    path: '*',
-    Component: NotFound
   }
 ]);
