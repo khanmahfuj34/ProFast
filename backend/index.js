@@ -26,14 +26,22 @@ admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
 
+const allowedOrigins = [
+    process.env.SITE_DOMAIN,
+    'http://localhost:5173',
+    'http://localhost:5174'
+].filter(Boolean);
+
 const app = express();
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
     cors: {
-        origin: process.env.SITE_DOMAIN || ['http://localhost:5173', 'http://localhost:5174'],
+        origin: allowedOrigins,
         methods: ['GET', 'POST'],
         credentials: true
-    }
+    },
+    transports: ['polling', 'websocket'], // Allow both
+    allowEIO3: true // Support older clients if any
 });
 const stripe = require('stripe')(process.env.STRIPE_SECRET); // ✅ Now STRIPE_SECRET is defined
 
@@ -45,15 +53,9 @@ const {
 
 const port = process.env.PORT || 3000;
 
-const allowedOrigins = new Set([
-    process.env.SITE_DOMAIN,
-    'http://localhost:5173',
-    'http://localhost:5174'
-].filter(Boolean));
-
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.has(origin)) {
+        if (!origin || allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
