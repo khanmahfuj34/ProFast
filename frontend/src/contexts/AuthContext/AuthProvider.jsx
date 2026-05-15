@@ -334,6 +334,52 @@ const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * ✅ Update user profile data in both Backend and Firebase (for displayName/photoURL)
+     * This follows the production-level pattern requested.
+     */
+    const updateProfileData = async (data) => {
+        try {
+            setLoading(true);
+            
+            // 1. Update Firebase profile if displayName or photoURL changed
+            if (auth.currentUser && (data.displayName || data.photoURL)) {
+                await updateProfile(auth.currentUser, {
+                    displayName: data.displayName || auth.currentUser.displayName,
+                    photoURL: data.photoURL || auth.currentUser.photoURL
+                });
+                await auth.currentUser.reload();
+                setUser({ ...auth.currentUser });
+            }
+
+            // 2. Update Backend profile
+            const response = await axios.patch(
+                'http://localhost:3000/users/update-profile-data',
+                data,
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.data.success) {
+                // 3. Refresh user profile state from backend
+                await fetchUserProfile();
+                return { success: true, message: response.data.message };
+            } else {
+                throw new Error(response.data.message || 'Failed to update profile');
+            }
+        } catch (error) {
+            const msg = error.response?.data?.message || error.message;
+            setAuthError(msg);
+            throw new Error(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // ✅ Firebase auth listener - ONLY updates user state (no async work in callback)
     // loading stays true when user exists; the token effect below will set it false
     // after the JWT is sent and the backend profile is fetched.
@@ -410,7 +456,8 @@ const AuthProvider = ({ children }) => {
         authError,
         resendVerificationEmail,
         updateUserProfilePhoto,
-        updateUserDisplayName
+        updateUserDisplayName,
+        updateProfileData
     };
 
     return (

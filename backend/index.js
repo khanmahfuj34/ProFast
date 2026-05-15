@@ -5,7 +5,9 @@ const http = require('http');
 const { Server: SocketIOServer } = require('socket.io');
 require('dotenv').config(); // ✅ MUST load before anything that reads process.env
 const notificationRoutes = require('./routes/notificationRoutes');
+const userRoutes = require('./routes/userRoutes');
 const notificationService = require('./services/notificationService');
+const userService = require('./services/userService');
 const setupNotificationSocket = require('./socket/notificationSocket');
 
 // 🔐 Firebase Admin SDK initialization
@@ -149,8 +151,9 @@ async function run() {
             });
         });
 
-        // Initialize Notification Module
+        // Initialize Modules
         notificationService.init(db, io);
+        userService.init(db);
         setupNotificationSocket(io);
 
     } catch (error) {
@@ -261,6 +264,9 @@ function generateTrackingId() {
 
 // ============ 🔔 NOTIFICATION ROUTES ============
 app.use('/notifications', verifyJWT, notificationRoutes);
+
+// ============ 👤 USER ROUTES ============
+app.use('/users', verifyJWT, userRoutes);
 
 // ============ 🔐 AUTH ROUTES ============
 

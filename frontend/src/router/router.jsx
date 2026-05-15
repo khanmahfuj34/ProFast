@@ -46,6 +46,8 @@ import RiderDashboard from "../pages/Dashboard/RiderDashboard/RiderDashboard";
 import DeliveryHistory from "../pages/Dashboard/DeliveryHistory/DeliveryHistory";
 import TrackParcel from "../pages/TrackParcel/TrackParcel";
 import Notifications from "../pages/Dashboard/Notifications/Notification";
+import Settings from "../pages/Dashboard/Settings/Settings";
+import ProfileSettings from "../pages/Dashboard/Settings/ProfileSettings";
 import useAuth from "../hooks/useAuth";
 
 const DashboardIndexRedirect = () => {
@@ -199,6 +201,16 @@ export const router = createBrowserRouter([
           {
             path: 'notifications',
             element: <PrivateRoute><Notifications /></PrivateRoute>
+          },
+          {
+            path: 'settings',
+            element: <PrivateRoute><Settings /></PrivateRoute>,
+            children: [
+              {
+                index: true,
+                element: <ProfileSettings />
+              }
+            ]
           }
         ]
       },
