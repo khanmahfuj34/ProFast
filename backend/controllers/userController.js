@@ -6,14 +6,14 @@ const userService = require('../services/userService');
 const updateProfileData = async (req, res) => {
     try {
         const email = req.user.email;
-        const { displayName, phoneNumber, district, area, address, photoURL } = req.body;
+        const { displayName, phoneNumber, division, district, address, photoURL } = req.body;
 
         // 🛡️ Security: Allowed field filtering (prevents role manipulation)
         const updateData = {};
         if (displayName !== undefined) updateData.displayName = displayName;
         if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
+        if (division !== undefined) updateData.division = division;
         if (district !== undefined) updateData.district = district;
-        if (area !== undefined) updateData.area = area;
         if (address !== undefined) updateData.address = address;
         if (photoURL !== undefined) updateData.photoURL = photoURL;
 

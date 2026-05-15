@@ -11,6 +11,9 @@ const notificationService = require('./services/notificationService');
 const userService = require('./services/userService');
 const notificationSettingsService = require('./services/notificationSettingsService');
 const setupNotificationSocket = require('./socket/notificationSocket');
+const coverageRoutes = require('./routes/coverageRoutes');
+const coverageService = require('./services/coverageService');
+const coverageData = require('./data/coverageData');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
@@ -131,7 +134,15 @@ async function run() {
         await paymentsCollection.createIndex({ parcelId: 1, customerEmail: 1 });
         console.log("✅ Index created on payments.parcelId and customerEmail");
 
-        // Start server AFTER MongoDB connects
+        // Initialize Modules
+        notificationService.init(db, io);
+        userService.init(db);
+        notificationSettingsService.init(db);
+        coverageService.init(db);
+        await coverageService.seedCoverageData(coverageData);
+        setupNotificationSocket(io);
+
+        // Start server AFTER MongoDB connects and services are initialized
         server.listen(port, () => {
             console.log(`
 ╔════════════════════════════════════════════╗
@@ -152,12 +163,6 @@ async function run() {
                 console.log(`❌ Client disconnected: ${socket.id}`);
             });
         });
-
-        // Initialize Modules
-        notificationService.init(db, io);
-        userService.init(db);
-        notificationSettingsService.init(db);
-        setupNotificationSocket(io);
 
     } catch (error) {
         console.log(error);
@@ -271,6 +276,7 @@ app.use('/notifications', verifyJWT, notificationRoutes);
 // ============ 👤 USER ROUTES ============
 app.use('/users', verifyJWT, userRoutes);
 app.use('/notification-settings', verifyJWT, notificationSettingsRoutes);
+app.use('/coverage', coverageRoutes);
 
 // ============ 🔐 AUTH ROUTES ============
 
