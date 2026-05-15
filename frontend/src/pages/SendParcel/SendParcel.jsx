@@ -39,12 +39,74 @@ const SendParcel = () => {
   });
   const {user}=useAuth();
   const axiosSecure = useAxiosSecure();
+  const [divisions, setDivisions] = useState([]);
+  const [senderDivision, setSenderDivision] = useState('');
+  const [receiverDivision, setReceiverDivision] = useState('');
+  const [senderDistricts, setSenderDistricts] = useState([]);
+  const [receiverDistricts, setReceiverDistricts] = useState([]);
   const [senderDistrictSearch, setSenderDistrictSearch] = useState('');
   const [receiverDistrictSearch, setReceiverDistrictSearch] = useState('');
   const [showSenderDropdown, setShowSenderDropdown] = useState(false);
   const [showReceiverDropdown, setShowReceiverDropdown] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deliveryTypeWarning, setDeliveryTypeWarning] = useState('');
+
+  // Fetch Divisions
+  useEffect(() => {
+    const fetchDivisions = async () => {
+      try {
+        const res = await axiosSecure.get('/coverage/divisions');
+        if (res.data.success) {
+          setDivisions(res.data.divisions);
+        }
+      } catch (error) {
+        console.error('Error fetching divisions:', error);
+      }
+    };
+    fetchDivisions();
+  }, [axiosSecure]);
+
+  // Fetch Sender Districts when Division changes
+  useEffect(() => {
+    if (senderDivision) {
+      const fetchDistricts = async () => {
+        try {
+          const res = await axiosSecure.get(`/coverage/districts/${senderDivision}`);
+          if (res.data.success) {
+            setSenderDistricts(res.data.districts);
+            setSenderDistrictSearch(''); // Reset district selection
+          }
+        } catch (error) {
+          console.error('Error fetching sender districts:', error);
+        }
+      };
+      fetchDistricts();
+    } else {
+      setSenderDistricts([]);
+      setSenderDistrictSearch('');
+    }
+  }, [senderDivision, axiosSecure]);
+
+  // Fetch Receiver Districts when Division changes
+  useEffect(() => {
+    if (receiverDivision) {
+      const fetchDistricts = async () => {
+        try {
+          const res = await axiosSecure.get(`/coverage/districts/${receiverDivision}`);
+          if (res.data.success) {
+            setReceiverDistricts(res.data.districts);
+            setReceiverDistrictSearch(''); // Reset district selection
+          }
+        } catch (error) {
+          console.error('Error fetching receiver districts:', error);
+        }
+      };
+      fetchDistricts();
+    } else {
+      setReceiverDistricts([]);
+      setReceiverDistrictSearch('');
+    }
+  }, [receiverDivision, axiosSecure]);
 
   // Auto-adjust delivery type when receiver district changes
   useEffect(() => {
@@ -68,16 +130,16 @@ const SendParcel = () => {
   const deliveryType = formWatch('deliveryType');
 
   const filteredSenderDistricts = useMemo(() => {
-    return districts.filter(d =>
-      d.name.toLowerCase().includes(senderDistrictSearch.toLowerCase())
+    return senderDistricts.filter(d =>
+      d.toLowerCase().includes(senderDistrictSearch.toLowerCase())
     );
-  }, [senderDistrictSearch]);
+  }, [senderDistrictSearch, senderDistricts]);
 
   const filteredReceiverDistricts = useMemo(() => {
-    return districts.filter(d =>
-      d.name.toLowerCase().includes(receiverDistrictSearch.toLowerCase())
+    return receiverDistricts.filter(d =>
+      d.toLowerCase().includes(receiverDistrictSearch.toLowerCase())
     );
-  }, [receiverDistrictSearch]);
+  }, [receiverDistrictSearch, receiverDistricts]);
 
   // Real-time price calculation
   const priceInfo = useMemo(() => {
@@ -94,14 +156,14 @@ const SendParcel = () => {
     setIsSubmitting(true);
 
     // Validate all required fields
-    if (!senderDistrictSearch) {
-      Swal.fire('Error', 'Please select sender district', 'error');
+    if (!senderDivision || !senderDistrictSearch) {
+      Swal.fire('Error', 'Please select sender division and district', 'error');
       setIsSubmitting(false);
       return;
     }
 
-    if (!receiverDistrictSearch) {
-      Swal.fire('Error', 'Please select receiver district', 'error');
+    if (!receiverDivision || !receiverDistrictSearch) {
+      Swal.fire('Error', 'Please select receiver division and district', 'error');
       setIsSubmitting(false);
       return;
     }
@@ -160,11 +222,15 @@ const SendParcel = () => {
         // Prepare parcel data
         const completeParcelData = {
           ...data,
+          senderDivision,
           senderDistrict: senderDistrictSearch,
+          receiverDivision,
           receiverDistrict: receiverDistrictSearch,
           basePrice: priceInfo.basePrice,
           extraCharges: priceInfo.extraCharges,
-          totalPrice: priceInfo.totalPrice
+          totalPrice: priceInfo.totalPrice,
+          deliveryStatus: 'awaiting-payment', // Ensure default status
+          status: 'pending_rider' // Add the requested status field
         };
 
         const res = await axiosSecure.post('/parcels', completeParcelData);
@@ -331,40 +397,57 @@ const SendParcel = () => {
                   {errors.senderPhone && <p className="text-red-500 text-sm mt-1">{errors.senderPhone.message}</p>}
                 </div>
 
-                <div>
-                  <label className={labelStyle}>Your District *</label>
-                  <div className="relative">
-                    <input
-                      value={senderDistrictSearch}
-                      onChange={(e) => setSenderDistrictSearch(e.target.value)}
-                      onFocus={() => setShowSenderDropdown(true)}
-                      onBlur={() => setTimeout(() => setShowSenderDropdown(false), 200)}
-                      placeholder="Search and select district"
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelStyle}>Your Division *</label>
+                    <select
+                      value={senderDivision}
+                      onChange={(e) => setSenderDivision(e.target.value)}
                       className={inputStyle}
-                    />
-
-                    {showSenderDropdown && (
-                      <div className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
-                        {filteredSenderDistricts.length > 0 ? (
-                          filteredSenderDistricts.map(d => (
-                            <div
-                              key={d.name}
-                              onClick={() => {
-                                setSenderDistrictSearch(d.name);
-                                setShowSenderDropdown(false);
-                              }}
-                              className="px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer transition"
-                            >
-                              {d.name}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="px-4 py-2 text-gray-500">No districts found</div>
-                        )}
-                      </div>
-                    )}
+                      required
+                    >
+                      <option value="">Select Division</option>
+                      {divisions.map(div => (
+                        <option key={div} value={div}>{div}</option>
+                      ))}
+                    </select>
                   </div>
-                  {!senderDistrictSearch && errors.senderDistrict && <p className="text-red-500 text-sm mt-1">Please select a district</p>}
+
+                  <div>
+                    <label className={labelStyle}>Your District *</label>
+                    <div className="relative">
+                      <input
+                        value={senderDistrictSearch}
+                        onChange={(e) => setSenderDistrictSearch(e.target.value)}
+                        onFocus={() => setShowSenderDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowSenderDropdown(false), 200)}
+                        placeholder={senderDivision ? "Search district" : "Select division first"}
+                        className={inputStyle}
+                        disabled={!senderDivision}
+                      />
+
+                      {showSenderDropdown && senderDistricts.length > 0 && (
+                        <div className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
+                          {filteredSenderDistricts.length > 0 ? (
+                            filteredSenderDistricts.map(d => (
+                              <div
+                                key={d}
+                                onClick={() => {
+                                  setSenderDistrictSearch(d);
+                                  setShowSenderDropdown(false);
+                                }}
+                                className="px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer transition"
+                              >
+                                {d}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-2 text-gray-500">No districts found</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -396,40 +479,57 @@ const SendParcel = () => {
                   {errors.receiverPhone && <p className="text-red-500 text-sm mt-1">{errors.receiverPhone.message}</p>}
                 </div>
 
-                <div>
-                  <label className={labelStyle}>Receiver District *</label>
-                  <div className="relative">
-                    <input
-                      value={receiverDistrictSearch}
-                      onChange={(e) => setReceiverDistrictSearch(e.target.value)}
-                      onFocus={() => setShowReceiverDropdown(true)}
-                      onBlur={() => setTimeout(() => setShowReceiverDropdown(false), 200)}
-                      placeholder="Search and select district"
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelStyle}>Receiver Division *</label>
+                    <select
+                      value={receiverDivision}
+                      onChange={(e) => setReceiverDivision(e.target.value)}
                       className={inputStyle}
-                    />
-
-                    {showReceiverDropdown && (
-                      <div className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
-                        {filteredReceiverDistricts.length > 0 ? (
-                          filteredReceiverDistricts.map(d => (
-                            <div
-                              key={d.name}
-                              onClick={() => {
-                                setReceiverDistrictSearch(d.name);
-                                setShowReceiverDropdown(false);
-                              }}
-                              className="px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer transition"
-                            >
-                              {d.name}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="px-4 py-2 text-gray-500">No districts found</div>
-                        )}
-                      </div>
-                    )}
+                      required
+                    >
+                      <option value="">Select Division</option>
+                      {divisions.map(div => (
+                        <option key={div} value={div}>{div}</option>
+                      ))}
+                    </select>
                   </div>
-                  {!receiverDistrictSearch && errors.receiverDistrict && <p className="text-red-500 text-sm mt-1">Please select a district</p>}
+
+                  <div>
+                    <label className={labelStyle}>Receiver District *</label>
+                    <div className="relative">
+                      <input
+                        value={receiverDistrictSearch}
+                        onChange={(e) => setReceiverDistrictSearch(e.target.value)}
+                        onFocus={() => setShowReceiverDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowReceiverDropdown(false), 200)}
+                        placeholder={receiverDivision ? "Search district" : "Select division first"}
+                        className={inputStyle}
+                        disabled={!receiverDivision}
+                      />
+
+                      {showReceiverDropdown && receiverDistricts.length > 0 && (
+                        <div className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
+                          {filteredReceiverDistricts.length > 0 ? (
+                            filteredReceiverDistricts.map(d => (
+                              <div
+                                key={d}
+                                onClick={() => {
+                                  setReceiverDistrictSearch(d);
+                                  setShowReceiverDropdown(false);
+                                }}
+                                className="px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer transition"
+                              >
+                                {d}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="px-4 py-2 text-gray-500">No districts found</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div>
