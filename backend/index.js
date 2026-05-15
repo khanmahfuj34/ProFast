@@ -17,6 +17,7 @@ const coverageRoutes = require('./routes/coverageRoutes');
 const coverageService = require('./services/coverageService');
 const supportService = require('./services/supportService');
 const riderService = require('./services/riderService');
+const riderMatchingService = require('./services/riderMatchingService');
 const riderRoutes = require('./routes/riderRoutes');
 const setupRiderSocket = require('./socket/riderSocket');
 const coverageData = require('./data/coverageData');
@@ -148,6 +149,7 @@ async function run() {
         notificationSettingsService.init(db);
         supportService.init(db);
         riderService.init(db, io);
+        riderMatchingService.init(db, io);
         coverageService.init(db);
         await coverageService.seedCoverageData(coverageData);
         setupNotificationSocket(io);
@@ -488,7 +490,29 @@ app.post('/parcels', verifyJWT, async(req, res) => {
             console.error('Failed to create notification:', nError.message);
         }
 
-        res.send(result);
+        // 🏍️ TRIGGER RIDER MATCHING
+        const savedParcel = { ...parcel, _id: result.insertedId };
+        const matchingRiders = await riderMatchingService.findMatchingRiders(savedParcel);
+        
+        if (matchingRiders.length > 0) {
+            // Update status to indicate we are waiting for rider response
+            await parcelsCollection.updateOne(
+                { _id: result.insertedId },
+                { $set: { status: 'pending_rider_response', matchingCount: matchingRiders.length } }
+            );
+            
+            // Notify matching riders
+            await riderMatchingService.notifyRiders(matchingRiders, savedParcel);
+        } else {
+            console.log(`⚠️ No riders matched for ${savedParcel.trackingId}`);
+            // Ensure status is 'pending_rider'
+            await parcelsCollection.updateOne(
+                { _id: result.insertedId },
+                { $set: { status: 'pending_rider' } }
+            );
+        }
+
+        res.send({ ...result, trackingId: parcel.trackingId });
     } catch (error) {
         console.error('Error creating parcel:', error.message);
         res.status(500).send({ message: 'Error creating parcel' });
