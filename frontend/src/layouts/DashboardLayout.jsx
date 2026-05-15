@@ -4,6 +4,7 @@ import useAuth from '../hooks/useAuth';
 import useLogout from '../hooks/useLogout';
 import { useNotifications } from '../contexts/NotificationContext';
 import logo from '../assets/logo.png';
+import useRiderStatus from '../hooks/useRiderStatus';
 
 import { RiTaskLine, RiCustomerService2Line } from 'react-icons/ri';
 
@@ -14,6 +15,7 @@ const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
+  const { isOnline, toggleStatus, isLoading: statusLoading } = useRiderStatus();
 
   useEffect(() => {
     if (loading) return;
@@ -78,6 +80,37 @@ const DashboardLayout = () => {
                   placeholder="Search..."
                   className="input input-sm input-bordered bg-slate-700 text-white placeholder-gray-400 border-slate-600"
                 />
+              </div>
+            </div>
+          )}
+          
+          {/* Rider Status Toggle */}
+          {isRider && (
+            <div className="flex-none gap-4 px-4 mr-4">
+              <div className="flex items-center gap-3 bg-slate-800/50 px-4 py-1.5 rounded-full border border-slate-700/50">
+                <div className="flex items-center gap-2">
+                  <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_8px] ${
+                    isOnline ? 'bg-lime-500 shadow-lime-500/50' : 'bg-red-500 shadow-red-500/50'
+                  }`}></div>
+                  <span className={`text-xs font-black uppercase tracking-wider ${
+                    isOnline ? 'text-lime-500' : 'text-red-400'
+                  }`}>
+                    {isOnline ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+                
+                <div className="h-4 w-px bg-slate-700"></div>
+
+                <label className="relative inline-flex items-center cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={isOnline}
+                    onChange={toggleStatus}
+                    disabled={statusLoading}
+                  />
+                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-500 group-hover:scale-105 transition-transform"></div>
+                </label>
               </div>
             </div>
           )}

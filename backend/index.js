@@ -16,6 +16,9 @@ const setupNotificationSocket = require('./socket/notificationSocket');
 const coverageRoutes = require('./routes/coverageRoutes');
 const coverageService = require('./services/coverageService');
 const supportService = require('./services/supportService');
+const riderService = require('./services/riderService');
+const riderRoutes = require('./routes/riderRoutes');
+const setupRiderSocket = require('./socket/riderSocket');
 const coverageData = require('./data/coverageData');
 
 // 🔐 Firebase Admin SDK initialization
@@ -144,9 +147,11 @@ async function run() {
         userService.init(db);
         notificationSettingsService.init(db);
         supportService.init(db);
+        riderService.init(db, io);
         coverageService.init(db);
         await coverageService.seedCoverageData(coverageData);
         setupNotificationSocket(io);
+        setupRiderSocket(io);
 
         // Start server AFTER MongoDB connects and services are initialized
         server.listen(port, () => {
@@ -284,6 +289,7 @@ app.use('/users', verifyJWT, userRoutes);
 app.use('/notification-settings', verifyJWT, notificationSettingsRoutes);
 app.use('/security', verifyJWT, securityRoutes);
 app.use('/support', verifyJWT, supportRoutes);
+app.use('/riders', verifyJWT, riderRoutes);
 app.use('/coverage', coverageRoutes);
 
 // ============ 🔐 AUTH ROUTES ============
