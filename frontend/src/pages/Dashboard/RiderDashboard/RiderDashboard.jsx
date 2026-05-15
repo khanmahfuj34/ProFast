@@ -10,12 +10,14 @@ import RiderActiveDeliveries from './components/RiderActiveDeliveries';
 import RiderAnalytics from './components/RiderAnalytics';
 import RiderActivityFeed from './components/RiderActivityFeed';
 import RiderPerformance from './components/RiderPerformance';
+import DeliveryRequestModal from './components/DeliveryRequestModal';
 
 const RiderDashboard = () => {
   const { user, userProfile } = useAuth();
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
   const [isOnline, setIsOnline] = useState(true);
+  const [activeRequest, setActiveRequest] = useState(null);
 
   // ✅ Inline mock data constants for fallback when backend is unavailable
   const mockRiderDashboardStats = {
@@ -87,6 +89,11 @@ const RiderDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ['rider-activity'] });
     });
 
+    newSocket.on('new_delivery_request', (request) => {
+      console.log('📦 [Socket] New delivery request received:', request.trackingId);
+      setActiveRequest(request);
+    });
+
     newSocket.on('disconnect', () => {
       toast.error('Disconnected from live updates', { duration: 2000 });
     });
@@ -96,6 +103,27 @@ const RiderDashboard = () => {
       newSocket.close();
     };
   }, [user?.email, queryClient]);
+
+  const handleAccept = async (parcelId) => {
+    try {
+      const res = await axiosSecure.patch(`/riders/accept-parcel/${parcelId}`);
+      if (res.data.success) {
+        toast.success('Parcel accepted! Start your journey.', { icon: '🚀' });
+        setActiveRequest(null);
+        // Refresh dashboard data
+        queryClient.invalidateQueries({ queryKey: ['rider-deliveries'] });
+        queryClient.invalidateQueries({ queryKey: ['rider-dashboard-stats'] });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to accept parcel');
+      setActiveRequest(null);
+    }
+  };
+
+  const handleReject = () => {
+    setActiveRequest(null);
+    toast('Request dismissed', { icon: '🤝' });
+  };
 
   // Fetch dashboard overview stats
   const { data: stats = mockRiderDashboardStats, isLoading: statsLoading } = useQuery({
@@ -194,6 +222,15 @@ const RiderDashboard = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-50">
+      {/* Real-time Delivery Request Modal */}
+      {activeRequest && (
+        <DeliveryRequestModal 
+          request={activeRequest}
+          onAccept={handleAccept}
+          onReject={handleReject}
+        />
+      )}
+      
       {/* Fixed Top Navigation Bar */}
       <RiderTopNavbar 
         user={user} 

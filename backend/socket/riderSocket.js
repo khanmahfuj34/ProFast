@@ -6,7 +6,8 @@ const setupRiderSocket = (io) => {
         socket.on('rider_online', async (data) => {
             const { email } = data;
             if (email) {
-                console.log(`🔌 [Socket] Rider ${email} came online`);
+                socket.join(email); // Join private room for targeted notifications
+                console.log(`🔌 [Socket] Rider ${email} came online and joined private room`);
                 await riderService.updateOnlineStatus(email, true, socket.id);
             }
         });

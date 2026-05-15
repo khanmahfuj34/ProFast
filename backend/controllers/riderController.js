@@ -45,6 +45,24 @@ const riderController = {
             console.error('❌ Get status error:', error.message);
             res.status(500).send({ success: false, message: 'Internal server error' });
         }
+    },
+
+    acceptParcel: async (req, res) => {
+        try {
+            const { parcelId } = req.params;
+            const email = req.user.email;
+
+            const result = await riderService.acceptParcel(email, parcelId);
+
+            res.send({
+                success: true,
+                message: 'Parcel accepted successfully',
+                parcel: result
+            });
+        } catch (error) {
+            console.error('❌ Accept parcel error:', error.message);
+            res.status(400).send({ success: false, message: error.message });
+        }
     }
 };
 

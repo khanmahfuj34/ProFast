@@ -64,6 +64,45 @@ const riderService = {
 
     getRiderByEmail: async (email) => {
         return await riderCollection.findOne({ email: email });
+    },
+
+    acceptParcel: async (riderEmail, parcelId) => {
+        if (!riderCollection || !parcelsCollection) throw new Error("Collections not initialized");
+
+        // 1. Check if rider is approved and online
+        const rider = await riderCollection.findOne({ email: riderEmail, status: 'Approved', isOnline: true });
+        if (!rider) throw new Error("Rider not authorized or offline");
+
+        // 2. Atomically attempt to accept the parcel (only if it's still pending_rider_response)
+        const result = await parcelsCollection.findOneAndUpdate(
+            { 
+                _id: new ObjectId(parcelId), 
+                status: 'pending_rider_response' 
+            },
+            { 
+                $set: { 
+                    status: 'picked-up', // Or 'assigned' depending on flow
+                    riderId: riderEmail,
+                    assignedAt: new Date(),
+                    updatedAt: new Date()
+                } 
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!result) {
+            throw new Error("Parcel already accepted by another rider or not available");
+        }
+
+        // 3. Broadcast update
+        io.emit('parcel_assigned', {
+            parcelId: parcelId,
+            riderEmail: riderEmail,
+            trackingId: result.trackingId,
+            status: 'picked-up'
+        });
+
+        return result;
     }
 };
 
