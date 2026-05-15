@@ -40,14 +40,19 @@ const Settings = () => {
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">SOON</span>
                         </button>
 
-                        <button
-                            disabled
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 cursor-not-allowed group relative"
+                        <NavLink
+                            to="/dashboard/settings/notifications"
+                            className={({ isActive }) =>
+                                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                                    isActive
+                                        ? 'bg-lime-500 text-white shadow-lg shadow-lime-500/30 font-bold'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`
+                            }
                         >
                             <RiNotification3Line className="w-5 h-5" />
                             <span>Notifications</span>
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">SOON</span>
-                        </button>
+                        </NavLink>
                     </nav>
                 </aside>
 

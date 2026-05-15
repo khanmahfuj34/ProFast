@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const notificationSettingsService = require('./notificationSettingsService');
 
 let notificationsCollection;
 let io;
@@ -18,6 +19,24 @@ const init = (db, socketIo) => {
 const createNotification = async (data) => {
     try {
         if (!notificationsCollection) return;
+
+        // 🛡️ Check User Preferences
+        const settings = await notificationSettingsService.getSettings(data.recipientEmail);
+        
+        // Map notification type to setting field
+        const typeMapping = {
+            'parcel': 'parcelUpdate',
+            'payment': 'payment',
+            'system': 'announcement',
+            'promotion': 'promotion'
+        };
+
+        const settingField = typeMapping[data.type] || 'announcement';
+        
+        if (settings && settings[settingField] === false) {
+            console.log(`🔇 Notification skipped for ${data.recipientEmail}: Type "${data.type}" is disabled in settings.`);
+            return null;
+        }
 
         const notification = {
             recipientEmail: data.recipientEmail,

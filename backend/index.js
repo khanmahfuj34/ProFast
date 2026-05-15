@@ -6,8 +6,10 @@ const { Server: SocketIOServer } = require('socket.io');
 require('dotenv').config(); // ✅ MUST load before anything that reads process.env
 const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
+const notificationSettingsRoutes = require('./routes/notificationSettingsRoutes');
 const notificationService = require('./services/notificationService');
 const userService = require('./services/userService');
+const notificationSettingsService = require('./services/notificationSettingsService');
 const setupNotificationSocket = require('./socket/notificationSocket');
 
 // 🔐 Firebase Admin SDK initialization
@@ -154,6 +156,7 @@ async function run() {
         // Initialize Modules
         notificationService.init(db, io);
         userService.init(db);
+        notificationSettingsService.init(db);
         setupNotificationSocket(io);
 
     } catch (error) {
@@ -267,6 +270,7 @@ app.use('/notifications', verifyJWT, notificationRoutes);
 
 // ============ 👤 USER ROUTES ============
 app.use('/users', verifyJWT, userRoutes);
+app.use('/notification-settings', verifyJWT, notificationSettingsRoutes);
 
 // ============ 🔐 AUTH ROUTES ============
 
@@ -362,6 +366,10 @@ app.post('/save-social-user', async(req, res) => {
         user.role = 'user';
         user.createdAt = new Date();
         const result = await usersCollection.insertOne(user);
+    
+        // 🎁 Create default notification settings
+        await notificationSettingsService.createDefaultSettings(user.email);
+    
         res.send(result);
     } else {
         res.send({ message: 'User already exists', insertedId: null });
@@ -373,6 +381,10 @@ app.post('/users', async(req, res) => {
     user.role = 'user';
     user.createdAt = new Date();
     const result = await usersCollection.insertOne(user);
+    
+    // 🎁 Create default notification settings
+    await notificationSettingsService.createDefaultSettings(user.email);
+    
     res.send(result);
 });
 

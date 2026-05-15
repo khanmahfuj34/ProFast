@@ -48,6 +48,7 @@ import TrackParcel from "../pages/TrackParcel/TrackParcel";
 import Notifications from "../pages/Dashboard/Notifications/Notification";
 import Settings from "../pages/Dashboard/Settings/Settings";
 import ProfileSettings from "../pages/Dashboard/Settings/ProfileSettings";
+import NotificationSettings from "../pages/Dashboard/Settings/NotificationSettings";
 import useAuth from "../hooks/useAuth";
 
 const DashboardIndexRedirect = () => {
@@ -209,6 +210,10 @@ export const router = createBrowserRouter([
               {
                 index: true,
                 element: <ProfileSettings />
+              },
+              {
+                path: 'notifications',
+                element: <NotificationSettings />
               }
             ]
           }
