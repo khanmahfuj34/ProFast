@@ -7,12 +7,15 @@ require('dotenv').config(); // ✅ MUST load before anything that reads process.
 const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
 const notificationSettingsRoutes = require('./routes/notificationSettingsRoutes');
+const securityRoutes = require('./routes/securityRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 const notificationService = require('./services/notificationService');
 const userService = require('./services/userService');
 const notificationSettingsService = require('./services/notificationSettingsService');
 const setupNotificationSocket = require('./socket/notificationSocket');
 const coverageRoutes = require('./routes/coverageRoutes');
 const coverageService = require('./services/coverageService');
+const supportService = require('./services/supportService');
 const coverageData = require('./data/coverageData');
 
 // 🔐 Firebase Admin SDK initialization
@@ -138,6 +141,7 @@ async function run() {
         notificationService.init(db, io);
         userService.init(db);
         notificationSettingsService.init(db);
+        supportService.init(db);
         coverageService.init(db);
         await coverageService.seedCoverageData(coverageData);
         setupNotificationSocket(io);
@@ -276,6 +280,8 @@ app.use('/notifications', verifyJWT, notificationRoutes);
 // ============ 👤 USER ROUTES ============
 app.use('/users', verifyJWT, userRoutes);
 app.use('/notification-settings', verifyJWT, notificationSettingsRoutes);
+app.use('/security', verifyJWT, securityRoutes);
+app.use('/support', verifyJWT, supportRoutes);
 app.use('/coverage', coverageRoutes);
 
 // ============ 🔐 AUTH ROUTES ============
@@ -938,7 +944,7 @@ app.get('/riders/:email', verifyJWT, async(req, res) => {
         const rider = await riderCollection.findOne({ email: email });
 
         if (!rider) {
-            return res.status(404).send({ message: 'No application found for this email' });
+            return res.send({ success: true, rider: null, message: 'No application found for this email' });
         }
 
         res.send({

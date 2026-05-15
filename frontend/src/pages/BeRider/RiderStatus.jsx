@@ -35,18 +35,17 @@ const RiderStatus = () => {
             const response = await axiosSecure.get(`/riders/${user?.email}`);
             
             if (response.data.success) {
-                setRiderData(response.data.rider);
-                setError(null);
+                if (response.data.rider) {
+                    setRiderData(response.data.rider);
+                    setError(null);
+                } else {
+                    setError('No application found. Please submit a rider application first.');
+                    setRiderData(null);
+                }
             }
         } catch (err) {
             console.error('Error fetching rider status:', err);
-            if (err.response?.status === 404) {
-                setError('No application found. Please submit a rider application first.');
-            } else if (err.response?.status === 403) {
-                setError('Unauthorized access. Please contact support.');
-            } else {
-                setError('Error fetching rider status. Please try again.');
-            }
+            setError('Error fetching rider status. Please try again.');
             setRiderData(null);
         } finally {
             setLoading(false);

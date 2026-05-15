@@ -44,14 +44,19 @@ const Settings = () => {
                                 <span>Profile Settings</span>
                             </NavLink>
                             
-                            <button
-                                disabled
-                                className="flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-400 cursor-not-allowed group relative font-bold text-sm transition-all"
+                            <NavLink
+                                to="/dashboard/settings/security"
+                                className={({ isActive }) =>
+                                    `flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 font-bold text-sm ${
+                                        isActive
+                                            ? 'bg-lime-500 text-white shadow-lg shadow-lime-500/40'
+                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                                    }`
+                                }
                             >
                                 <RiLockPasswordLine className="w-5 h-5" />
                                 <span>Security</span>
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">SOON</span>
-                            </button>
+                            </NavLink>
 
                             <NavLink
                                 to="/dashboard/settings/notifications"

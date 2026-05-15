@@ -5,7 +5,7 @@ import useLogout from '../hooks/useLogout';
 import { useNotifications } from '../contexts/NotificationContext';
 import logo from '../assets/logo.png';
 
-import { RiTaskLine } from 'react-icons/ri';
+import { RiTaskLine, RiCustomerService2Line } from 'react-icons/ri';
 
 const DashboardLayout = () => {
   const { user, isAdmin, userProfile, loading } = useAuth();
@@ -459,6 +459,22 @@ const DashboardLayout = () => {
                   </>
                 )}
 
+                <li>
+                  <NavLink
+                    to="/dashboard/support"
+                    data-tip="Support & Assistance"
+                    className={({ isActive }) =>
+                      `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-lime-500 text-white shadow-lg'
+                          : 'text-gray-300 hover:bg-slate-700'
+                      } is-drawer-close:px-0 is-drawer-close:justify-center`
+                    }
+                  >
+                    <RiCustomerService2Line className="w-5 h-5" />
+                    <span className="font-medium is-drawer-close:hidden flex-1 text-left">Support & Help</span>
+                  </NavLink>
+                </li>
                 <li>
                   <NavLink
                     to="/dashboard/settings"

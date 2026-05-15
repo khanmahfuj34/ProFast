@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -340,16 +341,22 @@ const ProfileSettings = () => {
                         </div>
                         <h4 className="text-xl font-black text-slate-900">Need Assistance?</h4>
                         <p className="text-slate-400 text-sm font-medium leading-relaxed mt-3">Our 24/7 dedicated support team is ready to help you with any issues.</p>
-                        <button className="mt-8 w-full h-12 bg-slate-50 hover:bg-lime-500 hover:text-white text-slate-900 rounded-xl font-black transition-all flex items-center justify-center gap-2 group/btn">
+                        <Link 
+                            to="/dashboard/support"
+                            className="mt-8 w-full h-12 bg-slate-50 hover:bg-lime-500 hover:text-white text-slate-900 rounded-xl font-black transition-all flex items-center justify-center gap-2 group/btn"
+                        >
                             Get Help Now
                             <RiArrowRightSLine size={20} className="group-hover/btn:translate-x-1 transition-transform" />
-                        </button>
+                        </Link>
                     </div>
                 </div>
 
                 {/* Account Settings Shortcut */}
                 <div className="bg-slate-50 rounded-[40px] p-4 flex flex-col gap-2">
-                    <button className="flex items-center justify-between p-4 hover:bg-white rounded-[24px] transition-all group">
+                    <Link 
+                        to="/dashboard/settings/security"
+                        className="flex items-center justify-between p-4 hover:bg-white rounded-[24px] transition-all group"
+                    >
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm group-hover:text-lime-500 transition-colors">
                                 <RiShieldCheckLine size={20} />
@@ -357,7 +364,7 @@ const ProfileSettings = () => {
                             <span className="font-bold text-slate-700">Security Privacy</span>
                         </div>
                         <RiArrowRightSLine className="text-slate-300 group-hover:text-lime-500" />
-                    </button>
+                    </Link>
                     <button className="flex items-center justify-between p-4 hover:bg-white rounded-[24px] transition-all group">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm group-hover:text-lime-500 transition-colors">

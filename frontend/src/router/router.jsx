@@ -49,6 +49,8 @@ import Notifications from "../pages/Dashboard/Notifications/Notification";
 import Settings from "../pages/Dashboard/Settings/Settings";
 import ProfileSettings from "../pages/Dashboard/Settings/ProfileSettings";
 import NotificationSettings from "../pages/Dashboard/Settings/NotificationSettings";
+import SecuritySettings from "../pages/Dashboard/Settings/SecuritySettings";
+import Support from "../pages/Dashboard/Support/Support";
 import useAuth from "../hooks/useAuth";
 
 const DashboardIndexRedirect = () => {
@@ -204,6 +206,10 @@ export const router = createBrowserRouter([
             element: <PrivateRoute><Notifications /></PrivateRoute>
           },
           {
+            path: 'support',
+            element: <PrivateRoute><Support /></PrivateRoute>
+          },
+          {
             path: 'settings',
             element: <PrivateRoute><Settings /></PrivateRoute>,
             children: [
@@ -214,6 +220,10 @@ export const router = createBrowserRouter([
               {
                 path: 'notifications',
                 element: <NotificationSettings />
+              },
+              {
+                path: 'security',
+                element: <SecuritySettings />
               }
             ]
           }
