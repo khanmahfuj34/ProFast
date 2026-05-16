@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { 
@@ -12,10 +12,17 @@ import {
   FiTruck as Truck,
   FiLayers as Layers,
   FiAlertCircle as AlertCircle,
-  FiRefreshCw as RefreshCw
+  FiRefreshCw as RefreshCw,
+  FiTrendingUp as TrendingUp,
+  FiActivity as Activity,
+  FiBell as Bell,
+  FiFilter as Filter,
+  FiChevronDown as ChevronDown,
+  FiNavigation as Navigation
 } from 'react-icons/fi';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import useRiderStatus from '../../../hooks/useRiderStatus';
 import { useNotifications } from '../../../contexts/NotificationContext';
 
 const ParcelRequests = () => {
@@ -23,6 +30,8 @@ const ParcelRequests = () => {
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
   const { socket } = useNotifications();
+  const { isOnline, toggleStatus, isLoading: statusLoading } = useRiderStatus();
+  const [filter, setFilter] = useState('all');
 
   // Fetch pending requests
   const { data: requestsData, isLoading, isError, refetch } = useQuery({
@@ -32,7 +41,27 @@ const ParcelRequests = () => {
       return res.data;
     },
     enabled: !!user?.email,
-    refetchInterval: 30000 // Refetch every 30s as fallback
+    refetchInterval: 30000 
+  });
+
+  // Fetch dashboard stats for the summary cards
+  const { data: statsData } = useQuery({
+    queryKey: ['rider-dashboard-stats', user?.email],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/rider/dashboard-stats');
+      return res.data?.stats;
+    },
+    enabled: !!user?.email
+  });
+
+  // Fetch performance data for rates
+  const { data: performanceData } = useQuery({
+    queryKey: ['rider-performance', user?.email],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/rider/performance');
+      return res.data?.performance;
+    },
+    enabled: !!user?.email
   });
 
   // Listen for real-time updates
@@ -41,7 +70,10 @@ const ParcelRequests = () => {
 
     const handleNewRequest = () => {
       queryClient.invalidateQueries(['rider-parcel-requests']);
-      toast.success('New delivery request available!', { icon: '📦' });
+      toast.success('New delivery request available!', { 
+        icon: '📦',
+        style: { borderRadius: '12px', background: '#1e293b', color: '#fff' }
+      });
     };
 
     const handleRequestClosed = () => {
@@ -63,9 +95,9 @@ const ParcelRequests = () => {
       const res = await axiosSecure.post(`/rider/deliveries/${parcelId}/accept`);
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Parcel accepted! Start your journey.', {
-        style: { borderRadius: '10px', background: '#333', color: '#fff' }
+        style: { borderRadius: '12px', background: '#1e293b', color: '#fff' }
       });
       queryClient.invalidateQueries(['rider-parcel-requests']);
       queryClient.invalidateQueries(['rider-deliveries']);
@@ -88,195 +120,338 @@ const ParcelRequests = () => {
     }
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <RefreshCw className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Scanning for delivery requests...</p>
-      </div>
-    );
-  }
+  const requests = requestsData?.requests || [];
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <div className="bg-red-100 p-4 rounded-full mb-4">
-          <AlertCircle className="w-12 h-12 text-red-500" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-in fade-in duration-500">
+        <div className="bg-red-50 p-6 rounded-3xl mb-6">
+          <AlertCircle className="w-16 h-16 text-red-500" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
-        <p className="text-gray-600 mb-6 max-w-md">We're having trouble reaching the dispatch server. Please check your internet connection.</p>
+        <h2 className="text-3xl font-black text-slate-900 mb-3">Connection Interrupted</h2>
+        <p className="text-slate-500 mb-8 max-w-md text-lg">We lost connection to the dispatch server. Please check your signal.</p>
         <button 
           onClick={() => refetch()}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-blue-200"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-2xl transition-all shadow-xl shadow-blue-200 active:scale-95"
         >
-          Try Again
+          Re-establish Connection
         </button>
       </div>
     );
   }
 
-  const requests = requestsData?.requests || [];
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700">
+      
+      {/* Header Section */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">
-            Dispatch <span className="text-blue-600">Center</span>
-          </h1>
-          <p className="text-slate-500 mt-2 font-medium flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            Live requests matching your current district
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl sm:text-4xl font-bold text-base-500 tracking-tight">
+              Parcel Requests
+            </h1>
+            {requests.length > 0 && (
+              <span className="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
+                {requests.length} LIVE
+              </span>
+            )}
+          </div>
+          <p className="text-slate-500 font-medium text-lg">
+            Live delivery requests near you
           </p>
         </div>
-        
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-          <div className="bg-blue-50 p-3 rounded-xl text-blue-600">
-            <Layers className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Available Tasks</p>
-            <p className="text-xl font-black text-slate-900">{requests.length} Requests</p>
+
+        <div className="flex flex-wrap items-center gap-4">
+
+          <button className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 text-slate-600 hover:bg-slate-50 transition-colors relative">
+            <Bell className="w-6 h-6" />
+            <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+          </button>
+
+          <div className="flex items-center gap-2 bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100">
+            <Filter className="w-5 h-5 text-slate-400" />
+            <span className="text-sm font-bold text-slate-700">Filter</span>
+            <ChevronDown className="w-4 h-4 text-slate-400" />
           </div>
         </div>
       </div>
 
-      {requests.length === 0 ? (
-        <div className="bg-white rounded-[2.5rem] p-12 text-center shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          label="New Requests" 
+          value={requests.length} 
+          subtext="Nearby requests" 
+          icon={<Package />} 
+          color="blue"
+          loading={isLoading}
+        />
+        <StatCard 
+          label="Response Rate" 
+          value="92%" 
+          subtext="Excellent" 
+          icon={<Activity />} 
+          color="indigo" 
+          loading={isLoading}
+        />
+        <StatCard 
+          label="Acceptance Rate" 
+          value={`${performanceData?.successRate || 0}%`} 
+          subtext="Great" 
+          icon={<TrendingUp />} 
+          color="emerald" 
+          loading={isLoading}
+        />
+        <StatCard 
+          label="Total Earnings Today" 
+          value={`৳${(statsData?.todayEarnings || 0).toLocaleString()}`} 
+          subtext="+12% from yesterday" 
+          icon={<DollarSign />} 
+          color="amber" 
+          loading={isLoading}
+        />
+      </div>
+
+      {/* Tabs & Sorting */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-2">
+        <div className="flex items-center gap-8 overflow-x-auto w-full sm:w-auto no-scrollbar">
+          <TabButton label="All Requests" count={requests.length} active={filter === 'all'} onClick={() => setFilter('all')} />
+          <TabButton label="High Priority" count={requests.filter(r => r.parcel?.parcelWeight > 5).length} active={filter === 'priority'} onClick={() => setFilter('priority')} />
+          <TabButton label="Regular" count={requests.filter(r => r.parcel?.parcelWeight <= 5).length} active={filter === 'regular'} onClick={() => setFilter('regular')} />
+        </div>
+        
+        <div className="flex items-center gap-2 text-sm text-slate-500 whitespace-nowrap">
+          <span>Sort by:</span>
+          <button className="flex items-center gap-1 font-bold text-slate-900 hover:text-blue-600 transition-colors">
+            Newest First <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Requests List */}
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => <RequestSkeleton key={i} />)}
+        </div>
+      ) : requests.length === 0 ? (
+        <div className="bg-white rounded-[2.5rem] p-16 text-center shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col items-center animate-in slide-in-from-bottom-4 duration-700">
+          <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-8">
             <Package className="w-12 h-12 text-slate-300" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-800 mb-3">Quiet right now</h3>
-          <p className="text-slate-500 max-w-sm mb-8 leading-relaxed font-medium">
-            There are no new delivery requests in your area at the moment. Keep your status 
-            <span className="text-green-600 font-bold"> Online</span> to receive instant notifications.
+          <h3 className="text-3xl font-black text-slate-900 mb-3">No Active Requests</h3>
+          <p className="text-slate-500 max-w-sm mb-10 text-lg leading-relaxed">
+            There are no delivery requests in your area right now. Stay online to be notified immediately.
           </p>
           <button 
             onClick={() => refetch()}
-            className="flex items-center gap-2 text-blue-600 font-bold hover:bg-blue-50 px-6 py-3 rounded-xl transition-all"
+            className="flex items-center gap-3 bg-slate-900 text-white font-bold px-8 py-4 rounded-2xl hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-200"
           >
             <RefreshCw className="w-5 h-5" />
-            Check for Updates
+            Scan for Requests
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="space-y-4">
           {requests.map((request, index) => (
-            <div 
-              key={request._id}
-              className="group bg-white rounded-[2rem] overflow-hidden shadow-xl shadow-slate-200/40 border border-slate-100 hover:border-blue-200 hover:shadow-blue-100/50 transition-all duration-500 animate-in fade-in slide-in-from-bottom-6"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Card Top - Earning & Type */}
-              <div className="bg-slate-900 p-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/10 p-2 rounded-lg text-white">
-                    <Truck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Potential Earning</p>
-                    <p className="text-white text-xl font-black">৳{Math.round(request.parcel?.totalPrice * 0.7)}</p>
-                  </div>
-                </div>
-                <div className="bg-blue-500 text-white text-xs font-black px-3 py-1.5 rounded-full uppercase tracking-wider">
-                  {request.parcel?.parcelType}
-                </div>
-              </div>
-
-              {/* Card Body */}
-              <div className="p-8 space-y-6">
-                {/* Parcel Info */}
-                <div>
-                  <h4 className="text-xl font-bold text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">
-                    {request.parcel?.parcelName}
-                  </h4>
-                  <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
-                    ID: {request.trackingId}
-                  </p>
-                </div>
-
-                {/* Route Visualization */}
-                <div className="space-y-4 relative">
-                  <div className="absolute left-[11px] top-6 bottom-6 w-0.5 bg-dashed bg-slate-200"></div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="z-10 bg-blue-50 p-1.5 rounded-full ring-4 ring-white">
-                      <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pickup From</p>
-                      <p className="text-sm font-bold text-slate-700">{request.parcel?.senderDistrict}</p>
-                      <p className="text-xs text-slate-500 truncate max-w-[180px]">{request.parcel?.senderAddress}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="z-10 bg-orange-50 p-1.5 rounded-full ring-4 ring-white">
-                      <MapPin className="w-3.5 h-3.5 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Deliver To</p>
-                      <p className="text-sm font-bold text-slate-700">{request.parcel?.receiverDistrict}</p>
-                      <p className="text-xs text-slate-500 truncate max-w-[180px]">{request.parcel?.receiverAddress}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Metadata */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-slate-50 p-2 rounded-lg text-slate-500">
-                      <Layers className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Weight</p>
-                      <p className="text-xs font-bold text-slate-700">{request.parcel?.parcelWeight}kg</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="bg-slate-50 p-2 rounded-lg text-slate-500">
-                      <Clock className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Received</p>
-                      <p className="text-xs font-bold text-slate-700">{new Date(request.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-4 pt-4">
-                  <button 
-                    onClick={() => rejectMutation.mutate(request._id)}
-                    disabled={rejectMutation.isPending || acceptMutation.isPending}
-                    className="flex-1 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <XCircle className="w-5 h-5" />
-                    Skip
-                  </button>
-                  <button 
-                    onClick={() => acceptMutation.mutate(request.parcelId)}
-                    disabled={acceptMutation.isPending || rejectMutation.isPending}
-                    className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:shadow-blue-200 flex items-center justify-center gap-2 group/btn disabled:opacity-50"
-                  >
-                    {acceptMutation.isPending ? (
-                      <RefreshCw className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        Accept Task
-                        <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <HorizontalRequestCard 
+              key={request._id} 
+              request={request} 
+              index={index}
+              onAccept={() => acceptMutation.mutate(request.parcelId)}
+              onReject={() => rejectMutation.mutate(request._id)}
+              isAccepting={acceptMutation.isPending && acceptMutation.variables === request.parcelId}
+              isRejecting={rejectMutation.isPending && rejectMutation.variables === request._id}
+              isDisabled={acceptMutation.isPending || rejectMutation.isPending}
+            />
           ))}
+          
+          <div className="bg-blue-50/50 rounded-2xl p-4 flex items-center gap-3 border border-blue-100 mt-8">
+            <div className="bg-blue-600 text-white p-1.5 rounded-lg">
+              <CheckCircle className="w-4 h-4" />
+            </div>
+            <p className="text-sm font-medium text-blue-900">
+              <span className="font-bold">Quick Tip:</span> Accept requests quickly to maintain your high acceptance rate and get more priority requests.
+            </p>
+          </div>
         </div>
       )}
     </div>
   );
 };
+
+// Sub-components
+const StatCard = ({ label, value, subtext, icon, color, loading }) => {
+  const colors = {
+    blue: 'text-blue-600 bg-blue-50',
+    indigo: 'text-indigo-600 bg-indigo-50',
+    emerald: 'text-emerald-600 bg-emerald-50',
+    amber: 'text-amber-600 bg-amber-50'
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+      <div className="flex items-start justify-between mb-4">
+        <div className={`p-3 rounded-2xl ${colors[color]} group-hover:scale-110 transition-transform duration-300`}>
+          {React.cloneElement(icon, { className: 'w-6 h-6' })}
+        </div>
+        <div className="flex items-center gap-1 text-green-500 font-bold text-xs">
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>+12%</span>
+        </div>
+      </div>
+      <div>
+        {loading ? (
+          <div className="h-9 w-20 bg-slate-100 animate-pulse rounded-lg mb-2"></div>
+        ) : (
+          <p className="text-3xl font-black text-slate-900">{value}</p>
+        )}
+        <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">{label}</p>
+        <p className="text-slate-400 text-xs mt-1 font-medium">{subtext}</p>
+      </div>
+    </div>
+  );
+};
+
+const TabButton = ({ label, count, active, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`pb-3 border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
+      active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+    }`}
+  >
+    <span className="font-bold">{label}</span>
+    {count > 0 && (
+      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+        active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+      }`}>
+        {count}
+      </span>
+    )}
+  </button>
+);
+
+const HorizontalRequestCard = ({ request, index, onAccept, onReject, isAccepting, isRejecting, isDisabled }) => {
+  const isHighPriority = request.parcel?.parcelWeight > 5;
+  const isFragile = request.parcel?.parcelType === 'fragile';
+  
+  return (
+    <div 
+      className="group bg-white rounded-3xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 p-5 sm:p-6 overflow-hidden relative animate-in fade-in slide-in-from-bottom-6"
+      style={{ animationDelay: `${index * 50}ms` }}
+    >
+      <div className="flex flex-col lg:flex-row gap-6 lg:items-center">
+        
+        {/* Left: Icon & ID */}
+        <div className="flex items-center gap-4 lg:w-64 flex-shrink-0">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${
+            isHighPriority ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
+          }`}>
+            <Package className="w-8 h-8" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span className="text-slate-900 font-black truncate">{request.trackingId}</span>
+              {isHighPriority && <span className="bg-red-50 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">High Priority</span>}
+              <span className="bg-blue-50 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">New</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase">
+              <span>{request.parcel?.parcelType}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1"><Layers className="w-3 h-3" /> {request.parcel?.parcelWeight}kg</span>
+              {isFragile && (
+                <>
+                  <span>•</span>
+                  <span className="text-orange-500">Fragile</span>
+                </>
+              )}
+            </div>
+            <p className="text-slate-400 text-[10px] mt-2 font-medium">Request time: {new Date(request.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+          </div>
+        </div>
+
+        {/* Middle: Route */}
+        <div className="flex-1 min-w-0 flex flex-col md:flex-row gap-6 md:items-center border-t border-slate-50 pt-6 lg:border-t-0 lg:pt-0 lg:border-x lg:px-8">
+          <div className="flex items-start gap-4 flex-1">
+            <div className="flex flex-col items-center gap-1 mt-1">
+              <div className="w-2.5 h-2.5 rounded-full border-2 border-blue-600 bg-white shadow-sm shadow-blue-200"></div>
+              <div className="w-0.5 h-8 bg-dashed bg-slate-200"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-orange-500"></div>
+            </div>
+            <div className="space-y-4 flex-1 min-w-0">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Pickup Location</p>
+                <p className="text-sm font-bold text-slate-900 truncate">{request.parcel?.senderDistrict}</p>
+                <p className="text-[10px] text-slate-400 truncate">{request.parcel?.senderAddress}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Delivery Location</p>
+                <p className="text-sm font-bold text-slate-900 truncate">{request.parcel?.receiverDistrict}</p>
+                <p className="text-[10px] text-slate-400 truncate">{request.parcel?.receiverAddress}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Earnings & Actions */}
+        <div className="flex items-center justify-between lg:w-72 flex-shrink-0 gap-6">
+          <div className="text-right">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estimated Earnings</p>
+            <p className="text-2xl font-black text-green-600">৳{Math.round(request.parcel?.totalPrice * 0.7)}</p>
+            <div className="flex items-center justify-end gap-3 text-slate-400 text-[10px] font-bold mt-1 uppercase">
+              <span className="flex items-center gap-1"><Navigation className="w-3 h-3" /> 4.2 km</span>
+              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> 20 min</span>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button 
+              onClick={onReject}
+              disabled={isDisabled}
+              className="p-4 rounded-2xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 disabled:opacity-50"
+              title="Reject"
+            >
+              {isRejecting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
+            </button>
+            <button 
+              onClick={onAccept}
+              disabled={isDisabled}
+              className="flex items-center gap-2 px-6 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all active:scale-95 shadow-lg shadow-blue-200 group/btn disabled:opacity-50"
+            >
+              {isAccepting ? (
+                <RefreshCw className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <span>Accept</span>
+                  <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {/* Auto-reject timer bar mockup */}
+      <div className="absolute bottom-0 left-0 h-1 bg-slate-100 w-full overflow-hidden">
+        <div className="h-full bg-blue-500 w-3/4"></div>
+      </div>
+    </div>
+  );
+};
+
+const RequestSkeleton = () => (
+  <div className="bg-white rounded-3xl border border-slate-100 p-6 animate-pulse">
+    <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex items-center gap-4 lg:w-64 flex-shrink-0">
+        <div className="w-16 h-16 bg-slate-100 rounded-2xl"></div>
+        <div className="space-y-2 flex-1">
+          <div className="h-5 bg-slate-100 rounded w-24"></div>
+          <div className="h-3 bg-slate-100 rounded w-32"></div>
+        </div>
+      </div>
+      <div className="flex-1 h-20 bg-slate-50/50 rounded-2xl"></div>
+      <div className="lg:w-72 h-16 bg-slate-100 rounded-2xl"></div>
+    </div>
+  </div>
+);
 
 export default ParcelRequests;

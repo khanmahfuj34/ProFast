@@ -105,7 +105,7 @@ const riderService = {
         const result = await parcelsCollection.findOneAndUpdate(
             { 
                 _id: new ObjectId(parcelId), 
-                status: { $in: ['pending_rider_response', 'pending', 'paid', 'pending-pickup'] },
+                status: { $in: ['pending_rider', 'pending_rider_response', 'pending', 'paid', 'pending-pickup'] },
                 $or: [
                     { riderEmail: { $exists: false } },
                     { riderEmail: null },
@@ -116,8 +116,9 @@ const riderService = {
                 $set: { 
                     status: 'driver_accepted',
                     deliveryStatus: 'driver_accepted',
-                    riderId: riderEmail,
+                    riderId: rider._id.toString(), // Fix: use rider._id instead of email
                     riderEmail: riderEmail,
+                    assignedRider: riderEmail,
                     riderName: rider.fullName || rider.name || 'Rider',
                     assignmentStatus: 'assigned',
                     acceptedAt: new Date(),
