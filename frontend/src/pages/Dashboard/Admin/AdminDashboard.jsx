@@ -159,12 +159,30 @@ const AdminDashboard = () => {
       socket.on('parcel_rider_assigned', (data) => {
         console.log('📡 Received: parcel_rider_assigned event', data);
         queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-all-parcels'] });
+      });
+
+      socket.on('parcel_assigned', (data) => {
+        console.log('📡 Received: parcel_assigned event', data);
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-all-parcels'] });
+      });
+
+      socket.on('admin_matching_update', (data) => {
+        console.log('📡 Received: admin_matching_update event', data);
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+      });
+
+      socket.on('delivery_request_closed', (data) => {
+        console.log('📡 Received: delivery_request_closed event', data);
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       });
 
       socket.on('rider_status_changed', (data) => {
         console.log('📡 Received: rider_status_changed event', data);
         queryClient.invalidateQueries({ queryKey: ['admin-riders'] });
         queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['online-riders'] });
       });
 
       // Cleanup on component unmount

@@ -79,7 +79,7 @@ const ApproveRiders = () => {
     };
 
     const viewRiderDetails = (riderId) => {
-        navigate(`/dashboard/ApproveRiders/${riderId}`, { state: { riders } });
+        navigate(`/admin/approve-riders/${riderId}`, { state: { riders } });
     };
 
     const getStatusBadge = (status) => {
@@ -202,7 +202,7 @@ const ApproveRiders = () => {
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Phone</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Region</th>
+                                    <th className="px-6 py-3 text-left text-sm font-semibold">Division</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Work Status</th>  
                                     <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
@@ -229,7 +229,7 @@ const ApproveRiders = () => {
                                         </td>
                                         <td className="px-6 py-4 text-gray-700">{rider.email}</td>
                                         <td className="px-6 py-4 text-gray-700">{rider.phoneNumber}</td>
-                                        <td className="px-6 py-4 text-gray-700">{rider.region}</td>
+                                        <td className="px-6 py-4 text-gray-700">{rider.division || rider.region}</td>
                                         <td className="px-6 py-4">
                                             {getStatusBadge(rider.status)}
                                         </td>

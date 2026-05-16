@@ -33,11 +33,16 @@ const riderController = {
             const rider = await riderService.getRiderByEmail(email);
 
             if (!rider) {
-                return res.status(404).send({ success: false, message: 'Rider not found' });
+                return res.send({
+                    success: true,
+                    isRider: false,
+                    isOnline: false
+                });
             }
 
             res.send({
                 success: true,
+                isRider: true,
                 isOnline: !!rider.isOnline,
                 lastSeen: rider.lastSeen
             });

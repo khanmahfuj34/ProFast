@@ -219,6 +219,28 @@ const DashboardLayout = () => {
                 </li>
                 <li>
                   <NavLink
+                    to="/dashboard/rider/parcel-requests"
+                    data-tip="Parcel Requests"
+                    className={({ isActive }) =>
+                      `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-emerald-600 text-white shadow-lg'
+                          : 'text-gray-300 hover:bg-slate-700'
+                      } is-drawer-close:px-0 is-drawer-close:justify-center`
+                    }
+                  >
+                    <div className="relative">
+                      <RiTaskLine className="w-5 h-5" />
+                      <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    </div>
+                    <span className="font-medium is-drawer-close:hidden flex-1">Parcel Requests</span>
+                    <span className="is-drawer-close:hidden px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[10px] font-black rounded-full border border-blue-500/30">
+                      LIVE
+                    </span>
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
                     to="/dashboard/assigned-deliveries"
                     data-tip="Assigned Deliveries"
                     className={({ isActive }) =>

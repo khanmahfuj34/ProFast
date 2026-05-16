@@ -21,6 +21,7 @@ const riderMatchingService = require('./services/riderMatchingService');
 const riderRoutes = require('./routes/riderRoutes');
 const setupRiderSocket = require('./socket/riderSocket');
 const coverageData = require('./data/coverageData');
+const migrateRegionToDivision = require('./utils/migrateRegionToDivision');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
@@ -90,6 +91,8 @@ const client = new MongoClient(uri, {
 let parcelsCollection;
 let paymentsCollection;
 let usersCollection;
+let riderCollection;
+let parcelRequestsCollection;
 
 async function run() {
     try {
@@ -101,6 +104,7 @@ async function run() {
         parcelsCollection = db.collection("parcels");
         paymentsCollection = db.collection("payments");
         riderCollection = db.collection("rider");
+        parcelRequestsCollection = db.collection("parcel_requests");
 
         // ✅ Create UNIQUE index on transactionId to prevent duplicate payments
         // Use sparse index to handle null values, and ignore if index already exists
@@ -143,17 +147,38 @@ async function run() {
         await paymentsCollection.createIndex({ parcelId: 1, customerEmail: 1 });
         console.log("✅ Index created on payments.parcelId and customerEmail");
 
+        // ✅ Rider Matching Indexes (Performance Improvement)
+        await riderCollection.createIndex({ division: 1 });
+        await riderCollection.createIndex({ district: 1 });
+        await riderCollection.createIndex({ isOnline: 1 });
+        await riderCollection.createIndex({ workStatus: 1 });
+        console.log("✅ Rider matching indexes created successfully");
+
+        // ✅ Drop TTL index on parcel_requests.expiresAt (no longer auto-expire requests)
+        try {
+            await parcelRequestsCollection.dropIndex("expiresAt_1");
+            console.log("✅ Dropped TTL index on parcel_requests.expiresAt — requests will no longer auto-expire");
+        } catch (e) {
+            // Index may not exist on fresh deployments — this is fine
+            if (e.codeName !== 'IndexNotFound') {
+                console.warn("⚠️  Could not drop expiresAt index:", e.message);
+            }
+        }
+
         // Initialize Modules
         notificationService.init(db, io);
         userService.init(db);
         notificationSettingsService.init(db);
         supportService.init(db);
-        riderService.init(db, io);
-        riderMatchingService.init(db, io);
+        riderService.init(db, io, parcelRequestsCollection);
+        riderMatchingService.init(db, io, parcelRequestsCollection);
         coverageService.init(db);
         await coverageService.seedCoverageData(coverageData);
         setupNotificationSocket(io);
         setupRiderSocket(io);
+
+        // Run Rider Location Standardization Migration
+        await migrateRegionToDivision(riderCollection);
 
         // Start server AFTER MongoDB connects and services are initialized
         server.listen(port, () => {
@@ -246,6 +271,8 @@ const verifyAdmin = async(req, res, next) => {
         res.status(500).send({ message: 'Error verifying admin status', error: error.message });
     }
 };
+
+
 
 // 🔐 Verify Rider Middleware
 const verifyRider = async(req, res, next) => {
@@ -881,7 +908,7 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
             const parcel = await parcelsCollection.findOne(filter);
             if (parcel?.riderId) {
                 try {
-                    await riderCollection.updateOne({ _id: new ObjectId(parcel.riderId) }, { $set: { workStatus: 'available', updatedAt: new Date() } });
+                    await riderCollection.updateOne({ _id: new ObjectId(parcel.riderId) }, { $set: { workStatus: 'Available', updatedAt: new Date() } });
                 } catch (_) {}
             }
         }
@@ -909,10 +936,10 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
         if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
             io.emit('rider_status_changed', {
                 riderId: (await parcelsCollection.findOne(filter))?.riderId,
-                workStatus: 'available',
+                workStatus: 'Available',
                 timestamp: new Date()
             });
-            console.log(`📡 Emitted: rider_status_changed - Rider back to available`);
+            console.log(`📡 Emitted: rider_status_changed - Rider back to Available`);
         }
 
         res.send(result);
@@ -928,8 +955,12 @@ app.post('/riders', verifyJWT, async(req, res) => {
     try {
         const riderData = req.body;
 
+        // Data Normalization (Fix for Rider Location Field Inconsistency)
+        if (riderData.division) riderData.division = riderData.division.trim().toLowerCase();
+        if (riderData.district) riderData.district = riderData.district.trim().toLowerCase();
+
         // ✅ Validate required fields
-        const requiredFields = ['name', 'email', 'phoneNumber', 'nidNo', 'drivingLicense', 'region', 'district', 'bikeBrand', 'bikeRegistration', 'aboutYourself', 'photo'];
+        const requiredFields = ['name', 'email', 'phoneNumber', 'nidNo', 'drivingLicense', 'division', 'district', 'bikeBrand', 'bikeRegistration', 'aboutYourself', 'photo'];
         const missingFields = requiredFields.filter(field => !riderData[field]);
 
         if (missingFields.length > 0) {
@@ -1042,7 +1073,11 @@ app.patch('/riders/:id', verifyJWT, async(req, res) => {
         }
 
         // ✅ Otherwise, this is a user profile edit request
-        const { name, email, nidNo, drivingLicense, phoneNumber, bikeBrand, bikeRegistration, aboutYourself, region } = req.body;
+        const { name, email, nidNo, drivingLicense, phoneNumber, bikeBrand, bikeRegistration, aboutYourself, division, region, district } = req.body;
+
+        // Data Normalization
+        const normalizedDivision = (division || rider.division || rider.region || '').trim().toLowerCase();
+        const normalizedDistrict = district ? district.trim().toLowerCase() : (rider.district || '');
 
         // ✅ Verify ownership - user can only edit their own profile
         if (rider.email !== req.user.email) {
@@ -1066,7 +1101,8 @@ app.patch('/riders/:id', verifyJWT, async(req, res) => {
                 bikeBrand: bikeBrand || rider.bikeBrand,
                 bikeRegistration: bikeRegistration || rider.bikeRegistration,
                 aboutYourself: aboutYourself || rider.aboutYourself,
-                region: region || rider.region,
+                division: normalizedDivision,
+                district: normalizedDistrict,
                 updatedAt: new Date()
             }
         };
@@ -1387,6 +1423,128 @@ app.get('/rider/status', verifyJWT, verifyRider, async(req, res) => {
     }
 });
 
+// GET /rider/parcel-requests - Get pending requests for the rider
+app.get('/rider/parcel-requests', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const riderEmail = req.user.email;
+        
+        // 1. Fetch rider's current profile to get their area
+        const rider = await riderCollection.findOne({ email: riderEmail });
+        if (!rider) return res.status(404).send({ message: 'Rider profile not found' });
+
+        const riderDivision = (rider.division || rider.region || '').trim().toLowerCase();
+        const riderDistrict = (rider.district || '').trim().toLowerCase();
+
+        if (riderDivision && riderDistrict) {
+            // 2. Discover available parcels in the rider's district that they haven't seen/rejected yet
+            // This handles riders who come online AFTER a parcel was created
+            const availableParcels = await parcelsCollection.find({
+                status: { $in: ['pending_rider', 'pending_rider_response', 'pending', 'paid'] },
+                senderDivision: { $regex: new RegExp(`^${riderDivision}$`, 'i') },
+                senderDistrict: { $regex: new RegExp(`^${riderDistrict}$`, 'i') },
+                $or: [
+                    { riderEmail: { $exists: false } },
+                    { riderEmail: null },
+                    { riderEmail: '' }
+                ]
+            }).toArray();
+
+            // 3. Ensure these parcels are in the rider's request inbox
+            if (availableParcels.length > 0) {
+                const bulkOps = availableParcels.map(parcel => ({
+                    updateOne: {
+                        filter: { parcelId: parcel._id, riderEmail: riderEmail },
+                        update: { 
+                            $setOnInsert: { 
+                                parcelId: parcel._id,
+                                trackingId: parcel.trackingId,
+                                riderEmail: riderEmail,
+                                status: 'pending',
+                                createdAt: new Date()
+                            } 
+                        },
+                        upsert: true
+                    }
+                }));
+                await parcelRequestsCollection.bulkWrite(bulkOps);
+            }
+        }
+
+        // 4. Return all pending requests
+        const requests = await parcelRequestsCollection.find({ 
+            riderEmail: riderEmail, 
+            status: 'pending'
+        }).sort({ createdAt: -1 }).toArray();
+
+        // Enrich with parcel data
+        const enrichedRequests = await Promise.all(requests.map(async (request) => {
+            const parcel = await parcelsCollection.findOne({ _id: new ObjectId(request.parcelId) });
+            return {
+                ...request,
+                parcel: parcel ? {
+                    parcelName: parcel.parcelName,
+                    parcelType: parcel.parcelType,
+                    parcelWeight: parcel.parcelWeight,
+                    senderName: parcel.senderName,
+                    senderDistrict: parcel.senderDistrict,
+                    senderAddress: parcel.senderAddress,
+                    receiverDistrict: parcel.receiverDistrict,
+                    receiverAddress: parcel.receiverAddress,
+                    totalPrice: parcel.totalPrice,
+                    createdAt: parcel.createdAt
+                } : null
+            };
+        }));
+
+        res.send({ success: true, requests: enrichedRequests.filter(r => r.parcel !== null) });
+    } catch (error) {
+        console.error('❌ [RiderRequests] Error:', error.message);
+        res.status(500).send({ message: 'Error fetching parcel requests' });
+    }
+});
+
+// PATCH /rider/parcel-requests/:id/reject - Reject a request
+app.patch('/rider/parcel-requests/:id/reject', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const requestId = req.params.id;
+        const riderEmail = req.user.email;
+
+        const result = await parcelRequestsCollection.updateOne(
+            { _id: new ObjectId(requestId), riderEmail: riderEmail },
+            { $set: { status: 'rejected', rejectedAt: new Date() } }
+        );
+
+        if (result.modifiedCount === 0) {
+            return res.status(404).send({ message: 'Request not found' });
+        }
+
+        res.send({ success: true, message: 'Request rejected' });
+    } catch (error) {
+        console.error('❌ Reject parcel request error:', error.message);
+        res.status(500).send({ message: 'Error rejecting request' });
+    }
+});
+
+// POST /rider/deliveries/:id/accept - Accept a delivery request
+app.post('/rider/deliveries/:id/accept', verifyJWT, verifyRider, async(req, res) => {
+    try {
+        const parcelId = req.params.id;
+        const riderEmail = req.user.email;
+
+        // Use the centralized riderService to handle the transaction-like logic
+        const result = await riderService.acceptParcel(riderEmail, parcelId);
+        
+        res.send({ 
+            success: true, 
+            message: 'Delivery accepted successfully!', 
+            parcel: result 
+        });
+    } catch (error) {
+        console.error('❌ [AcceptDelivery] Error:', error.message);
+        res.status(400).send({ success: false, message: error.message });
+    }
+});
+
 // PATCH /rider/delivery/:id/status - Update delivery status by rider
 app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) => {
     try {
@@ -1421,7 +1579,21 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
             setFields.deliveredAt = new Date();
         }
 
-        const result = await parcelsCollection.updateOne({ _id: new ObjectId(parcelId) }, { $set: setFields });
+        const result = await parcelsCollection.updateOne(
+            { _id: new ObjectId(parcelId) }, 
+            { 
+                $set: setFields,
+                $push: {
+                    activityLog: {
+                        status: deliveryStatus,
+                        timestamp: new Date(),
+                        updatedBy: riderEmail,
+                        role: 'rider',
+                        message: `Parcel status updated to ${deliveryStatus.replace(/_/g, ' ')} by rider`
+                    }
+                }
+            }
+        );
 
         // 🔔 Notify User: Status Update by Rider
         try {
@@ -1433,9 +1605,25 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
                 relatedId: parcelId,
                 metadata: { status: deliveryStatus, trackingId: parcel.trackingId }
             });
+
+            // Emit real-time status update to the sender's room
+            io.to(parcel.senderEmail).emit('parcel_status_updated', {
+                parcelId: parcelId,
+                trackingId: parcel.trackingId,
+                status: deliveryStatus,
+                message: `Your parcel is now ${deliveryStatus.replace(/_/g, ' ')}`
+            });
         } catch (nError) {
             console.error('Failed to create notification:', nError.message);
         }
+
+        // Update admin monitoring
+        io.emit('admin_dashboard_update', {
+            event: 'parcel_status_changed',
+            parcelId: parcelId,
+            status: deliveryStatus,
+            riderEmail: riderEmail
+        });
 
         // Update rider workStatus based on remaining active deliveries
         const hasActiveDelivery = await parcelsCollection.countDocuments({

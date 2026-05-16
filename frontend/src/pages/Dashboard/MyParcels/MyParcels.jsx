@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import io from 'socket.io-client';
 import Swal from 'sweetalert2';
 import {
     FiSearch, FiFilter, FiChevronLeft, FiChevronRight,
@@ -77,12 +78,51 @@ const MyParcels = () => {
     const { user, isAdmin } = useAuth();
     const navigate = useNavigate();
     const axiosSecure = useAxiosSecure();
+    const queryClient = useQueryClient();
 
     const [search, setSearch]           = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [sort, setSort]               = useState('latest');
     const [page, setPage]               = useState(1);
     const [selectedParcel, setSelectedParcel] = useState(null);
+
+    // Socket.IO real-time updates
+    useEffect(() => {
+        if (!user?.email) return;
+
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+        const socket = io(socketUrl, {
+            auth: { email: user.email },
+            reconnection: true
+        });
+
+        socket.on('connect', () => {
+            console.log('📡 [Socket] MyParcels connected');
+        });
+
+        // Listen for assignment or status updates to this user's parcels
+        socket.on('parcel_assigned', (data) => {
+            console.log('📡 [Socket] Parcel assigned:', data.trackingId);
+            queryClient.invalidateQueries({ queryKey: ['parcels', user?.email] });
+        });
+
+        socket.on('parcel_status_updated', (data) => {
+            console.log('📡 [Socket] Parcel status updated:', data.trackingId);
+            queryClient.invalidateQueries({ queryKey: ['parcels', user?.email] });
+        });
+
+        // Custom notification event we used in riderService
+        socket.on('new_notification', (data) => {
+            if (data.type === 'parcel') {
+                console.log('📡 [Socket] New parcel notification:', data.title);
+                queryClient.invalidateQueries({ queryKey: ['parcels', user?.email] });
+            }
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [user?.email, queryClient]);
 
     /* ── Data fetch ── */
     const { data: parcels = [], isLoading, isError, isFetching, refetch } = useQuery({

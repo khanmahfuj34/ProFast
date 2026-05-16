@@ -8,12 +8,16 @@ const NotificationContext = createContext();
 export const useNotifications = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }) => {
-    const { user, tokenReady } = useAuth();
+    const { user, tokenReady, userProfile } = useAuth();
     const axiosSecure = useAxiosSecure();
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [socket, setSocket] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isOnline, setIsOnline] = useState(false);
+    const [statusLoading, setStatusLoading] = useState(true);
+
+    const isRider = userProfile?.role === 'rider';
 
     // Fetch notifications
     const fetchNotifications = useCallback(async () => {
@@ -32,27 +36,68 @@ export const NotificationProvider = ({ children }) => {
         }
     }, [user?.email, tokenReady, axiosSecure]);
 
+    // ✅ Rider Status Management
+    const fetchRiderStatus = useCallback(async () => {
+        if (!user?.email || !tokenReady || !isRider) {
+            setStatusLoading(false);
+            return;
+        }
+        try {
+            const res = await axiosSecure.get('/rider/status');
+            if (res.data.success) {
+                setIsOnline(res.data.isOnline);
+                console.log(`🏍️ [Status] Rider status loaded: ${res.data.isOnline ? 'Online' : 'Offline'}`);
+            }
+        } catch (error) {
+            console.error('❌ [Status] Fetch error:', error.message);
+        } finally {
+            setStatusLoading(false);
+        }
+    }, [user?.email, tokenReady, isRider, axiosSecure]);
+
+    const toggleStatus = async () => {
+        const nextState = !isOnline;
+        setStatusLoading(true);
+        try {
+            const res = await axiosSecure.patch('/rider/status', { isOnline: nextState });
+            if (res.data.success) {
+                setIsOnline(nextState);
+                if (socket && socket.connected) {
+                    socket.emit(nextState ? 'rider_online' : 'rider_offline', { email: user.email });
+                }
+                console.log(`🏍️ [Status] Rider status toggled to: ${nextState ? 'Online' : 'Offline'}`);
+            }
+        } catch (error) {
+            console.error('❌ [Status] Toggle error:', error.message);
+        } finally {
+            setStatusLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (user?.email && tokenReady) {
             fetchNotifications();
+            if (isRider) fetchRiderStatus();
         } else {
             setNotifications([]);
             setUnreadCount(0);
+            setIsOnline(false);
         }
-    }, [user?.email, tokenReady, fetchNotifications]);
+    }, [user?.email, tokenReady, isRider, fetchNotifications, fetchRiderStatus]);
 
     // Setup Socket
     useEffect(() => {
         if (!user?.email) return;
 
-        // Use same domain as axiosSecure
-        const newSocket = io('http://localhost:3000', {
+        const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+        const newSocket = io(socketUrl, {
             withCredentials: true,
             transports: ['websocket', 'polling']
         });
 
         newSocket.on('connect', () => {
             console.log('🔌 [Socket] Connected to notification room');
+            // Join personal notification room (all users)
             newSocket.emit('join_notification_room', user.email);
         });
 
@@ -72,6 +117,14 @@ export const NotificationProvider = ({ children }) => {
             newSocket.disconnect();
         };
     }, [user?.email]);
+
+    // ✅ Rider Signal: Notify backend when rider is ready for deliveries
+    useEffect(() => {
+        if (socket && isRider && user?.email && isOnline) {
+            socket.emit('rider_online', { email: user.email });
+            console.log(`🏍️ [Socket] Signaling rider_online for ${user.email}`);
+        }
+    }, [socket, isRider, user?.email, isOnline]);
 
     const markAsRead = async (id) => {
         try {
@@ -107,6 +160,11 @@ export const NotificationProvider = ({ children }) => {
             notifications, 
             unreadCount, 
             isLoading,
+            socket,
+            isOnline,
+            setIsOnline,
+            statusLoading,
+            toggleStatus,
             markAsRead, 
             markAllRead, 
             clearAllRead,

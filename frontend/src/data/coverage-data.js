@@ -1,5 +1,5 @@
 export const coverageData = [{
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Dhaka",
         "city": "Dhaka",
         "covered_area": ["Uttara", "Dhanmondi", "Mirpur", "Mohammadpur"],
@@ -9,7 +9,7 @@ export const coverageData = [{
         "latitude": 23.8103
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Faridpur",
         "city": "Faridpur",
         "covered_area": ["Goalanda", "Boalmari", "Bhanga"],
@@ -19,7 +19,7 @@ export const coverageData = [{
         "latitude": 23.6
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Gazipur",
         "city": "Gazipur",
         "covered_area": ["Tongi", "Kaliakair", "Sreepur"],
@@ -29,7 +29,7 @@ export const coverageData = [{
         "latitude": 23.9999
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Gopalganj",
         "city": "Gopalganj",
         "covered_area": ["Tungipara", "Kotalipara", "Kashiani"],
@@ -39,7 +39,7 @@ export const coverageData = [{
         "latitude": 23.0052
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Kishoreganj",
         "city": "Kishoreganj",
         "covered_area": ["Bajitpur", "Kuliarchar", "Pakundia"],
@@ -49,7 +49,7 @@ export const coverageData = [{
         "latitude": 24.426
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Madaripur",
         "city": "Madaripur",
         "covered_area": ["Rajoir", "Kalkini", "Shibchar"],
@@ -59,7 +59,7 @@ export const coverageData = [{
         "latitude": 23.17
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Manikganj",
         "city": "Manikganj",
         "covered_area": ["Saturia", "Shivalaya", "Ghior"],
@@ -69,7 +69,7 @@ export const coverageData = [{
         "latitude": 23.8617
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Munshiganj",
         "city": "Munshiganj",
         "covered_area": ["Sreenagar", "Lohajang", "Sirajdikhan"],
@@ -79,7 +79,7 @@ export const coverageData = [{
         "latitude": 23.55
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Narayanganj",
         "city": "Narayanganj",
         "covered_area": ["Fatullah", "Siddhirganj", "Rupganj"],
@@ -89,7 +89,7 @@ export const coverageData = [{
         "latitude": 23.62
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Narsingdi",
         "city": "Narsingdi",
         "covered_area": ["Palash", "Belabo", "Raipura"],
@@ -99,7 +99,7 @@ export const coverageData = [{
         "latitude": 23.9226
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Rajbari",
         "city": "Rajbari",
         "covered_area": ["Pangsha", "Kalukhali", "Baliakandi"],
@@ -109,7 +109,7 @@ export const coverageData = [{
         "latitude": 23.7576
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Shariatpur",
         "city": "Shariatpur",
         "covered_area": ["Zajira", "Naria", "Gosairhat"],
@@ -119,7 +119,7 @@ export const coverageData = [{
         "latitude": 23.22
     },
     {
-        "region": "Dhaka",
+        "division": "Dhaka",
         "district": "Tangail",
         "city": "Tangail",
         "covered_area": ["Delduar", "Ghatail", "Kalihati"],
@@ -129,7 +129,7 @@ export const coverageData = [{
         "latitude": 24.25
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Chattogram",
         "city": "Chattogram",
         "covered_area": ["Pahartali", "Kotwali", "Halishahar", "Panchlaish", "Agrabad", "Chandgaon"],
@@ -139,7 +139,7 @@ export const coverageData = [{
         "latitude": 22.3569
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Cox's Bazar",
         "city": "Cox's Bazar",
         "covered_area": ["Teknaf", "Ukhia", "Chakaria", "Ramu"],
@@ -149,7 +149,7 @@ export const coverageData = [{
         "latitude": 21.4272
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Cumilla",
         "city": "Cumilla",
         "covered_area": ["Laksam", "Debidwar", "Chandina", "Muradnagar"],
@@ -159,7 +159,7 @@ export const coverageData = [{
         "latitude": 23.4573
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Brahmanbaria",
         "city": "Brahmanbaria",
         "covered_area": ["Nabinagar", "Ashuganj", "Sarail"],
@@ -169,7 +169,7 @@ export const coverageData = [{
         "latitude": 23.9571
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Chandpur",
         "city": "Chandpur",
         "covered_area": ["Haimchar", "Matlab", "Shahrasti"],
@@ -179,7 +179,7 @@ export const coverageData = [{
         "latitude": 23.2333
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Feni",
         "city": "Feni",
         "covered_area": ["Parshuram", "Daganbhuiyan", "Chhagalnaiya"],
@@ -189,7 +189,7 @@ export const coverageData = [{
         "latitude": 23.0167
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Khagrachari",
         "city": "Khagrachari",
         "covered_area": ["Ramgarh", "Mahalchari", "Dighinala"],
@@ -199,7 +199,7 @@ export const coverageData = [{
         "latitude": 23.1
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Lakshmipur",
         "city": "Lakshmipur",
         "covered_area": ["Raipur", "Ramganj", "Kamalnagar"],
@@ -209,7 +209,7 @@ export const coverageData = [{
         "latitude": 22.9444
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Noakhali",
         "city": "Noakhali",
         "covered_area": ["Begumganj", "Senbagh", "Chatkhil"],
@@ -219,7 +219,7 @@ export const coverageData = [{
         "latitude": 22.8245
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Rangamati",
         "city": "Rangamati",
         "covered_area": ["Baghaichhari", "Kaptai", "Juraichhari"],
@@ -229,7 +229,7 @@ export const coverageData = [{
         "latitude": 22.65
     },
     {
-        "region": "Chattogram",
+        "division": "Chattogram",
         "district": "Bandarban",
         "city": "Bandarban",
         "covered_area": ["Bandarban Sadar", "Thanchi", "Lama", "Rowangchhari"],
@@ -239,7 +239,7 @@ export const coverageData = [{
         "latitude": 22.1958
     },
     {
-        "region": "Sylhet",
+        "division": "Sylhet",
         "district": "Sylhet",
         "city": "Sylhet",
         "covered_area": ["Zindabazar", "Ambarkhana", "Dargah Gate", "South Surma", "Subid Bazar", "Tilagor"],
@@ -249,7 +249,7 @@ export const coverageData = [{
         "latitude": 24.8949
     },
     {
-        "region": "Sylhet",
+        "division": "Sylhet",
         "district": "Moulvibazar",
         "city": "Moulvibazar",
         "covered_area": ["Sreemangal", "Kamalganj", "Kulaura", "Barlekha"],
@@ -259,7 +259,7 @@ export const coverageData = [{
         "latitude": 24.4826
     },
     {
-        "region": "Sylhet",
+        "division": "Sylhet",
         "district": "Habiganj",
         "city": "Habiganj",
         "covered_area": ["Shaistaganj", "Madhabpur", "Chunarughat", "Nabiganj"],
@@ -269,7 +269,7 @@ export const coverageData = [{
         "latitude": 24.3745
     },
     {
-        "region": "Sylhet",
+        "division": "Sylhet",
         "district": "Sunamganj",
         "city": "Sunamganj",
         "covered_area": ["Jagannathpur", "Chhatak", "Tahirpur", "Dowarabazar"],
@@ -279,7 +279,7 @@ export const coverageData = [{
         "latitude": 25.0658
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Rangpur",
         "city": "Rangpur",
         "covered_area": ["Jahaj Company", "Pairaband", "Mahiganj", "Satmatha", "Lalbagh"],
@@ -289,7 +289,7 @@ export const coverageData = [{
         "latitude": 25.746
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Dinajpur",
         "city": "Dinajpur",
         "covered_area": ["Birampur", "Fulbari", "Parbatipur", "Nawabganj"],
@@ -299,7 +299,7 @@ export const coverageData = [{
         "latitude": 25.6275
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Thakurgaon",
         "city": "Thakurgaon",
         "covered_area": ["Pirganj", "Ranisankail", "Baliadangi"],
@@ -309,7 +309,7 @@ export const coverageData = [{
         "latitude": 26.0333
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Panchagarh",
         "city": "Panchagarh",
         "covered_area": ["Tetulia", "Boda", "Atwari"],
@@ -319,7 +319,7 @@ export const coverageData = [{
         "latitude": 26.3411
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Nilphamari",
         "city": "Nilphamari",
         "covered_area": ["Saidpur", "Domar", "Jaldhaka"],
@@ -329,7 +329,7 @@ export const coverageData = [{
         "latitude": 25.931
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Lalmonirhat",
         "city": "Lalmonirhat",
         "covered_area": ["Hatibandha", "Patgram", "Aditmari"],
@@ -339,7 +339,7 @@ export const coverageData = [{
         "latitude": 25.9167
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Kurigram",
         "city": "Kurigram",
         "covered_area": ["Nageshwari", "Bhurungamari", "Chilmari", "Ulipur"],
@@ -349,7 +349,7 @@ export const coverageData = [{
         "latitude": 25.8054
     },
     {
-        "region": "Rangpur",
+        "division": "Rangpur",
         "district": "Gaibandha",
         "city": "Gaibandha",
         "covered_area": ["Gobindaganj", "Sundarganj", "Palashbari", "Phulchhari"],
@@ -359,7 +359,7 @@ export const coverageData = [{
         "latitude": 25.3288
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Khulna",
         "city": "Khulna",
         "covered_area": ["Sonadanga", "Khalishpur", "Daulatpur", "Shib Bari", "Boyra"],
@@ -369,7 +369,7 @@ export const coverageData = [{
         "latitude": 22.8456
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Jessore",
         "city": "Jessore",
         "covered_area": ["Chowgachha", "Bagharpara", "Manirampur", "Abhaynagar"],
@@ -379,7 +379,7 @@ export const coverageData = [{
         "latitude": 23.17
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Satkhira",
         "city": "Satkhira",
         "covered_area": ["Tala", "Assasuni", "Kalaroa", "Debhata"],
@@ -389,7 +389,7 @@ export const coverageData = [{
         "latitude": 22.7085
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Bagerhat",
         "city": "Bagerhat",
         "covered_area": ["Mongla", "Rampal", "Fakirhat", "Kachua"],
@@ -399,7 +399,7 @@ export const coverageData = [{
         "latitude": 22.6516
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Magura",
         "city": "Magura",
         "covered_area": ["Sreepur", "Mohammadpur", "Shalikha"],
@@ -409,7 +409,7 @@ export const coverageData = [{
         "latitude": 23.4853
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Narail",
         "city": "Narail",
         "covered_area": ["Lohagara", "Kalia", "Narail Sadar"],
@@ -419,7 +419,7 @@ export const coverageData = [{
         "latitude": 23.1667
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Jhenaidah",
         "city": "Jhenaidah",
         "covered_area": ["Harinakunda", "Shailkupa", "Kaliganj"],
@@ -429,7 +429,7 @@ export const coverageData = [{
         "latitude": 23.5333
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Chuadanga",
         "city": "Chuadanga",
         "covered_area": ["Alamdanga", "Damurhuda", "Jibannagar"],
@@ -439,7 +439,7 @@ export const coverageData = [{
         "latitude": 23.64
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Meherpur",
         "city": "Meherpur",
         "covered_area": ["Mujibnagar", "Gangni"],
@@ -449,7 +449,7 @@ export const coverageData = [{
         "latitude": 23.7623
     },
     {
-        "region": "Khulna",
+        "division": "Khulna",
         "district": "Kushtia",
         "city": "Kushtia",
         "covered_area": ["Kushtia Sadar", "Kumarkhali", "Khoksa", "Mirpur", "Bheramara", "Daulatpur"],
@@ -459,7 +459,7 @@ export const coverageData = [{
         "latitude": 23.9013
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Rajshahi",
         "city": "Rajshahi",
         "covered_area": ["Boalia", "Rajpara", "Motihar", "Shah Makhdum", "Paba"],
@@ -469,7 +469,7 @@ export const coverageData = [{
         "latitude": 24.3745
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Natore",
         "city": "Natore",
         "covered_area": ["Baraigram", "Bagatipara", "Lalpur", "Singra"],
@@ -479,7 +479,7 @@ export const coverageData = [{
         "latitude": 24.4167
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Naogaon",
         "city": "Naogaon",
         "covered_area": ["Manda", "Sapahar", "Porsha", "Patnitala"],
@@ -489,7 +489,7 @@ export const coverageData = [{
         "latitude": 24.8236
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Chapainawabganj",
         "city": "Chapainawabganj",
         "covered_area": ["Shibganj", "Bholahat", "Gomostapur"],
@@ -499,7 +499,7 @@ export const coverageData = [{
         "latitude": 24.5962
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Pabna",
         "city": "Pabna",
         "covered_area": ["Ishwardi", "Bera", "Chatmohar", "Atgharia"],
@@ -509,7 +509,7 @@ export const coverageData = [{
         "latitude": 24.0037
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Sirajganj",
         "city": "Sirajganj",
         "covered_area": ["Ullapara", "Kazipur", "Shahjadpur", "Belkuchi"],
@@ -519,7 +519,7 @@ export const coverageData = [{
         "latitude": 24.45
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Joypurhat",
         "city": "Joypurhat",
         "covered_area": ["Akkelpur", "Kalai", "Panchbibi"],
@@ -529,7 +529,7 @@ export const coverageData = [{
         "latitude": 25.0953
     },
     {
-        "region": "Rajshahi",
+        "division": "Rajshahi",
         "district": "Bogura",
         "city": "Bogura",
         "covered_area": ["Sariakandi", "Sonatola", "Gabtali", "Sherpur", "Shajahanpur"],
@@ -539,7 +539,7 @@ export const coverageData = [{
         "latitude": 24.85
     },
     {
-        "region": "Barisal",
+        "division": "Barisal",
         "district": "Barisal",
         "city": "Barisal",
         "covered_area": ["Band Road", "Cox's Road", "Kawnia", "Rupatali", "Nathullabad"],
@@ -549,7 +549,7 @@ export const coverageData = [{
         "latitude": 22.7
     },
     {
-        "region": "Barisal",
+        "division": "Barisal",
         "district": "Bhola",
         "city": "Bhola",
         "covered_area": ["Borhanuddin", "Tazumuddin", "Daulatkhan", "Char Fasson"],
@@ -559,7 +559,7 @@ export const coverageData = [{
         "latitude": 22.685
     },
     {
-        "region": "Barisal",
+        "division": "Barisal",
         "district": "Patuakhali",
         "city": "Patuakhali",
         "covered_area": ["Kalapara", "Mirzaganj", "Dashmina", "Galachipa"],
@@ -569,7 +569,7 @@ export const coverageData = [{
         "latitude": 22.35
     },
     {
-        "region": "Barisal",
+        "division": "Barisal",
         "district": "Pirojpur",
         "city": "Pirojpur",
         "covered_area": ["Mathbaria", "Bhandaria", "Kawkhali", "Nazirpur"],
@@ -579,7 +579,7 @@ export const coverageData = [{
         "latitude": 22.5833
     },
     {
-        "region": "Barisal",
+        "division": "Barisal",
         "district": "Barguna",
         "city": "Barguna",
         "covered_area": ["Amtali", "Patharghata", "Betagi", "Bamna"],
@@ -589,7 +589,7 @@ export const coverageData = [{
         "latitude": 22.1667
     },
     {
-        "region": "Barisal",
+        "division": "Barisal",
         "district": "Jhalokati",
         "city": "Jhalokati",
         "covered_area": ["Nalchity", "Rajapur", "Kathalia"],
@@ -599,7 +599,7 @@ export const coverageData = [{
         "latitude": 22.6417
     },
     {
-        "region": "Mymensingh",
+        "division": "Mymensingh",
         "district": "Mymensingh",
         "city": "Mymensingh",
         "covered_area": ["Trishal", "Muktagachha", "Bhaluka", "Phulpur", "Haluaghat"],
@@ -609,7 +609,7 @@ export const coverageData = [{
         "latitude": 24.7539
     },
     {
-        "region": "Mymensingh",
+        "division": "Mymensingh",
         "district": "Netrokona",
         "city": "Netrokona",
         "covered_area": ["Khaliajuri", "Mohanganj", "Durgapur", "Barhatta"],
@@ -619,7 +619,7 @@ export const coverageData = [{
         "latitude": 24.8833
     },
     {
-        "region": "Mymensingh",
+        "division": "Mymensingh",
         "district": "Jamalpur",
         "city": "Jamalpur",
         "covered_area": ["Madarganj", "Islampur", "Sarishabari", "Baksiganj"],
@@ -629,7 +629,7 @@ export const coverageData = [{
         "latitude": 24.9167
     },
     {
-        "region": "Mymensingh",
+        "division": "Mymensingh",
         "district": "Sherpur",
         "city": "Sherpur",
         "covered_area": ["Nakla", "Nalitabari", "Jhenaigati", "Sreebardi"],

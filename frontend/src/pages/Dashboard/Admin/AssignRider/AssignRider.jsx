@@ -692,7 +692,7 @@ const AssignRider = () => {
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-3 text-xs text-slate-600">{rider.district || rider.region || '—'}</td>
+                                                        <td className="px-4 py-3 text-xs text-slate-600">{rider.district || rider.division || rider.region || '—'}</td>
                                                         <td className="px-4 py-3">
                                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : isBusy ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
                                                                 <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : isBusy ? 'bg-amber-500' : 'bg-slate-400'}`}></span>

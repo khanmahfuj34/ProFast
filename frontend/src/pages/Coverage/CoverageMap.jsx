@@ -19,8 +19,8 @@ function FlyToDistrict({ position }) {
   return null;
 }
 
-// 🎨 Color scheme by region
-const regionColors = {
+// 🎨 Color scheme by division
+const divisionColors = {
   "Dhaka": "#3B82F6",
   "Chattogram": "#DC2626",
   "Sylhet": "#10B981",
@@ -59,7 +59,7 @@ const createMarkerIcon = (color) => {
 
 // 📊 Statistics component
 const CoverageStats = ({ data }) => {
-  const regions = [...new Set(data.map(d => d.region))];
+  const divisions = [...new Set(data.map(d => d.division))];
   const activeDistricts = data.filter(d => d.status === "active").length;
   
   return (
@@ -69,8 +69,8 @@ const CoverageStats = ({ data }) => {
         <p className="text-xs text-gray-600">Districts</p>
       </div>
       <div className="text-center">
-        <p className="text-2xl font-bold text-green-600">{regions.length}</p>
-        <p className="text-xs text-gray-600">Regions</p>
+        <p className="text-2xl font-bold text-green-600">{divisions.length}</p>
+        <p className="text-xs text-gray-600">Divisions</p>
       </div>
       <div className="text-center">
         <p className="text-2xl font-bold text-orange-600">{activeDistricts}</p>
@@ -84,34 +84,34 @@ const CoverageStats = ({ data }) => {
   );
 };
 
-// 🏷️ Region filter tags
-const RegionFilter = ({ regions, selectedRegion, onRegionChange }) => {
+// 🏷️ Division filter tags
+const DivisionFilter = ({ divisions, selectedDivision, onDivisionChange }) => {
   return (
     <div className="mb-4 flex flex-wrap gap-2">
       <button
-        onClick={() => onRegionChange(null)}
+        onClick={() => onDivisionChange(null)}
         className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-          selectedRegion === null
+          selectedDivision === null
             ? "bg-gray-800 text-white"
             : "bg-gray-200 text-gray-700 hover:bg-gray-300"
         }`}
       >
-        All Regions
+        All Divisions
       </button>
-      {regions.map((region) => (
+      {divisions.map((division) => (
         <button
-          key={region}
-          onClick={() => onRegionChange(region)}
+          key={division}
+          onClick={() => onDivisionChange(division)}
           className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            selectedRegion === region
+            selectedDivision === division
               ? "text-white"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
           style={{
-            backgroundColor: selectedRegion === region ? regionColors[region] : undefined,
+            backgroundColor: selectedDivision === division ? divisionColors[division] : undefined,
           }}
         >
-          {region}
+          {division}
         </button>
       ))}
     </div>
@@ -122,7 +122,7 @@ const CoverageMap = () => {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [selectedDivision, setSelectedDivision] = useState(null);
 
   // 🔍 Enhanced filtering
   const filtered = useMemo(() => {
@@ -130,11 +130,11 @@ const CoverageMap = () => {
       const matchesSearch =
         d.district.toLowerCase().includes(search.toLowerCase()) ||
         d.city.toLowerCase().includes(search.toLowerCase()) ||
-        d.region.toLowerCase().includes(search.toLowerCase());
-      const matchesRegion = !selectedRegion || d.region === selectedRegion;
-      return matchesSearch && matchesRegion;
+        d.division.toLowerCase().includes(search.toLowerCase());
+      const matchesDivision = !selectedDivision || d.division === selectedDivision;
+      return matchesSearch && matchesDivision;
     });
-  }, [search, selectedRegion]);
+  }, [search, selectedDivision]);
 
   // ⌨️ Keyboard navigation
   const handleKeyDown = (e) => {
@@ -152,10 +152,10 @@ const CoverageMap = () => {
     setSelected(district);
     setSearch(district.district);
     setActiveIndex(-1);
-    setSelectedRegion(district.region);
+    setSelectedDivision(district.division);
   };
 
-  const regions = [...new Set(coverageData.map((d) => d.region))].sort();
+  const divisions = [...new Set(coverageData.map((d) => d.division))].sort();
 
   return (
     <div className="h-screen w-full flex flex-col bg-gray-50">
@@ -172,12 +172,12 @@ const CoverageMap = () => {
           {/* Stats */}
           <CoverageStats data={coverageData} />
 
-          {/* Region Filter */}
-          <h3 className="font-semibold text-gray-900 mb-3 text-sm">Filter by Region</h3>
-          <RegionFilter
-            regions={regions}
-            selectedRegion={selectedRegion}
-            onRegionChange={setSelectedRegion}
+          {/* Division Filter */}
+          <h3 className="font-semibold text-gray-900 mb-3 text-sm">Filter by Division</h3>
+          <DivisionFilter
+            divisions={divisions}
+            selectedDivision={selectedDivision}
+            onDivisionChange={setSelectedDivision}
           />
 
           {/* Search Box */}
@@ -215,11 +215,11 @@ const CoverageMap = () => {
                     <div className="flex items-start gap-3">
                       <div
                         className="w-3 h-3 rounded-full mt-1 flex-shrink-0"
-                        style={{ backgroundColor: regionColors[d.region] }}
+                        style={{ backgroundColor: divisionColors[d.division] }}
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900">{d.district}</p>
-                        <p className="text-xs text-gray-500">{d.region} Region</p>
+                        <p className="text-xs text-gray-500">{d.division} Division</p>
                         <p className="text-xs text-gray-600 mt-1">
                           {d.covered_area.join(", ")}
                         </p>
@@ -243,7 +243,7 @@ const CoverageMap = () => {
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
               <div className="mb-3">
                 <h3 className="text-lg font-bold text-gray-900">{selected.district}</h3>
-                <p className="text-sm text-gray-600">{selected.region} Region</p>
+                <p className="text-sm text-gray-600">{selected.division} Division</p>
               </div>
               
               <div className="space-y-2 text-sm">
@@ -303,11 +303,11 @@ const CoverageMap = () => {
             <FlyToDistrict position={selected ? [selected.latitude, selected.longitude] : null} />
 
             {/* Markers */}
-            {(selectedRegion ? filtered : coverageData).map((d, i) => (
+            {(selectedDivision ? filtered : coverageData).map((d, i) => (
               <Marker
                 key={i}
                 position={[d.latitude, d.longitude]}
-                icon={createMarkerIcon(regionColors[d.region])}
+                icon={createMarkerIcon(divisionColors[d.division])}
                 eventHandlers={{
                   click: () => handleSelect(d),
                 }}
@@ -315,7 +315,7 @@ const CoverageMap = () => {
                 <Popup>
                   <div className="w-64">
                     <h3 className="font-bold text-lg text-gray-900">{d.district}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{d.region}</p>
+                    <p className="text-sm text-gray-600 mb-2">{d.division}</p>
                     
                     <div className="space-y-1 text-sm">
                       <p>
@@ -328,7 +328,7 @@ const CoverageMap = () => {
                       <p>
                         <span
                           className="inline-block px-2 py-1 rounded text-white text-xs font-bold"
-                          style={{ backgroundColor: regionColors[d.region] }}
+                          style={{ backgroundColor: divisionColors[d.division] }}
                         >
                           {d.status.toUpperCase()}
                         </span>
@@ -342,15 +342,15 @@ const CoverageMap = () => {
 
           {/* Map Legend */}
           <div className="absolute bottom-6 left-6 bg-white rounded-lg shadow-lg p-4 border border-gray-200 max-w-xs">
-            <h4 className="font-semibold text-gray-900 mb-3 text-sm">Regions</h4>
+            <h4 className="font-semibold text-gray-900 mb-3 text-sm">Divisions</h4>
             <div className="space-y-2">
-              {regions.map((region) => (
-                <div key={region} className="flex items-center gap-2 text-xs">
+              {divisions.map((division) => (
+                <div key={division} className="flex items-center gap-2 text-xs">
                   <div
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: regionColors[region] }}
+                    style={{ backgroundColor: divisionColors[division] }}
                   />
-                  <span className="text-gray-700">{region}</span>
+                  <span className="text-gray-700">{division}</span>
                 </div>
               ))}
             </div>

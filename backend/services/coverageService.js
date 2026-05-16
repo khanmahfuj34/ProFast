@@ -32,7 +32,7 @@ const fallbackDistricts = {
 };
 
 /**
- * Get all unique divisions (regions)
+ * Get all unique divisions
  */
 const getDivisions = async () => {
     if (!coverageCollection) {
@@ -40,7 +40,7 @@ const getDivisions = async () => {
         return fallbackDivisions;
     }
     try {
-        const divisions = await coverageCollection.distinct("region");
+        const divisions = await coverageCollection.distinct("division");
         if (!divisions || divisions.length === 0) {
             console.warn("⚠️ getDivisions returned empty. Using fallback.");
             return fallbackDivisions;
@@ -63,7 +63,7 @@ const getDistrictsByDivision = async (division) => {
     }
     try {
         const districtsData = await coverageCollection
-            .find({ region: division })
+            .find({ division: division })
             .project({ district: 1, _id: 0 })
             .toArray();
         

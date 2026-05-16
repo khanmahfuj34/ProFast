@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import io from 'socket.io-client';
 import toast from 'react-hot-toast';
+import { useNotifications } from '../../../contexts/NotificationContext';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import RiderTopNavbar from './components/RiderTopNavbar';
@@ -16,7 +16,7 @@ const RiderDashboard = () => {
   const { user, userProfile } = useAuth();
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
-  const [isOnline, setIsOnline] = useState(true);
+  const { isOnline, setIsOnline, socket } = useNotifications();
   const [activeRequest, setActiveRequest] = useState(null);
 
   // ✅ Inline mock data constants for fallback when backend is unavailable
@@ -54,59 +54,59 @@ const RiderDashboard = () => {
     weeklyDeliveries: 0
   };
 
-  // Initialize WebSocket connection for real-time updates
+  // Handle real-time delivery request updates via shared socket
   useEffect(() => {
-    if (!user?.email) return;
+    if (!socket || !user?.email) return;
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
-    const newSocket = io(socketUrl, {
-      auth: {
-        email: user.email,
-        token: localStorage.getItem('access_token')
-      },
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Socket connected for real-time updates');
-      toast.success('Connected to live updates', { duration: 2000 });
-    });
-
-    newSocket.on('delivery_updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['rider-deliveries'] });
-      queryClient.invalidateQueries({ queryKey: ['rider-dashboard-stats'] });
-    });
-
-    newSocket.on('earnings_updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['rider-earnings'] });
-      queryClient.invalidateQueries({ queryKey: ['rider-analytics'] });
-    });
-
-    newSocket.on('activity_new', () => {
-      queryClient.invalidateQueries({ queryKey: ['rider-activity'] });
-    });
-
-    newSocket.on('new_delivery_request', (request) => {
+    const handleNewRequest = (request) => {
       console.log('📦 [Socket] New delivery request received:', request.trackingId);
       setActiveRequest(request);
-    });
-
-    newSocket.on('disconnect', () => {
-      toast.error('Disconnected from live updates', { duration: 2000 });
-    });
-
-    // Initialize socket connection for real-time delivery updates
-    return () => {
-      newSocket.close();
     };
-  }, [user?.email, queryClient]);
+
+    const handleRequestClosed = (data) => {
+      setActiveRequest(prev => {
+        if (prev && prev.parcelId === data.parcelId) {
+          console.log('🔒 [Socket] Delivery request closed by another rider');
+          return null;
+        }
+        return prev;
+      });
+    };
+
+    const handleDeliveryUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['rider-deliveries'] });
+      queryClient.invalidateQueries({ queryKey: ['rider-dashboard-stats'] });
+    };
+
+    const handleEarningsUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['rider-earnings'] });
+      queryClient.invalidateQueries({ queryKey: ['rider-analytics'] });
+    };
+
+    const handleActivityNew = () => {
+      queryClient.invalidateQueries({ queryKey: ['rider-activity'] });
+    };
+
+    // Attach listeners
+    socket.on('new_delivery_request', handleNewRequest);
+    socket.on('delivery_request_closed', handleRequestClosed);
+    socket.on('delivery_updated', handleDeliveryUpdated);
+    socket.on('earnings_updated', handleEarningsUpdated);
+    socket.on('activity_new', handleActivityNew);
+
+    return () => {
+      // Cleanup listeners
+      socket.off('new_delivery_request', handleNewRequest);
+      socket.off('delivery_request_closed', handleRequestClosed);
+      socket.off('delivery_updated', handleDeliveryUpdated);
+      socket.off('earnings_updated', handleEarningsUpdated);
+      socket.off('activity_new', handleActivityNew);
+    };
+  }, [socket, user?.email, queryClient]);
 
   const handleAccept = async (parcelId) => {
     try {
-      const res = await axiosSecure.patch(`/riders/accept-parcel/${parcelId}`);
+      const res = await axiosSecure.post(`/rider/deliveries/${parcelId}/accept`);
       if (res.data.success) {
         toast.success('Parcel accepted! Start your journey.', { icon: '🚀' });
         setActiveRequest(null);

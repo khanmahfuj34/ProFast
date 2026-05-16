@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import useAxiosSecure from '../../hooks/useAxiosSecure';
 import useAuth from '../../hooks/useAuth';
+import { useNotifications } from '../../contexts/NotificationContext';
 import {
     FiSearch, FiPackage, FiUser, FiPhone, FiMapPin,
     FiCheckCircle, FiClock, FiTruck, FiXCircle,
@@ -91,6 +92,8 @@ const TrackParcel = () => {
     const { user } = useAuth();
     const [page, setPage] = useState(1);
     const PAGE_SIZE = 7;
+    const { socket } = useNotifications();
+    const queryClient = useQueryClient();
 
     const axiosSecure = useAxiosSecure();
 
@@ -104,6 +107,29 @@ const TrackParcel = () => {
         enabled: !!trackingId,
         retry: false,
     });
+
+    // Real-time socket updates for tracking
+    useEffect(() => {
+        if (!socket || !trackingId) return;
+
+        const handleStatusUpdate = (data) => {
+            // If the updated parcel is the one we're currently tracking
+            if (data.trackingId === trackingId) {
+                queryClient.invalidateQueries({ queryKey: ['track-parcel', trackingId] });
+            }
+            
+            // Also refresh user's parcels list if they are logged in
+            if (user?.email) {
+                queryClient.invalidateQueries({ queryKey: ['parcels', user.email] });
+            }
+        };
+
+        socket.on('parcel_status_updated', handleStatusUpdate);
+
+        return () => {
+            socket.off('parcel_status_updated', handleStatusUpdate);
+        };
+    }, [socket, trackingId, user?.email, queryClient]);
 
     // Fetch user's active parcels
     const { data: userParcels = [], isFetching: isFetchingParcels } = useQuery({

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import Swal from 'sweetalert2';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import { useNotifications } from '../../../contexts/NotificationContext';
 
 // Fix leaflet default icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -497,8 +498,9 @@ const AssignedDeliveries = () => {
     const navigate = useNavigate();
     const axiosSecure = useAxiosSecure();
     const queryClient = useQueryClient();
+    const { socket } = useNotifications();
 
-    const { data: parcels = [], isLoading, isError } = useQuery({
+    const { data: parcels = [], isLoading, isError, refetch } = useQuery({
         queryKey: ['assigned-deliveries', user?.email],
         queryFn: async () => {
             const res = await axiosSecure.get('/parcels/assigned');
@@ -507,15 +509,43 @@ const AssignedDeliveries = () => {
         enabled: !!user?.email
     });
 
+    // Real-time socket listeners
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewAssignment = (data) => {
+            // Only refresh if the assignment is for THIS rider
+            if (data.assignedTo === user?.email) {
+                queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
+                Swal.fire({
+                    title: 'New Assignment!',
+                    text: `You have a new delivery request: ${data.trackingId}`,
+                    icon: 'info',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 4000
+                });
+            }
+        };
+
+        const handleStatusUpdate = () => {
+            queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
+        };
+
+        socket.on('admin_matching_update', handleNewAssignment);
+        socket.on('parcel_status_updated', handleStatusUpdate);
+
+        return () => {
+            socket.off('admin_matching_update', handleNewAssignment);
+            socket.off('parcel_status_updated', handleStatusUpdate);
+        };
+    }, [socket, user?.email, queryClient]);
+
     const updateDeliveryStatusMutation = useMutation({
         mutationFn: async ({ parcelId, deliveryStatus, clearRider }) => {
-            const updatePayload = { deliveryStatus };
-            if (clearRider) {
-                updatePayload.riderId = null;
-                updatePayload.riderName = '';
-                updatePayload.riderEmail = '';
-            }
-            return axiosSecure.patch(`/parcels/${parcelId}`, updatePayload);
+            // Use the dedicated rider status update endpoint
+            return axiosSecure.patch(`/rider/delivery/${parcelId}/status`, { deliveryStatus });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
@@ -527,16 +557,33 @@ const AssignedDeliveries = () => {
                 timer: 2000,
             });
         },
-        onError: () => {
-            Swal.fire('Error', 'Failed to update delivery status', 'error');
+        onError: (error) => {
+            console.error('Update error:', error);
+            Swal.fire('Error', error.response?.data?.message || 'Failed to update delivery status', 'error');
+        }
+    });
+
+    const acceptMutation = useMutation({
+        mutationFn: async (parcelId) => {
+            // Use the dedicated acceptance endpoint
+            return axiosSecure.post(`/rider/deliveries/${parcelId}/accept`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
+            Swal.fire({
+                title: 'Accepted!',
+                text: 'You have successfully accepted the delivery.',
+                icon: 'success',
+                confirmButtonColor: '#10b981',
+            });
+        },
+        onError: (error) => {
+            Swal.fire('Error', error.response?.data?.message || 'Failed to accept delivery', 'error');
         }
     });
 
     const handleAccept = (parcel) => {
-        updateDeliveryStatusMutation.mutate({
-            parcelId: parcel._id,
-            deliveryStatus: 'driver_accepted'
-        });
+        acceptMutation.mutate(parcel._id);
     };
 
     const handleReject = (parcel) => {
@@ -550,10 +597,15 @@ const AssignedDeliveries = () => {
             confirmButtonText: 'Yes, reject it!'
         }).then((result) => {
             if (result.isConfirmed) {
-                updateDeliveryStatusMutation.mutate({
-                    parcelId: parcel._id,
+                // For rejection, we still use the general patch for now as it handles rider clearing
+                axiosSecure.patch(`/parcels/${parcel._id}`, { 
                     deliveryStatus: 'pending-pickup',
-                    clearRider: true
+                    clearRider: true 
+                }).then(() => {
+                    queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
+                    Swal.fire('Rejected', 'Delivery returned to pending pool.', 'success');
+                }).catch(err => {
+                    Swal.fire('Error', 'Failed to reject delivery', 'error');
                 });
             }
         });

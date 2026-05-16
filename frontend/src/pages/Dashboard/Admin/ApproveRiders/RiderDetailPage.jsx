@@ -266,19 +266,19 @@ const RiderDetailPage = () => {
                     </div>
                 </div>
 
-                {/* Region & Location */}
+                {/* Division & Location */}
                 <div className="mb-8">
                     <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        Region & Location
+                        Division & Location
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="form-group">
-                            <label className="text-gray-700 font-semibold mb-2 block">🗺️ Region</label>
-                            <input type="text" value={rider.region} disabled className="input input-bordered w-full bg-gray-50 text-gray-900" />
+                            <label className="text-gray-700 font-semibold mb-2 block">🗺️ Division</label>
+                            <input type="text" value={rider.division || rider.region || ''} disabled className="input input-bordered w-full bg-gray-50 text-gray-900" />
                         </div>
                         <div className="form-group">
                             <label className="text-gray-700 font-semibold mb-2 block">📍 District</label>

@@ -96,7 +96,7 @@ const RiderStatus = () => {
                 nidNo: editData.nidNo,
                 drivingLicense: editData.drivingLicense,
                 phoneNumber: editData.phoneNumber,
-                region: editData.region,
+                division: editData.division,
                 bikeBrand: editData.bikeBrand,
                 bikeRegistration: editData.bikeRegistration,
                 aboutYourself: editData.aboutYourself
@@ -278,8 +278,8 @@ const RiderStatus = () => {
                                 <p className="text-lg text-gray-900 font-bold">{riderData.phoneNumber || 'N/A'}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-semibold text-gray-600">Region</p>
-                                <p className="text-lg text-gray-900 font-bold">{riderData.region || 'N/A'}</p>
+                                <p className="text-sm font-semibold text-gray-600">Division</p>
+                                <p className="text-lg text-gray-900 font-bold">{riderData.division || riderData.region || 'N/A'}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-gray-600">District</p>
@@ -452,11 +452,11 @@ const RiderStatus = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-base font-bold text-gray-800 mb-3">Region</label>
+                                    <label className="block text-base font-bold text-gray-800 mb-3">Division</label>
                                     <input
                                         type="text"
-                                        value={editData.region || ''}
-                                        onChange={(e) => handleEditChange('region', e.target.value)}
+                                        value={editData.division || editData.region || ''}
+                                        onChange={(e) => handleEditChange('division', e.target.value)}
                                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-base-100 font-semibold text-lg"
                                     />
                                 </div>

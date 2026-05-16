@@ -16,7 +16,7 @@ const BeRider = () => {
             name: '',
             drivingLicense: '',
             email: '',
-            region: '',
+            division: '',
             district: '',
             nidNo: '',
             phoneNumber: '',
@@ -29,7 +29,7 @@ const BeRider = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [photoURL, setPhotoURL] = useState(null);
     const [photoUploading, setPhotoUploading] = useState(false);
-    const selectedRegion = watch('region');
+    const selectedDivision = watch('division');
     const axiosSecure = useAxiosSecure();
     const { user, tokenReady } = useAuth();
     const { uploadImage } = useImageUpload();
@@ -72,13 +72,13 @@ const BeRider = () => {
         }
     };
 
-    // Get unique regions
-    const regions = [...new Set(coverageData.map(item => item.region))];
+    // Get unique divisions
+    const divisions = [...new Set(coverageData.map(item => item.division))];
 
-    // Get districts for selected region
-    const districts = selectedRegion 
+    // Get districts for selected division
+    const districts = selectedDivision 
         ? coverageData
-            .filter(item => item.region === selectedRegion)
+            .filter(item => item.division === selectedDivision)
             .map(item => item.district)
         : [];
 
@@ -319,23 +319,23 @@ const BeRider = () => {
                                     {errors.drivingLicense && <p className="text-red-500 text-sm mt-1 font-semibold">⚠️ {errors.drivingLicense.message}</p>}
                                 </div>
 
-                                {/* Region */}
+                                {/* Division */}
                                 <div className="group">
                                     <label className="block text-sm font-bold text-gray-800 mb-2 group-hover:text-yellow-600 transition">
-                                        🗺️ Your Region <span className="text-red-500">*</span>
+                                        🗺️ Your Division <span className="text-red-500">*</span>
                                     </label>
                                     <select
-                                        {...register('region', { required: 'Region is required' })}
+                                        {...register('division', { required: 'Division is required' })}
                                         className={`w-full text-base-100 px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 ${
-                                            errors.region ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:border-yellow-300'
+                                            errors.division ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:border-yellow-300'
                                         }`}
                                     >
-                                        <option value="">Select Region</option>
-                                        {regions.map(region => (
-                                            <option key={region} value={region}>{region}</option>
+                                        <option value="">Select Division</option>
+                                        {divisions.map(division => (
+                                            <option key={division} value={division}>{division}</option>
                                         ))}
                                     </select>
-                                    {errors.region && <p className="text-red-500 text-sm mt-1 font-semibold">⚠️ {errors.region.message}</p>}
+                                    {errors.division && <p className="text-red-500 text-sm mt-1 font-semibold">⚠️ {errors.division.message}</p>}
                                 </div>
 
                                 {/* District */}
@@ -345,13 +345,13 @@ const BeRider = () => {
                                     </label>
                                     <select
                                         {...register('district', { required: 'District is required' })}
-                                        disabled={!selectedRegion}
+                                        disabled={!selectedDivision}
                                         className={`w-full text-base-100 px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all duration-300 ${
                                             errors.district ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50 hover:border-yellow-300'
-                                        } ${!selectedRegion ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        } ${!selectedDivision ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         <option value="">
-                                            {selectedRegion ? 'Select District' : 'Select Region First'}
+                                            {selectedDivision ? 'Select District' : 'Select Division First'}
                                         </option>
                                         {districts.map(district => (
                                             <option key={district} value={district}>{district}</option>
