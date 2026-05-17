@@ -1481,18 +1481,7 @@ app.get('/rider/parcel-requests', verifyJWT, verifyRider, async(req, res) => {
             const parcel = await parcelsCollection.findOne({ _id: new ObjectId(request.parcelId) });
             return {
                 ...request,
-                parcel: parcel ? {
-                    parcelName: parcel.parcelName,
-                    parcelType: parcel.parcelType,
-                    parcelWeight: parcel.parcelWeight,
-                    senderName: parcel.senderName,
-                    senderDistrict: parcel.senderDistrict,
-                    senderAddress: parcel.senderAddress,
-                    receiverDistrict: parcel.receiverDistrict,
-                    receiverAddress: parcel.receiverAddress,
-                    totalPrice: parcel.totalPrice,
-                    createdAt: parcel.createdAt
-                } : null
+                parcel: parcel || null
             };
         }));
 

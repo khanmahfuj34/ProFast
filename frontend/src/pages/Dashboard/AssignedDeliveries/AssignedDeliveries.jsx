@@ -4,7 +4,27 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
+import { 
+  FiPackage as Package, 
+  FiMapPin as MapPin, 
+  FiClock as Clock, 
+  FiNavigation as Navigation,
+  FiChevronLeft as ChevronLeft,
+  FiChevronDown as ChevronDown,
+  FiChevronUp as ChevronUp,
+  FiCheckCircle as CheckCircle,
+  FiAlertCircle as AlertCircle,
+  FiTruck as Truck,
+  FiUser as User,
+  FiPhone as Phone,
+  FiDollarSign as DollarSign,
+  FiActivity as Activity,
+  FiHash as Hash,
+  FiArrowRight as ArrowRight,
+  FiRefreshCw as RefreshCw,
+  FiInfo as Info
+} from 'react-icons/fi';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import { useNotifications } from '../../../contexts/NotificationContext';
@@ -24,7 +44,6 @@ const customMarker = (color) => new L.DivIcon({
     iconAnchor: [7, 7]
 });
 
-// District coords (mirrors backend logic for map preview)
 const districtCoords = {
     'Dhaka': [23.8103, 90.4125], 'Mirpur': [23.8223, 90.3654], 'Banani': [23.7936, 90.4065],
     'Uttara': [23.8746, 90.3980], 'Gulshan': [23.7925, 90.4078], 'Dhanmondi': [23.7465, 90.3740],
@@ -43,459 +62,8 @@ const getCoords = (districtName) => {
     return key ? districtCoords[key] : [23.8103, 90.4125];
 };
 
-const getSizeLabel = (weight) => {
-    const w = parseFloat(weight) || 0;
-    if (w <= 1) return 'Small';
-    if (w <= 5) return 'Medium';
-    return 'Large';
-};
-
-const getPaymentTypeLabel = (status) => status === 'paid' ? 'Prepaid' : 'Cash on Delivery';
-
-const formatDateTime = (date) => {
-    if (!date) return '—';
-    const d = new Date(date);
-    return d.toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-};
-
-const getTimeline = (statusRaw) => {
-    const steps = [
-        { label: 'Assigned', desc: 'Parcel assigned to you', icon: '✓' },
-        { label: 'Pick Up', desc: 'Collect parcel from sender', icon: '📦' },
-        { label: 'On The Way', desc: 'In transit to delivery', icon: '🛵' },
-        { label: 'Delivered', desc: 'Parcel delivered successfully', icon: '✅' }
-    ];
-    const order = ['driver_assigned', 'driver_accepted', 'picked_up', 'on_the_way', 'delivered'];
-    const idx = order.indexOf(statusRaw);
-    return steps.map((s, i) => {
-        const stepIdx = i + 1; // mapped to order indices 1,2,3,4
-        const completed = idx >= stepIdx;
-        const current = idx === stepIdx;
-        return { ...s, completed, current };
-    });
-};
-
-const statusBadgeClasses = {
-    'driver_assigned': 'bg-amber-50 text-amber-700 border-amber-200',
-    'driver_accepted': 'bg-blue-50 text-blue-700 border-blue-200',
-    'picked_up': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    'on_the_way': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'delivered': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    'pending-pickup': 'bg-red-50 text-red-700 border-red-200',
-};
-
-const formatStatusLabel = (status) => {
-    const map = {
-        'driver_assigned': 'Assigned',
-        'driver_accepted': 'Accepted',
-        'picked_up': 'Picked Up',
-        'on_the_way': 'On The Way',
-        'delivered': 'Delivered',
-        'pending-pickup': 'Pending'
-    };
-    return map[status] || status?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Unknown';
-};
-
-/* ─── Delivery Detail Card ─── */
-const DeliveryCard = ({ parcel, onAccept, onReject, onUpdateProgress, isUpdating }) => {
-    const [expanded, setExpanded] = useState(false);
-    const pickupCoords = getCoords(parcel.senderDistrict);
-    const dropCoords = getCoords(parcel.receiverDistrict);
-    const midLat = (pickupCoords[0] + dropCoords[0]) / 2;
-    const midLng = (pickupCoords[1] + dropCoords[1]) / 2;
-    const riderEarning = Math.round((parcel.totalPrice || 0) * 0.7);
-    const timeline = getTimeline(parcel.deliveryStatus);
-
-    return (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-shadow hover:shadow-md">
-            {/* ── Summary Row ── */}
-            <div className="p-5 sm:p-6">
-                <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
-                    {/* Left: parcel info */}
-                    <div className="flex items-start gap-4 flex-1 min-w-0">
-                        <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-xl shrink-0">
-                            📦
-                        </div>
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="text-base font-bold text-slate-800">{parcel.parcelName || 'Unnamed Parcel'}</h3>
-                                {parcel.deliveryStatus === 'driver_assigned' && (
-                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-full border border-blue-100 uppercase tracking-wide">
-                                        New Assignment
-                                    </span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-3 mt-1 flex-wrap text-xs text-slate-500">
-                                <span className="font-mono">{parcel.trackingId || `ZS-${parcel._id?.slice(-6)?.toUpperCase()}`}</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span>{parcel.parcelWeight || 1} kg</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <span>{formatDateTime(parcel.updatedAt)}</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${statusBadgeClasses[parcel.deliveryStatus] || statusBadgeClasses['driver_assigned']}`}>
-                                    {formatStatusLabel(parcel.deliveryStatus)}
-                                </span>
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                                    parcel.paymentStatus === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                                }`}>
-                                    {parcel.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Middle: route preview + fee */}
-                    <div className="flex items-center gap-6 lg:gap-8 flex-wrap">
-                        <div className="flex items-center gap-3 text-sm">
-                            <div className="text-center">
-                                <p className="text-xs text-slate-400 mb-0.5">Pickup</p>
-                                <p className="font-semibold text-slate-700 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    {parcel.senderDistrict || 'N/A'}
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center px-2">
-                                <span className="text-slate-300 text-lg">→</span>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-xs text-slate-400 mb-0.5">Delivery</p>
-                                <p className="font-semibold text-slate-700 flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                    {parcel.receiverDistrict || 'N/A'}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="text-right min-w-[80px]">
-                            <p className="text-xs text-slate-400">Earning</p>
-                            <p className="text-lg font-bold text-emerald-600">৳{riderEarning}</p>
-                        </div>
-                        <button
-                            onClick={() => setExpanded(v => !v)}
-                            className="px-4 py-2 text-sm font-semibold text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition shrink-0"
-                        >
-                            {expanded ? 'Hide Details' : 'View Full Details'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Expanded Detail Section ── */}
-            {expanded && (
-                <div className="border-t border-slate-100 bg-slate-50/50">
-                    {/* Header bar */}
-                    <div className="px-5 sm:px-6 pt-5 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-lg">
-                                🏠
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-bold text-slate-800">{parcel.parcelName || 'Unnamed Parcel'}</h4>
-                                <p className="text-xs text-slate-500 font-mono">Tracking ID: {parcel.trackingId || `ZS-${parcel._id?.slice(-6)?.toUpperCase()}`}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <span className="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg border border-blue-100">
-                                {parcel.deliveryType === 'within-city' ? 'Standard Delivery' : 'Express Delivery'}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="px-5 sm:px-6 mt-4">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            {[
-                                { icon: '⚖️', label: 'Parcel Weight', value: `${parcel.parcelWeight || 1} kg` },
-                                { icon: '📐', label: 'Parcel Size', value: getSizeLabel(parcel.parcelWeight) },
-                                { icon: '💳', label: 'Payment Type', value: getPaymentTypeLabel(parcel.paymentStatus) },
-                                { icon: '💰', label: 'Total Cost', value: `৳${parcel.totalPrice || 0}` },
-                            ].map((item, i) => (
-                                <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 text-center">
-                                    <div className="text-lg mb-1">{item.icon}</div>
-                                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">{item.label}</p>
-                                    <p className="text-sm font-bold text-slate-800 mt-0.5">{item.value}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Two-column layout */}
-                    <div className="px-5 sm:px-6 py-5 grid grid-cols-1 lg:grid-cols-5 gap-5">
-                        {/* Left: Pickup & Delivery Info */}
-                        <div className="lg:col-span-3 space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {/* Pickup Information */}
-                                <div className="bg-white rounded-xl border border-slate-200 p-5">
-                                    <h5 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                        Pickup Information
-                                    </h5>
-                                    <div className="space-y-3 text-sm">
-                                        <InfoRow label="Sender Name" value={parcel.senderName || 'N/A'} />
-                                        <InfoRow label="Phone" value={parcel.senderPhone || 'N/A'} icon="📞" />
-                                        <InfoRow label="Address" value={parcel.senderAddress || parcel.senderDistrict || 'N/A'} icon="📍" />
-                                        <InfoRow label="Area" value={parcel.senderDistrict || 'N/A'} />
-                                        <InfoRow label="Landmark" value={parcel.senderLandmark || 'Near main road'} />
-                                        <InfoRow label="Pickup Time" value={parcel.pickupTime || `Today, 10:00 AM - 12:00 PM`} icon="🕐" />
-                                    </div>
-                                </div>
-
-                                {/* Delivery Information */}
-                                <div className="bg-white rounded-xl border border-slate-200 p-5">
-                                    <h5 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-                                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                                        Delivery Information
-                                    </h5>
-                                    <div className="space-y-3 text-sm">
-                                        <InfoRow label="Receiver Name" value={parcel.receiverName || 'N/A'} />
-                                        <InfoRow label="Phone" value={parcel.receiverPhone || 'N/A'} icon="📞" />
-                                        <InfoRow label="Address" value={parcel.receiverAddress || parcel.receiverDistrict || 'N/A'} icon="📍" />
-                                        <InfoRow label="Area" value={parcel.receiverDistrict || 'N/A'} />
-                                        <InfoRow label="Landmark" value={parcel.receiverLandmark || 'Near main road'} />
-                                        <InfoRow label="Est. Delivery" value={parcel.estimatedDelivery || `Today, 04:00 PM - 08:00 PM`} icon="🕐" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Delivery Instructions */}
-                            <div className="bg-white rounded-xl border border-slate-200 p-5">
-                                <h5 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-3">
-                                    <span className="text-amber-500 text-base">⚠️</span>
-                                    Delivery Instructions
-                                </h5>
-                                <p className="text-sm text-slate-600">
-                                    {parcel.deliveryInstructions || 'Please handle with care. Ensure the parcel is delivered to the right person and collect signature if required.'}
-                                </p>
-                            </div>
-
-                            {/* Parcel Notes */}
-                            <div className="bg-white rounded-xl border border-slate-200 p-5">
-                                <h5 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-3">
-                                    <span className="text-blue-500 text-base">📝</span>
-                                    Parcel Notes
-                                </h5>
-                                <p className="text-sm text-slate-600">
-                                    {parcel.parcelNotes || `Keep the parcel safe and deliver to the right person. Category: ${parcel.parcelType || 'standard'}.`}
-                                </p>
-                            </div>
-
-                            {/* Actions */}
-                            {parcel.deliveryStatus === 'driver_assigned' && (
-                                <div className="flex gap-3 pt-2">
-                                    <button
-                                        onClick={() => onReject(parcel)}
-                                        disabled={isUpdating}
-                                        className="flex-1 py-3 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        <span>✕</span> Reject Delivery
-                                    </button>
-                                    <button
-                                        onClick={() => onAccept(parcel)}
-                                        disabled={isUpdating}
-                                        className="flex-1 py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        <span>✓</span> Accept Delivery
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Delivery Progress Buttons — shown after accepted */}
-                            {parcel.deliveryStatus === 'driver_accepted' && (
-                                <div className="pt-2">
-                                    <p className="text-xs font-semibold text-slate-500 mb-2">Update delivery status:</p>
-                                    <button
-                                        onClick={() => onUpdateProgress(parcel, 'picked_up')}
-                                        disabled={isUpdating}
-                                        className="w-full py-3 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2 mb-2"
-                                    >
-                                        📦 Mark as Picked Up
-                                    </button>
-                                </div>
-                            )}
-                            {parcel.deliveryStatus === 'picked_up' && (
-                                <div className="pt-2">
-                                    <p className="text-xs font-semibold text-slate-500 mb-2">Update delivery status:</p>
-                                    <button
-                                        onClick={() => onUpdateProgress(parcel, 'on_the_way')}
-                                        disabled={isUpdating}
-                                        className="w-full py-3 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2 mb-2"
-                                    >
-                                        🛵 Mark as On The Way
-                                    </button>
-                                </div>
-                            )}
-                            {parcel.deliveryStatus === 'on_the_way' && (
-                                <div className="pt-2 space-y-2">
-                                    <p className="text-xs font-semibold text-slate-500">Finalize delivery:</p>
-                                    <button
-                                        onClick={() => onUpdateProgress(parcel, 'delivered')}
-                                        disabled={isUpdating}
-                                        className="w-full py-3 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        ✅ Mark as Delivered
-                                    </button>
-                                    <button
-                                        onClick={() => onUpdateProgress(parcel, 'delivery_failed')}
-                                        disabled={isUpdating}
-                                        className="w-full py-3 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        ✕ Delivery Failed
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Completed state */}
-                            {['delivered', 'delivery_failed', 'cancelled'].includes(parcel.deliveryStatus) && (
-                                <div className={`rounded-xl p-4 flex items-center gap-3 border ${
-                                    parcel.deliveryStatus === 'delivered'
-                                        ? 'bg-emerald-50 border-emerald-100'
-                                        : 'bg-red-50 border-red-100'
-                                }`}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                                        parcel.deliveryStatus === 'delivered'
-                                            ? 'bg-emerald-100 text-emerald-600'
-                                            : 'bg-red-100 text-red-500'
-                                    }`}>
-                                        {parcel.deliveryStatus === 'delivered' ? '✓' : '✕'}
-                                    </div>
-                                    <div>
-                                        <p className={`text-sm font-semibold ${
-                                            parcel.deliveryStatus === 'delivered' ? 'text-emerald-800' : 'text-red-700'
-                                        }`}>
-                                            {parcel.deliveryStatus === 'delivered' ? 'Delivery completed!' : 'Delivery not completed'}
-                                        </p>
-                                        <p className={`text-xs ${
-                                            parcel.deliveryStatus === 'delivered' ? 'text-emerald-600' : 'text-red-500'
-                                        }`}>
-                                            Final status: {formatStatusLabel(parcel.deliveryStatus)}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Right: Timeline + Route + Payment */}
-                        <div className="lg:col-span-2 space-y-4">
-                            {/* Delivery Overview / Timeline */}
-                            <div className="bg-white rounded-xl border border-slate-200 p-5">
-                                <h5 className="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4">
-                                    <span className="text-blue-500 text-base">📋</span>
-                                    Delivery Overview
-                                </h5>
-                                <div className="relative pl-4">
-                                    {timeline.map((step, idx) => (
-                                        <div key={idx} className="relative pb-5 last:pb-0">
-                                            {/* connector line */}
-                                            {idx < timeline.length - 1 && (
-                                                <div className={`absolute left-[11px] top-6 w-0.5 h-full ${step.completed ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                                            )}
-                                            <div className="flex items-start gap-3">
-                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 border-2 ${
-                                                    step.completed
-                                                        ? 'bg-emerald-500 border-emerald-500 text-white'
-                                                        : step.current
-                                                            ? 'bg-white border-emerald-500 text-emerald-600'
-                                                            : 'bg-white border-slate-200 text-slate-300'
-                                                }`}>
-                                                    {step.completed ? '✓' : step.icon}
-                                                </div>
-                                                <div>
-                                                    <p className={`text-sm font-semibold ${step.completed || step.current ? 'text-slate-800' : 'text-slate-400'}`}>
-                                                        {step.label}
-                                                    </p>
-                                                    <p className="text-xs text-slate-500 mt-0.5">{step.desc}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Route Information */}
-                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                                <h5 className="text-sm font-bold text-slate-800 flex items-center gap-2 p-5 pb-0">
-                                    <span className="text-emerald-500 text-base">🗺️</span>
-                                    Route Information
-                                </h5>
-                                <div className="p-5 pt-3">
-                                    <div className="rounded-xl overflow-hidden border border-slate-200 h-44">
-                                        <MapContainer center={[midLat, midLng]} zoom={12} scrollWheelZoom={false} className="h-full w-full" style={{ height: '100%' }}>
-                                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                            <Marker position={pickupCoords} icon={customMarker('#10b981')}></Marker>
-                                            <Marker position={dropCoords} icon={customMarker('#ef4444')}></Marker>
-                                            <Polyline positions={[pickupCoords, dropCoords]} color="#10b981" weight={3} opacity={0.8} />
-                                        </MapContainer>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3 mt-3">
-                                        <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                            <p className="text-[10px] text-slate-400 font-medium uppercase">Distance</p>
-                                            <p className="text-sm font-bold text-slate-700">{parcel.distance || '8.5'} km</p>
-                                        </div>
-                                        <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                            <p className="text-[10px] text-slate-400 font-medium uppercase">Est. Time</p>
-                                            <p className="text-sm font-bold text-slate-700">{parcel.estimatedTime || '25'} min</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Payment Summary */}
-                            <div className="bg-white rounded-xl border border-slate-200 p-5">
-                                <h5 className="text-sm font-bold text-slate-800 mb-4">Payment Summary</h5>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Delivery Fee</span>
-                                        <span className="font-semibold text-slate-700">৳{parcel.basePrice || Math.round((parcel.totalPrice || 0) * 0.85)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Service Charge</span>
-                                        <span className="font-semibold text-slate-700">৳{parcel.extraCharges || Math.round((parcel.totalPrice || 0) * 0.15)}</span>
-                                    </div>
-                                    <div className="border-t border-slate-100 pt-3 flex justify-between">
-                                        <span className="text-sm font-bold text-slate-800">Total Amount</span>
-                                        <span className="text-lg font-bold text-emerald-600">৳{parcel.totalPrice || 0}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center pt-1">
-                                        <span className="text-xs text-slate-400">Payment Status</span>
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
-                                            parcel.paymentStatus === 'paid'
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                : 'bg-amber-50 text-amber-700 border-amber-200'
-                                        }`}>
-                                            {parcel.paymentStatus === 'paid' ? 'Paid (Prepaid)' : 'Unpaid (COD)'}
-                                        </span>
-                                    </div>
-                                    <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 mt-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-emerald-700 font-medium">Your Earning (70%)</span>
-                                            <span className="text-sm font-bold text-emerald-700">৳{riderEarning}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-/* ─── Info Row helper ─── */
-const InfoRow = ({ label, value, icon }) => (
-    <div>
-        <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wide">{label}</p>
-        <p className="text-sm font-semibold text-slate-700 mt-0.5 flex items-center gap-1.5">
-            {icon && <span className="text-xs opacity-70">{icon}</span>}
-            {value}
-        </p>
-    </div>
-);
-
-/* ─── Main Page ─── */
 const AssignedDeliveries = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const axiosSecure = useAxiosSecure();
     const queryClient = useQueryClient();
     const { socket } = useNotifications();
@@ -513,197 +81,333 @@ const AssignedDeliveries = () => {
     useEffect(() => {
         if (!socket) return;
 
-        const handleNewAssignment = (data) => {
-            // Only refresh if the assignment is for THIS rider
-            if (data.assignedTo === user?.email) {
-                queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
-                Swal.fire({
-                    title: 'New Assignment!',
-                    text: `You have a new delivery request: ${data.trackingId}`,
-                    icon: 'info',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 4000
-                });
-            }
+        const handleUpdate = () => {
+            queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
         };
 
-        const handleStatusUpdate = () => {
-            queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
+        const handleNewAssignment = (data) => {
+            if (data.assignedTo === user?.email) {
+                handleUpdate();
+                toast.success('New assignment received!', { icon: '📦' });
+            }
         };
 
         socket.on('admin_matching_update', handleNewAssignment);
-        socket.on('parcel_status_updated', handleStatusUpdate);
+        socket.on('delivery_accepted', (data) => {
+             // Local update for the rider who accepted
+             handleUpdate();
+        });
+        socket.on('parcel_status_updated', handleUpdate);
 
         return () => {
             socket.off('admin_matching_update', handleNewAssignment);
-            socket.off('parcel_status_updated', handleStatusUpdate);
+            socket.off('delivery_accepted');
+            socket.off('parcel_status_updated', handleUpdate);
         };
     }, [socket, user?.email, queryClient]);
 
-    const updateDeliveryStatusMutation = useMutation({
-        mutationFn: async ({ parcelId, deliveryStatus, clearRider }) => {
-            // Use the dedicated rider status update endpoint
-            return axiosSecure.patch(`/rider/delivery/${parcelId}/status`, { deliveryStatus });
+    const updateStatusMutation = useMutation({
+        mutationFn: async ({ parcelId, status }) => {
+            return axiosSecure.patch(`/rider/delivery/${parcelId}/status`, { deliveryStatus: status });
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
-            Swal.fire({
-                title: 'Success!',
-                text: 'Delivery status updated successfully.',
-                icon: 'success',
-                confirmButtonColor: '#10b981',
-                timer: 2000,
-            });
+            queryClient.invalidateQueries(['assigned-deliveries']);
+            queryClient.invalidateQueries(['rider-dashboard-stats']);
+            toast.success('Status updated successfully');
         },
         onError: (error) => {
-            console.error('Update error:', error);
-            Swal.fire('Error', error.response?.data?.message || 'Failed to update delivery status', 'error');
+            toast.error(error.response?.data?.message || 'Failed to update status');
         }
     });
-
-    const acceptMutation = useMutation({
-        mutationFn: async (parcelId) => {
-            // Use the dedicated acceptance endpoint
-            return axiosSecure.post(`/rider/deliveries/${parcelId}/accept`);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
-            Swal.fire({
-                title: 'Accepted!',
-                text: 'You have successfully accepted the delivery.',
-                icon: 'success',
-                confirmButtonColor: '#10b981',
-            });
-        },
-        onError: (error) => {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to accept delivery', 'error');
-        }
-    });
-
-    const handleAccept = (parcel) => {
-        acceptMutation.mutate(parcel._id);
-    };
-
-    const handleReject = (parcel) => {
-        Swal.fire({
-            title: 'Reject Delivery?',
-            text: 'Are you sure you want to reject this delivery? It will be sent back to the admin.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, reject it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // For rejection, we still use the general patch for now as it handles rider clearing
-                axiosSecure.patch(`/parcels/${parcel._id}`, { 
-                    deliveryStatus: 'pending-pickup',
-                    clearRider: true 
-                }).then(() => {
-                    queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
-                    Swal.fire('Rejected', 'Delivery returned to pending pool.', 'success');
-                }).catch(err => {
-                    Swal.fire('Error', 'Failed to reject delivery', 'error');
-                });
-            }
-        });
-    };
-
-    const handleUpdateProgress = (parcel, status) => {
-        let title = 'Update Status?';
-        let text = `Mark this parcel as ${formatStatusLabel(status)}?`;
-        
-        if (status === 'delivered') {
-            title = 'Complete Delivery?';
-            text = 'Mark this parcel as successfully delivered? This cannot be undone.';
-        } else if (status === 'delivery_failed') {
-            title = 'Delivery Failed?';
-            text = 'Mark this delivery as failed? This will return the parcel to the admin. This cannot be undone.';
-        }
-
-        Swal.fire({
-            title,
-            text,
-            icon: status === 'delivery_failed' ? 'warning' : 'question',
-            showCancelButton: true,
-            confirmButtonColor: status === 'delivery_failed' ? '#ef4444' : '#10b981',
-            cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, update it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                updateDeliveryStatusMutation.mutate({
-                    parcelId: parcel._id,
-                    deliveryStatus: status
-                });
-            }
-        });
-    };
 
     return (
-        <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800">Assigned Deliveries</h1>
-                        <p className="text-sm text-slate-500 mt-1">
-                            Review delivery details and take action on your assigned parcels.
-                        </p>
+        <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700">
+            {/* Header Section */}
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                <div>
+                    <div className="flex items-center gap-4 mb-2">
+                        <Link 
+                            to="/dashboard/rider-dashboard" 
+                            className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 text-slate-400 hover:text-blue-600 transition-all hover:shadow-md"
+                        >
+                            <ChevronLeft className="w-6 h-6" />
+                        </Link>
+                        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+                            Assigned Deliveries
+                        </h1>
                     </div>
-                    <Link
-                        to="/dashboard/rider-dashboard"
-                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition self-start"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Dashboard
-                    </Link>
+                    <p className="text-slate-500 font-medium text-lg ml-16">
+                        Manage your active delivery journey
+                    </p>
                 </div>
 
-                {/* Loading */}
-                {isLoading && (
-                    <div className="flex justify-center items-center py-20">
-                        <span className="loading loading-spinner loading-lg text-emerald-600"></span>
+                <div className="flex items-center gap-3 bg-white p-2 rounded-[2rem] shadow-sm border border-slate-100 ml-16 xl:ml-0">
+                    <div className="px-6 py-3 bg-blue-50 rounded-[1.5rem] flex items-center gap-3">
+                        <Truck className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm font-black text-blue-700 uppercase tracking-tighter">
+                            {parcels.length} Active Orders
+                        </span>
                     </div>
-                )}
-
-                {/* Error */}
-                {isError && (
-                    <div className="bg-red-50 border-l-4 border-red-500 p-5 rounded-xl">
-                        <p className="text-red-700 font-medium">Failed to load assigned deliveries. Please try again later.</p>
-                    </div>
-                )}
-
-                {/* Empty */}
-                {!isLoading && !isError && parcels.length === 0 && (
-                    <div className="bg-white rounded-2xl border-2 border-dashed border-slate-300 px-6 py-20 text-center">
-                        <div className="text-6xl mb-4">📭</div>
-                        <p className="text-xl font-bold text-slate-700">No Deliveries Assigned</p>
-                        <p className="text-slate-500 mt-2 max-w-md mx-auto">
-                            You currently don't have any parcels assigned to you. Check back later when admins assign new deliveries.
-                        </p>
-                    </div>
-                )}
-
-                {/* Cards */}
-                {!isLoading && !isError && parcels.length > 0 && (
-                    <div className="space-y-5">
-                        {parcels.map((parcel) => (
-                            <DeliveryCard
-                                key={parcel._id}
-                                parcel={parcel}
-                                onAccept={handleAccept}
-                                onReject={handleReject}
-                                onUpdateProgress={handleUpdateProgress}
-                                isUpdating={updateDeliveryStatusMutation.isPending}
-                            />
-                        ))}
-                    </div>
-                )}
+                </div>
             </div>
+
+            {/* List */}
+            {isLoading ? (
+                <div className="space-y-6">
+                    {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-100 animate-pulse rounded-[2.5rem]"></div>)}
+                </div>
+            ) : parcels.length === 0 ? (
+                <div className="bg-white rounded-[2.5rem] p-20 text-center shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col items-center">
+                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-8">
+                        <Activity className="w-12 h-12 text-slate-300" />
+                    </div>
+                    <h3 className="text-3xl font-black text-slate-900 mb-3">No Active Deliveries</h3>
+                    <p className="text-slate-500 max-w-sm text-lg leading-relaxed mb-10">
+                        You don't have any parcels to deliver right now. Accept new requests from the dispatch center.
+                    </p>
+                    <Link 
+                        to="/dashboard/rider/parcel-requests"
+                        className="bg-slate-900 text-white font-bold px-10 py-5 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-300 flex items-center gap-3"
+                    >
+                        Go to Dispatch Center
+                        <ArrowRight className="w-5 h-5" />
+                    </Link>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-8">
+                    {parcels.map((parcel, index) => (
+                        <DetailedDeliveryCard 
+                            key={parcel._id} 
+                            parcel={parcel} 
+                            index={index}
+                            onUpdate={(status) => updateStatusMutation.mutate({ parcelId: parcel._id, status })}
+                            isUpdating={updateStatusMutation.isPending && updateStatusMutation.variables?.parcelId === parcel._id}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const DetailedDeliveryCard = ({ parcel, index, onUpdate, isUpdating }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const riderEarning = Math.round((parcel.totalPrice || 0) * 0.7);
+    
+    // Status mapping for labels
+    const getStatusInfo = (status) => {
+        const config = {
+            'driver_accepted': { label: 'Pending Pickup', color: 'blue', icon: <Clock /> },
+            'picked_up': { label: 'In Transit', color: 'indigo', icon: <Navigation /> },
+            'on_the_way': { label: 'Near Delivery', color: 'emerald', icon: <Truck /> },
+            'delivered': { label: 'Delivered', color: 'green', icon: <CheckCircle /> },
+            'delivery_failed': { label: 'Failed', color: 'red', icon: <AlertCircle /> }
+        };
+        return config[status] || { label: status, color: 'slate', icon: <Info /> };
+    };
+
+    const statusInfo = getStatusInfo(parcel.deliveryStatus);
+    const pickupCoords = getCoords(parcel.senderDistrict);
+    const dropCoords = getCoords(parcel.receiverDistrict);
+    const midPoint = [(pickupCoords[0] + dropCoords[0]) / 2, (pickupCoords[1] + dropCoords[1]) / 2];
+
+    return (
+        <div 
+            className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden hover:border-blue-200 transition-all duration-500 animate-in slide-in-from-bottom-8"
+            style={{ animationDelay: `${index * 100}ms` }}
+        >
+            {/* Top Info Bar */}
+            <div className="p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-8 justify-between">
+                <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center flex-shrink-0 text-white shadow-xl shadow-slate-200">
+                        <Package className="w-10 h-10" />
+                    </div>
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                            <h3 className="text-xl font-black text-slate-900 truncate">{parcel.parcelName || 'Unnamed Parcel'}</h3>
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-${statusInfo.color}-50 text-${statusInfo.color}-600 border border-${statusInfo.color}-100 flex items-center gap-1.5`}>
+                                <span className={`w-1.5 h-1.5 rounded-full bg-${statusInfo.color}-500 animate-pulse`}></span>
+                                {statusInfo.label}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-slate-400 font-bold text-xs">
+                            <span className="flex items-center gap-1"><Hash className="w-3.5 h-3.5" /> {parcel.trackingId}</span>
+                            <span>•</span>
+                            <span>{parcel.parcelType}</span>
+                            <span>•</span>
+                            <span>{parcel.parcelWeight}kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-6 lg:gap-10">
+                    <div className="flex items-center gap-6 border-x border-slate-50 px-8">
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Earnings</p>
+                            <p className="text-2xl font-black text-green-600 leading-none">৳{riderEarning}</p>
+                        </div>
+                        <div className="w-px h-8 bg-slate-100"></div>
+                        <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Fee Status</p>
+                            <p className={`text-sm font-black uppercase tracking-tighter ${parcel.paymentStatus === 'paid' ? 'text-blue-600' : 'text-orange-600'}`}>
+                                {parcel.paymentStatus === 'paid' ? 'Prepaid' : 'COD'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="px-6 py-4 rounded-2xl bg-slate-50 text-slate-600 font-bold hover:bg-slate-100 transition-all flex items-center gap-2"
+                        >
+                            View Details
+                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                        </button>
+                        
+                        {parcel.deliveryStatus === 'driver_accepted' && (
+                            <button 
+                                onClick={() => onUpdate('picked_up')}
+                                disabled={isUpdating}
+                                className="px-8 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all shadow-lg shadow-blue-200 flex items-center gap-3 active:scale-95 disabled:opacity-50"
+                            >
+                                {isUpdating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Package className="w-5 h-5" />}
+                                Start Pickup
+                            </button>
+                        )}
+
+                        {parcel.deliveryStatus === 'picked_up' && (
+                            <button 
+                                onClick={() => onUpdate('on_the_way')}
+                                disabled={isUpdating}
+                                className="px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black transition-all shadow-lg shadow-indigo-200 flex items-center gap-3 active:scale-95 disabled:opacity-50"
+                            >
+                                {isUpdating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5" />}
+                                Start Delivery
+                            </button>
+                        )}
+
+                        {parcel.deliveryStatus === 'on_the_way' && (
+                            <button 
+                                onClick={() => onUpdate('delivered')}
+                                disabled={isUpdating}
+                                className="px-8 py-4 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-black transition-all shadow-lg shadow-green-200 flex items-center gap-3 active:scale-95 disabled:opacity-50"
+                            >
+                                {isUpdating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                                Confirm Delivery
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Expanded Section */}
+            {isExpanded && (
+                <div className="border-t border-slate-50 bg-slate-50/30 animate-in slide-in-from-top-4 duration-500">
+                    <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        {/* Map & Route */}
+                        <div className="space-y-6">
+                            <div className="h-64 rounded-3xl overflow-hidden border-4 border-white shadow-xl relative">
+                                <MapContainer center={midPoint} zoom={12} scrollWheelZoom={false} className="h-full w-full">
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                    <Marker position={pickupCoords} icon={customMarker('#3b82f6')}></Marker>
+                                    <Marker position={dropCoords} icon={customMarker('#f97316')}></Marker>
+                                    <Polyline positions={[pickupCoords, dropCoords]} color="#3b82f6" weight={4} opacity={0.6} dashArray="10, 10" />
+                                </MapContainer>
+                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg border border-slate-100 z-[1000]">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Route Distance</p>
+                                    <p className="text-sm font-black text-slate-900 flex items-center gap-2">
+                                        <Navigation className="w-4 h-4 text-blue-500" /> 8.5 km
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50"></div>
+                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Sender</h4>
+                                    </div>
+                                    <p className="text-base font-bold text-slate-900 mb-1">{parcel.senderName}</p>
+                                    <p className="text-sm text-slate-500 flex items-center gap-2 mb-3">
+                                        <Phone className="w-3.5 h-3.5" /> {parcel.senderPhone}
+                                    </p>
+                                    <p className="text-xs text-slate-400 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                                        "{parcel.senderAddress}"
+                                    </p>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500 ring-4 ring-orange-50"></div>
+                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Receiver</h4>
+                                    </div>
+                                    <p className="text-base font-bold text-slate-900 mb-1">{parcel.receiverName}</p>
+                                    <p className="text-sm text-slate-500 flex items-center gap-2 mb-3">
+                                        <Phone className="w-3.5 h-3.5" /> {parcel.receiverPhone}
+                                    </p>
+                                    <p className="text-xs text-slate-400 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                                        "{parcel.receiverAddress}"
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Instructions & Notes */}
+                        <div className="space-y-6">
+                            <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 flex items-center gap-3 mb-4">
+                                        <Info className="w-5 h-5 text-blue-500" />
+                                        Pickup Instructions
+                                    </h4>
+                                    <p className="text-slate-600 text-sm leading-relaxed bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                                        {parcel.pickupInstructions || "Please call before arrival. The parcel is fragile."}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 flex items-center gap-3 mb-4">
+                                        <MapPin className="w-5 h-5 text-orange-500" />
+                                        Delivery Notes
+                                    </h4>
+                                    <p className="text-slate-600 text-sm leading-relaxed bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
+                                        {parcel.deliveryInstructions || "Deliver to 3rd floor, door number 302."}
+                                    </p>
+                                </div>
+
+                                <div className="pt-6 border-t border-slate-100 grid grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Assigned On</p>
+                                        <p className="text-sm font-bold text-slate-700">{new Date(parcel.assignedAt || parcel.updatedAt).toLocaleDateString()}</p>
+                                        <p className="text-[11px] text-slate-400">{new Date(parcel.assignedAt || parcel.updatedAt).toLocaleTimeString()}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Last Updated</p>
+                                        <p className="text-sm font-bold text-slate-700">{new Date(parcel.updatedAt).toLocaleTimeString()}</p>
+                                        <p className="text-[11px] text-slate-400">Status Sync: Live</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Quick Help */}
+                            <div className="bg-slate-900 rounded-[2rem] p-6 text-white flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                                        <Phone className="w-6 h-6 text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400">Need Support?</p>
+                                        <p className="text-sm font-black">Contact Dispatch Center</p>
+                                    </div>
+                                </div>
+                                <button className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-sm transition-all">
+                                    Call Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -210,6 +210,19 @@ const riderService = {
             assignedTo: riderEmail
         });
 
+        // Notify current rider to update their local stats/UI
+        io.to(riderEmail).emit('delivery_accepted', {
+            parcelId: result._id,
+            trackingId: result.trackingId,
+            parcel: result
+        });
+
+        // Broadcast to update general stats
+        io.emit('rider_stats_updated', {
+            email: riderEmail,
+            totalDeliveries: true // Flag to trigger recount
+        });
+
         return result;
     }
 };

@@ -34,7 +34,7 @@ const DashboardLayout = () => {
     <div className="drawer lg:drawer-open min-h-screen">
       <input id="my-drawer-4" type="checkbox" className="drawer-toggle" />
 
-      <div className={`drawer-content flex flex-col ${isRider ? 'bg-[#0b1120]' : 'bg-gray-50'}`}>
+      <div className="drawer-content flex flex-col bg-gray-50">
         {/* Professional Navbar */}
         <nav className="navbar bg-linear-to-r from-slate-900 to-slate-800 shadow-lg sticky top-0 z-40">
           <div className="flex-1">

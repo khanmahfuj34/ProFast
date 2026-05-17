@@ -90,7 +90,11 @@ const RiderDashboard = () => {
     // Attach listeners
     socket.on('new_delivery_request', handleNewRequest);
     socket.on('delivery_request_closed', handleRequestClosed);
+    socket.on('delivery_accepted', handleDeliveryUpdated);
     socket.on('delivery_updated', handleDeliveryUpdated);
+    socket.on('rider_stats_updated', (data) => {
+      if (data.email === user?.email) handleDeliveryUpdated();
+    });
     socket.on('earnings_updated', handleEarningsUpdated);
     socket.on('activity_new', handleActivityNew);
 
@@ -98,7 +102,9 @@ const RiderDashboard = () => {
       // Cleanup listeners
       socket.off('new_delivery_request', handleNewRequest);
       socket.off('delivery_request_closed', handleRequestClosed);
+      socket.off('delivery_accepted', handleDeliveryUpdated);
       socket.off('delivery_updated', handleDeliveryUpdated);
+      socket.off('rider_stats_updated');
       socket.off('earnings_updated', handleEarningsUpdated);
       socket.off('activity_new', handleActivityNew);
     };
