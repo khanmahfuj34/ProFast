@@ -1,415 +1,624 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import toast from 'react-hot-toast';
+import { useState, useEffect, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { 
-  FiPackage as Package, 
-  FiMapPin as MapPin, 
-  FiClock as Clock, 
-  FiNavigation as Navigation,
-  FiChevronLeft as ChevronLeft,
-  FiChevronDown as ChevronDown,
-  FiChevronUp as ChevronUp,
-  FiCheckCircle as CheckCircle,
-  FiAlertCircle as AlertCircle,
-  FiTruck as Truck,
-  FiUser as User,
-  FiPhone as Phone,
-  FiDollarSign as DollarSign,
-  FiActivity as Activity,
-  FiHash as Hash,
-  FiArrowRight as ArrowRight,
-  FiRefreshCw as RefreshCw,
-  FiInfo as Info
-} from 'react-icons/fi';
-import useAuth from '../../../hooks/useAuth';
-import useAxiosSecure from '../../../hooks/useAxiosSecure';
-import { useNotifications } from '../../../contexts/NotificationContext';
-
-// Fix leaflet default icon
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-const customMarker = (color) => new L.DivIcon({
-    className: 'custom-div-icon',
-    html: `<div style="background:${color};width:14px;height:14px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7]
-});
+  FiRefreshCw, 
+  FiAlertCircle, 
+  FiPhone, 
+  FiCopy, 
+  FiMapPin, 
+  FiTruck, 
+  FiCheckCircle, 
+  FiClock, 
+  FiNavigation, 
+  FiUser, 
+  FiChevronRight, 
+  FiInfo, 
+  FiTrendingUp, 
+  FiDollarSign,
+  FiX,
+  FiCalendar
+} from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import useAuth from "../../../hooks/useAuth";
+import useAxiosSecure from "../../../hooks/useAxiosSecure";
+import { useNotifications } from "../../../contexts/NotificationContext";
+import RiderDrawer from "../../../components/RiderDrawer";
 
 const districtCoords = {
-    'Dhaka': [23.8103, 90.4125], 'Mirpur': [23.8223, 90.3654], 'Banani': [23.7936, 90.4065],
-    'Uttara': [23.8746, 90.3980], 'Gulshan': [23.7925, 90.4078], 'Dhanmondi': [23.7465, 90.3740],
-    'Mohammadpur': [23.7536, 90.3595], 'Badda': [23.7805, 90.4250], 'Malibagh': [23.7423, 90.4125],
-    'Farmgate': [23.7562, 90.3907], 'Tejgaon': [23.7608, 90.3900], 'Shyamoli': [23.7747, 90.3655],
-    'Dumni': [23.8400, 90.4700], 'Wari': [23.7150, 90.4150], 'Lalmatia': [23.7550, 90.3700],
-    'Rampura': [23.7580, 90.4150], 'Bashundhara': [23.8195, 90.4360], 'Motijheel': [23.7333, 90.4167],
-    'Chittagong': [22.3569, 91.7832], 'Sylhet': [24.8949, 91.8687], 'Khulna': [22.8456, 89.5403],
-    'Rajshahi': [24.3745, 88.6042], 'Barisal': [22.7010, 90.3535], 'Rangpur': [25.7439, 89.2752],
-    'Mymensingh': [24.7471, 90.4203], 'Narayanganj': [23.6238, 90.5000], 'Gazipur': [23.9999, 90.4203]
+  Dhaka: [23.8103, 90.4125],
+  Mirpur: [23.8223, 90.3654],
+  Banani: [23.7936, 90.4065],
+  Uttara: [23.8746, 90.3980],
+  Gulshan: [23.7925, 90.4078],
+  Dhanmondi: [23.7465, 90.3740],
+  Mohammadpur: [23.7536, 90.3595],
+  Badda: [23.7805, 90.4250],
+  Malibagh: [23.7423, 90.4125],
+  Farmgate: [23.7562, 90.3907],
+  Tejgaon: [23.7608, 90.3900],
+  Shyamoli: [23.7747, 90.3655],
+  Dumni: [23.8400, 90.4700],
+  Wari: [23.7150, 90.4150],
+  Lalmatia: [23.7550, 90.3700],
+  Rampura: [23.7580, 90.4150],
+  Bashundhara: [23.8195, 90.4360],
+  Motijheel: [23.7333, 90.4167],
+  Chittagong: [22.3569, 91.7832],
+  Sylhet: [24.8949, 91.8687],
+  Khulna: [22.8456, 89.5403],
+  Rajshahi: [24.3745, 88.6042],
+  Barisal: [22.7010, 90.3535],
+  Rangpur: [25.7439, 89.2752],
+  Mymensingh: [24.7471, 90.4203],
+  Narayanganj: [23.6238, 90.5000],
+  Gazipur: [23.9999, 90.4203],
 };
 
-const getCoords = (districtName) => {
-    if (!districtName) return [23.8103, 90.4125];
-    const key = Object.keys(districtCoords).find(k => districtName.toLowerCase().includes(k.toLowerCase()));
-    return key ? districtCoords[key] : [23.8103, 90.4125];
+const resolveCoords = (district, address, isReceiver = false) => {
+  const searchString = `${district || ""} ${address || ""}`.toLowerCase();
+  const matchedKey = Object.keys(districtCoords).find((k) =>
+    searchString.includes(k.toLowerCase())
+  );
+  if (matchedKey) return districtCoords[matchedKey];
+  if (isReceiver) return [23.832, 90.435];
+  return [23.785, 90.385];
 };
 
-const AssignedDeliveries = () => {
-    const { user } = useAuth();
-    const axiosSecure = useAxiosSecure();
-    const queryClient = useQueryClient();
-    const { socket } = useNotifications();
-
-    const { data: parcels = [], isLoading, isError, refetch } = useQuery({
-        queryKey: ['assigned-deliveries', user?.email],
-        queryFn: async () => {
-            const res = await axiosSecure.get('/parcels/assigned');
-            return res.data || [];
-        },
-        enabled: !!user?.email
-    });
-
-    // Real-time socket listeners
-    useEffect(() => {
-        if (!socket) return;
-
-        const handleUpdate = () => {
-            queryClient.invalidateQueries({ queryKey: ['assigned-deliveries', user?.email] });
-        };
-
-        const handleNewAssignment = (data) => {
-            if (data.assignedTo === user?.email) {
-                handleUpdate();
-                toast.success('New assignment received!', { icon: '📦' });
-            }
-        };
-
-        socket.on('admin_matching_update', handleNewAssignment);
-        socket.on('delivery_accepted', (data) => {
-             // Local update for the rider who accepted
-             handleUpdate();
-        });
-        socket.on('parcel_status_updated', handleUpdate);
-
-        return () => {
-            socket.off('admin_matching_update', handleNewAssignment);
-            socket.off('delivery_accepted');
-            socket.off('parcel_status_updated', handleUpdate);
-        };
-    }, [socket, user?.email, queryClient]);
-
-    const updateStatusMutation = useMutation({
-        mutationFn: async ({ parcelId, status }) => {
-            return axiosSecure.patch(`/rider/delivery/${parcelId}/status`, { deliveryStatus: status });
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries(['assigned-deliveries']);
-            queryClient.invalidateQueries(['rider-dashboard-stats']);
-            toast.success('Status updated successfully');
-        },
-        onError: (error) => {
-            toast.error(error.response?.data?.message || 'Failed to update status');
-        }
-    });
-
-    return (
-        <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700">
-            {/* Header Section */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                <div>
-                    <div className="flex items-center gap-4 mb-2">
-                        <Link 
-                            to="/dashboard/rider-dashboard" 
-                            className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 text-slate-400 hover:text-blue-600 transition-all hover:shadow-md"
-                        >
-                            <ChevronLeft className="w-6 h-6" />
-                        </Link>
-                        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-                            Assigned Deliveries
-                        </h1>
-                    </div>
-                    <p className="text-slate-500 font-medium text-lg ml-16">
-                        Manage your active delivery journey
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-3 bg-white p-2 rounded-[2rem] shadow-sm border border-slate-100 ml-16 xl:ml-0">
-                    <div className="px-6 py-3 bg-blue-50 rounded-[1.5rem] flex items-center gap-3">
-                        <Truck className="w-5 h-5 text-blue-600" />
-                        <span className="text-sm font-black text-blue-700 uppercase tracking-tighter">
-                            {parcels.length} Active Orders
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* List */}
-            {isLoading ? (
-                <div className="space-y-6">
-                    {[1, 2, 3].map(i => <div key={i} className="h-64 bg-slate-100 animate-pulse rounded-[2.5rem]"></div>)}
-                </div>
-            ) : parcels.length === 0 ? (
-                <div className="bg-white rounded-[2.5rem] p-20 text-center shadow-xl shadow-slate-200/40 border border-slate-100 flex flex-col items-center">
-                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-8">
-                        <Activity className="w-12 h-12 text-slate-300" />
-                    </div>
-                    <h3 className="text-3xl font-black text-slate-900 mb-3">No Active Deliveries</h3>
-                    <p className="text-slate-500 max-w-sm text-lg leading-relaxed mb-10">
-                        You don't have any parcels to deliver right now. Accept new requests from the dispatch center.
-                    </p>
-                    <Link 
-                        to="/dashboard/rider/parcel-requests"
-                        className="bg-slate-900 text-white font-bold px-10 py-5 rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-300 flex items-center gap-3"
-                    >
-                        Go to Dispatch Center
-                        <ArrowRight className="w-5 h-5" />
-                    </Link>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 gap-8">
-                    {parcels.map((parcel, index) => (
-                        <DetailedDeliveryCard 
-                            key={parcel._id} 
-                            parcel={parcel} 
-                            index={index}
-                            onUpdate={(status) => updateStatusMutation.mutate({ parcelId: parcel._id, status })}
-                            isUpdating={updateStatusMutation.isPending && updateStatusMutation.variables?.parcelId === parcel._id}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
+const getDistanceVal = (p1, p2) => {
+  if (!p1 || !p2) return 5.2;
+  const dx = (p1[0] - p2[0]) * 111;
+  const dy = (p1[1] - p2[1]) * 111;
+  const rawDist = Math.sqrt(dx * dx + dy * dy);
+  return rawDist > 0 ? rawDist : 3.5;
 };
 
-const DetailedDeliveryCard = ({ parcel, index, onUpdate, isUpdating }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
-    const riderEarning = Math.round((parcel.totalPrice || 0) * 0.7);
-    
-    // Status mapping for labels
-    const getStatusInfo = (status) => {
-        const config = {
-            'driver_accepted': { label: 'Pending Pickup', color: 'blue', icon: <Clock /> },
-            'picked_up': { label: 'In Transit', color: 'indigo', icon: <Navigation /> },
-            'on_the_way': { label: 'Near Delivery', color: 'emerald', icon: <Truck /> },
-            'delivered': { label: 'Delivered', color: 'green', icon: <CheckCircle /> },
-            'delivery_failed': { label: 'Failed', color: 'red', icon: <AlertCircle /> }
-        };
-        return config[status] || { label: status, color: 'slate', icon: <Info /> };
+const statusConfig = {
+  driver_accepted: {
+    label: "Pending Pickup",
+    color: "#D97706", // amber-600
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    text: "text-amber-700",
+    actionLabel: "Start Pickup",
+  },
+  picked_up: {
+    label: "Picked Up",
+    color: "#7C3AED", // violet-600
+    bg: "bg-violet-50",
+    border: "border-violet-200",
+    text: "text-violet-700",
+    actionLabel: "Start Delivery",
+  },
+  on_the_way: {
+    label: "On The Way",
+    color: "#059669", // emerald-600
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
+    text: "text-emerald-700",
+    actionLabel: "Mark Delivered",
+  },
+  delivered: {
+    label: "Delivered",
+    color: "#0891B2", // cyan-600
+    bg: "bg-cyan-50",
+    border: "border-cyan-200",
+    text: "text-cyan-700",
+    actionLabel: "View Summary", // Replace all actions for delivered status with "View Summary"
+  },
+};
+
+const filterTabs = [
+  { key: "all", label: "All" },
+  { key: "driver_accepted", label: "Pending Pickup" },
+  { key: "picked_up", label: "Picked Up" },
+  { key: "on_the_way", label: "On The Way" },
+  { key: "delivered", label: "Delivered" },
+];
+
+export default function AssignedDeliveries() {
+  const { user } = useAuth();
+  const axiosSecure = useAxiosSecure();
+  const queryClient = useQueryClient();
+  const { socket } = useNotifications();
+
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [selectedDelivery, setSelectedDelivery] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Fetch assigned deliveries
+  const {
+    data: parcels = [],
+    isLoading: isParcelsLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["assigned-deliveries", user?.email],
+    queryFn: async () => {
+      const res = await axiosSecure.get("/parcels/assigned");
+      return res.data || [];
+    },
+    enabled: !!user?.email,
+  });
+
+  // Handle Socket.IO real-time updates
+  useEffect(() => {
+    if (!socket || !user?.email) return;
+
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["assigned-deliveries", user?.email] });
     };
 
-    const statusInfo = getStatusInfo(parcel.deliveryStatus);
-    const pickupCoords = getCoords(parcel.senderDistrict);
-    const dropCoords = getCoords(parcel.receiverDistrict);
-    const midPoint = [(pickupCoords[0] + dropCoords[0]) / 2, (pickupCoords[1] + dropCoords[1]) / 2];
+    socket.on("delivery_accepted", handleUpdate);
+    socket.on("delivery_updated", handleUpdate);
+    socket.on("rider_stats_updated", (data) => {
+      if (data.email === user?.email) handleUpdate();
+    });
 
+    return () => {
+      socket.off("delivery_accepted", handleUpdate);
+      socket.off("delivery_updated", handleUpdate);
+      socket.off("rider_stats_updated");
+    };
+  }, [socket, user?.email, queryClient]);
+
+  // Mutation for updating status
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ parcelId, status }) => {
+      return axiosSecure.patch(`/rider/delivery/${parcelId}/status`, {
+        deliveryStatus: status,
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["assigned-deliveries", user?.email] });
+      queryClient.invalidateQueries({ queryKey: ["rider-dashboard-stats"] });
+      toast.success("Delivery status updated successfully!", { icon: "✅" });
+
+      // Live update drawer content if it's currently open
+      if (selectedDelivery && selectedDelivery.id === variables.parcelId) {
+        setSelectedDelivery((prev) => {
+          const updatedStatus = variables.status;
+          return {
+            ...prev,
+            status: updatedStatus,
+            timeline: prev.timeline.map((step) => {
+              if (step.step === "Picked Up" && updatedStatus === "picked_up") {
+                return { ...step, done: true, active: true };
+              }
+              if (step.step === "On The Way" && updatedStatus === "on_the_way") {
+                return { ...step, done: true, active: true };
+              }
+              if (step.step === "Delivered" && updatedStatus === "delivered") {
+                return { ...step, done: true, active: true };
+              }
+              return { ...step, active: false };
+            }),
+          };
+        });
+      }
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to update status", {
+        icon: "❌",
+      });
+    },
+  });
+
+  const getTimeline = (d) => {
+    const s = d.deliveryStatus;
+    const isCreated = true;
+    const isAssigned = ["driver_assigned", "driver_accepted", "picked_up", "on_the_way", "delivered"].includes(s);
+    const isPending = ["driver_accepted", "picked_up", "on_the_way", "delivered"].includes(s);
+    const isPickedUp = ["picked_up", "on_the_way", "delivered"].includes(s);
+    const isOnTheWay = ["on_the_way", "delivered"].includes(s);
+    const isDelivered = s === "delivered";
+
+    return [
+      {
+        step: "Parcel Created",
+        time: d.createdAt
+          ? new Date(d.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "",
+        done: isCreated,
+      },
+      {
+        step: "Rider Assigned",
+        time: d.updatedAt
+          ? new Date(d.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "",
+        done: isAssigned,
+      },
+      {
+        step: "Pending Pickup",
+        time: s === "driver_accepted" ? "Active" : "",
+        done: isPending,
+        active: s === "driver_accepted",
+      },
+      {
+        step: "Picked Up",
+        time: s === "picked_up" ? "Active" : "",
+        done: isPickedUp,
+        active: s === "picked_up",
+      },
+      {
+        step: "On The Way",
+        time: s === "on_the_way" ? "Active" : "",
+        done: isOnTheWay,
+        active: s === "on_the_way",
+      },
+      {
+        step: "Delivered",
+        time: s === "delivered"
+          ? new Date(d.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "",
+        done: isDelivered,
+        active: s === "delivered",
+      },
+    ];
+  };
+
+  const mapParcelData = (d) => {
+    const p1 = resolveCoords(d.senderDistrict, d.pickupAddress || d.senderAddress, false);
+    const p2 = resolveCoords(d.receiverDistrict, d.receiverAddress, true);
+    const distVal = getDistanceVal(p1, p2);
+    const etaVal = d.deliveryStatus === "delivered" ? "Delivered" : `${Math.round(distVal * 4 + 10)} MIN`;
+
+    return {
+      _id: d._id,
+      id: d._id,
+      parcelName: d.parcelName || "Package",
+      trackingId: d.trackingId || `TRK-${d._id?.slice(-6)?.toUpperCase()}`,
+      type: d.parcelType ? d.parcelType.toUpperCase() : "STANDARD",
+      weight: d.parcelWeight ? `${d.parcelWeight} kg` : "1.0 kg",
+      status: d.deliveryStatus,
+      pickupDistrict: d.senderDistrict || d.pickupDistrict || "N/A",
+      pickupAddress: d.senderAddress || d.pickupAddress || "N/A",
+      deliveryDistrict: d.receiverDistrict || d.deliveryDistrict || "N/A",
+      deliveryAddress: d.receiverAddress || d.deliveryAddress || "N/A",
+      distance: `${distVal.toFixed(1)} KM`,
+      eta: etaVal,
+      earnings: Math.round((d.totalPrice || 0) * 0.7),
+      deliveryFee: d.totalPrice || 0,
+      paymentStatus: d.paymentStatus === "paid" ? "PREPAID" : "COD",
+      requestedAt: d.createdAt
+        ? new Date(d.createdAt).toLocaleString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+        : "N/A",
+      deliveredAt: d.deliveryStatus === "delivered" && d.updatedAt
+        ? new Date(d.updatedAt).toLocaleString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+        : "N/A",
+      senderName: d.senderName || "N/A",
+      senderPhone: d.senderPhone || "N/A",
+      senderDivision: d.senderDivision || "N/A",
+      senderDistrict: d.senderDistrict || "N/A",
+      receiverName: d.receiverName || "N/A",
+      receiverPhone: d.receiverPhone || "N/A",
+      receiverDivision: d.receiverDivision || "N/A",
+      receiverDistrict: d.receiverDistrict || "N/A",
+      receiverAddress: d.receiverAddress || "N/A",
+      fragile: d.parcelType === "fragile" || d.fragile === true || d.fragile === "Yes" ? "Yes" : "No",
+      note: d.note || "No instruction note",
+      timeline: getTimeline(d),
+    };
+  };
+
+  const handleAction = async (delivery, nextStatus) => {
+    if (!nextStatus) return;
+    updateStatusMutation.mutate({ parcelId: delivery.id || delivery._id, status: nextStatus });
+  };
+
+  const getNextStatus = (status) => {
+    const map = {
+      driver_accepted: "picked_up",
+      picked_up: "on_the_way",
+      on_the_way: "delivered",
+    };
+    return map[status] || null;
+  };
+
+  const filtered = useMemo(() => {
+    return activeFilter === "all"
+      ? parcels
+      : parcels.filter((d) => d.deliveryStatus === activeFilter);
+  }, [parcels, activeFilter]);
+
+  const counts = useMemo(() => {
+    return {
+      all: parcels.length,
+      driver_accepted: parcels.filter((d) => d.deliveryStatus === "driver_accepted").length,
+      picked_up: parcels.filter((d) => d.deliveryStatus === "picked_up").length,
+      on_the_way: parcels.filter((d) => d.deliveryStatus === "on_the_way").length,
+      delivered: parcels.filter((d) => d.deliveryStatus === "delivered").length,
+    };
+  }, [parcels]);
+
+  const completedToday = useMemo(() => {
+    return parcels.filter((d) => d.deliveryStatus === "delivered").length;
+  }, [parcels]);
+
+  const activeOrders = useMemo(() => {
+    return parcels.filter(
+      (d) => d.deliveryStatus !== "delivered" && d.deliveryStatus !== "delivery_failed"
+    ).length;
+  }, [parcels]);
+
+  const progress = useMemo(() => {
+    if (parcels.length === 0) return 0;
+    return Math.round((completedToday / parcels.length) * 100);
+  }, [parcels, completedToday]);
+
+  const totalEarnings = useMemo(() => {
+    return parcels
+      .filter((d) => d.deliveryStatus === "delivered")
+      .reduce((sum, d) => sum + Math.round((d.totalPrice || 0) * 0.7), 0);
+  }, [parcels]);
+
+  const openDrawer = (d) => {
+    setSelectedDelivery(d);
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setTimeout(() => setSelectedDelivery(null), 300);
+  };
+
+  if (isParcelsLoading) {
     return (
-        <div 
-            className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden hover:border-blue-200 transition-all duration-500 animate-in slide-in-from-bottom-8"
-            style={{ animationDelay: `${index * 100}ms` }}
-        >
-            {/* Top Info Bar */}
-            <div className="p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center gap-8 justify-between">
-                <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center flex-shrink-0 text-white shadow-xl shadow-slate-200">
-                        <Package className="w-10 h-10" />
-                    </div>
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-3 mb-1">
-                            <h3 className="text-xl font-black text-slate-900 truncate">{parcel.parcelName || 'Unnamed Parcel'}</h3>
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-${statusInfo.color}-50 text-${statusInfo.color}-600 border border-${statusInfo.color}-100 flex items-center gap-1.5`}>
-                                <span className={`w-1.5 h-1.5 rounded-full bg-${statusInfo.color}-500 animate-pulse`}></span>
-                                {statusInfo.label}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-slate-400 font-bold text-xs">
-                            <span className="flex items-center gap-1"><Hash className="w-3.5 h-3.5" /> {parcel.trackingId}</span>
-                            <span>•</span>
-                            <span>{parcel.parcelType}</span>
-                            <span>•</span>
-                            <span>{parcel.parcelWeight}kg</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-6 lg:gap-10">
-                    <div className="flex items-center gap-6 border-x border-slate-50 px-8">
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Earnings</p>
-                            <p className="text-2xl font-black text-green-600 leading-none">৳{riderEarning}</p>
-                        </div>
-                        <div className="w-px h-8 bg-slate-100"></div>
-                        <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Fee Status</p>
-                            <p className={`text-sm font-black uppercase tracking-tighter ${parcel.paymentStatus === 'paid' ? 'text-blue-600' : 'text-orange-600'}`}>
-                                {parcel.paymentStatus === 'paid' ? 'Prepaid' : 'COD'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <button 
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="px-6 py-4 rounded-2xl bg-slate-50 text-slate-600 font-bold hover:bg-slate-100 transition-all flex items-center gap-2"
-                        >
-                            View Details
-                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                        </button>
-                        
-                        {parcel.deliveryStatus === 'driver_accepted' && (
-                            <button 
-                                onClick={() => onUpdate('picked_up')}
-                                disabled={isUpdating}
-                                className="px-8 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all shadow-lg shadow-blue-200 flex items-center gap-3 active:scale-95 disabled:opacity-50"
-                            >
-                                {isUpdating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Package className="w-5 h-5" />}
-                                Start Pickup
-                            </button>
-                        )}
-
-                        {parcel.deliveryStatus === 'picked_up' && (
-                            <button 
-                                onClick={() => onUpdate('on_the_way')}
-                                disabled={isUpdating}
-                                className="px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black transition-all shadow-lg shadow-indigo-200 flex items-center gap-3 active:scale-95 disabled:opacity-50"
-                            >
-                                {isUpdating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Navigation className="w-5 h-5" />}
-                                Start Delivery
-                            </button>
-                        )}
-
-                        {parcel.deliveryStatus === 'on_the_way' && (
-                            <button 
-                                onClick={() => onUpdate('delivered')}
-                                disabled={isUpdating}
-                                className="px-8 py-4 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-black transition-all shadow-lg shadow-green-200 flex items-center gap-3 active:scale-95 disabled:opacity-50"
-                            >
-                                {isUpdating ? <RefreshCw className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-                                Confirm Delivery
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Expanded Section */}
-            {isExpanded && (
-                <div className="border-t border-slate-50 bg-slate-50/30 animate-in slide-in-from-top-4 duration-500">
-                    <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        {/* Map & Route */}
-                        <div className="space-y-6">
-                            <div className="h-64 rounded-3xl overflow-hidden border-4 border-white shadow-xl relative">
-                                <MapContainer center={midPoint} zoom={12} scrollWheelZoom={false} className="h-full w-full">
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                    <Marker position={pickupCoords} icon={customMarker('#3b82f6')}></Marker>
-                                    <Marker position={dropCoords} icon={customMarker('#f97316')}></Marker>
-                                    <Polyline positions={[pickupCoords, dropCoords]} color="#3b82f6" weight={4} opacity={0.6} dashArray="10, 10" />
-                                </MapContainer>
-                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-lg border border-slate-100 z-[1000]">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Route Distance</p>
-                                    <p className="text-sm font-black text-slate-900 flex items-center gap-2">
-                                        <Navigation className="w-4 h-4 text-blue-500" /> 8.5 km
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-4 ring-blue-50"></div>
-                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Sender</h4>
-                                    </div>
-                                    <p className="text-base font-bold text-slate-900 mb-1">{parcel.senderName}</p>
-                                    <p className="text-sm text-slate-500 flex items-center gap-2 mb-3">
-                                        <Phone className="w-3.5 h-3.5" /> {parcel.senderPhone}
-                                    </p>
-                                    <p className="text-xs text-slate-400 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
-                                        "{parcel.senderAddress}"
-                                    </p>
-                                </div>
-
-                                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-orange-500 ring-4 ring-orange-50"></div>
-                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Receiver</h4>
-                                    </div>
-                                    <p className="text-base font-bold text-slate-900 mb-1">{parcel.receiverName}</p>
-                                    <p className="text-sm text-slate-500 flex items-center gap-2 mb-3">
-                                        <Phone className="w-3.5 h-3.5" /> {parcel.receiverPhone}
-                                    </p>
-                                    <p className="text-xs text-slate-400 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
-                                        "{parcel.receiverAddress}"
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Instructions & Notes */}
-                        <div className="space-y-6">
-                            <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm space-y-8">
-                                <div>
-                                    <h4 className="text-sm font-black text-slate-900 flex items-center gap-3 mb-4">
-                                        <Info className="w-5 h-5 text-blue-500" />
-                                        Pickup Instructions
-                                    </h4>
-                                    <p className="text-slate-600 text-sm leading-relaxed bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                                        {parcel.pickupInstructions || "Please call before arrival. The parcel is fragile."}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <h4 className="text-sm font-black text-slate-900 flex items-center gap-3 mb-4">
-                                        <MapPin className="w-5 h-5 text-orange-500" />
-                                        Delivery Notes
-                                    </h4>
-                                    <p className="text-slate-600 text-sm leading-relaxed bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
-                                        {parcel.deliveryInstructions || "Deliver to 3rd floor, door number 302."}
-                                    </p>
-                                </div>
-
-                                <div className="pt-6 border-t border-slate-100 grid grid-cols-2 gap-6">
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Assigned On</p>
-                                        <p className="text-sm font-bold text-slate-700">{new Date(parcel.assignedAt || parcel.updatedAt).toLocaleDateString()}</p>
-                                        <p className="text-[11px] text-slate-400">{new Date(parcel.assignedAt || parcel.updatedAt).toLocaleTimeString()}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Last Updated</p>
-                                        <p className="text-sm font-bold text-slate-700">{new Date(parcel.updatedAt).toLocaleTimeString()}</p>
-                                        <p className="text-[11px] text-slate-400">Status Sync: Live</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* Quick Help */}
-                            <div className="bg-slate-900 rounded-[2rem] p-6 text-white flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                                        <Phone className="w-6 h-6 text-blue-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400">Need Support?</p>
-                                        <p className="text-sm font-black">Contact Dispatch Center</p>
-                                    </div>
-                                </div>
-                                <button className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-sm transition-all">
-                                    Call Now
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+      <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-slate-100 min-h-[400px] shadow-sm">
+        <span className="loading loading-spinner loading-lg text-slate-800"></span>
+        <p className="text-slate-500 mt-4 font-semibold text-sm">Loading assigned deliveries...</p>
+      </div>
     );
-};
+  }
 
-export default AssignedDeliveries;
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl border border-slate-100 min-h-[400px] p-6 shadow-sm">
+        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4 border border-red-100">
+          <FiAlertCircle className="text-red-600 text-2xl" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800">Failed to load assigned deliveries</h3>
+        <p className="text-slate-500 mt-2 mb-6 max-w-sm text-sm">
+          Something went wrong while connecting to the server. Please try again.
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-sm transition shadow-sm"
+        >
+          <FiRefreshCw /> Try Again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 lg:p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* HEADER SECTION WITH REFRESH */}
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Assigned Deliveries</h1>
+            <p className="text-slate-500 text-xs md:text-sm mt-1">
+              Manage and track your accepted shipment requests in real time
+            </p>
+          </div>
+          <button
+            onClick={() => refetch()}
+            disabled={isParcelsLoading}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-xs md:text-sm hover:bg-slate-50 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <FiRefreshCw className={`text-slate-800 ${isParcelsLoading ? "animate-spin" : ""}`} />
+            {isParcelsLoading ? "Refreshing..." : "Refresh Queue"}
+          </button>
+        </header>
+
+        {/* STATISTICS GRID */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {[
+            {
+              label: "ACTIVE ORDERS",
+              value: activeOrders,
+              sub: "Ongoing deliveries",
+              icon: <FiTruck className="text-indigo-600" />,
+              bg: "bg-indigo-50",
+            },
+            {
+              label: "TODAY'S EARNINGS",
+              value: `৳${totalEarnings}`,
+              sub: "Rider payout (70%)",
+              icon: <FiDollarSign className="text-emerald-600" />,
+              bg: "bg-emerald-50",
+            },
+            {
+              label: "COMPLETED TODAY",
+              value: completedToday,
+              sub: "Successful drops",
+              icon: <FiCheckCircle className="text-cyan-600" />,
+              bg: "bg-cyan-50",
+            },
+            {
+              label: "DELIVERY PROGRESS",
+              value: `${progress}%`,
+              sub: "Completion ratio",
+              icon: <FiTrendingUp className="text-amber-600" />,
+              bg: "bg-amber-50",
+            },
+          ].map((s) => (
+            <div key={s.label} className="bg-white border border-slate-100 rounded-2xl p-5 md:p-6 shadow-sm flex items-center justify-between transition-all duration-300 hover:shadow-md">
+              <div>
+                <div className="text-[10px] md:text-xs font-bold text-slate-400 tracking-wider uppercase">{s.label}</div>
+                <div className="text-xl md:text-2xl font-black text-slate-800 mt-1">{s.value}</div>
+                <div className="text-[10px] md:text-xs text-slate-400 mt-0.5">{s.sub}</div>
+              </div>
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl ${s.bg} flex items-center justify-center text-lg md:text-xl flex-shrink-0`}>
+                {s.icon}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* FILTER NAVIGATION TABS */}
+        <div className="flex gap-2 flex-wrap items-center justify-between bg-white border border-slate-100 p-1.5 rounded-2xl shadow-sm">
+          <div className="flex gap-1 overflow-x-auto scrollbar-none w-full">
+            {filterTabs.map((tab) => (
+              <button
+                key={tab.key}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs md:text-sm font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                  activeFilter === tab.key 
+                    ? "bg-slate-900 text-white shadow-sm" 
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+                onClick={() => setActiveFilter(tab.key)}
+              >
+                {tab.label}
+                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
+                  activeFilter === tab.key 
+                    ? "bg-white/20 text-white" 
+                    : "bg-slate-100 text-slate-600"
+                }`}>
+                  {counts[tab.key]}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* CARD CONTAINER */}
+        <div className="flex flex-col gap-4">
+          <AnimatePresence mode="popLayout">
+            {filtered.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-white border border-dashed border-slate-200 rounded-2xl py-16 px-6 text-center shadow-sm"
+              >
+                <div className="text-4xl mb-4">📦</div>
+                <h3 className="text-base font-bold text-slate-700">No assigned deliveries found</h3>
+                <p className="text-slate-400 mt-2 max-w-sm mx-auto text-xs md:text-sm">
+                  {activeFilter === "all"
+                    ? "New delivery requests assigned to you will appear here."
+                    : `No active deliveries match the "${statusConfig[activeFilter]?.label || activeFilter}" filter.`}
+                </p>
+              </motion.div>
+            ) : (
+              filtered.map((d, i) => {
+                const item = mapParcelData(d);
+                const cfg = statusConfig[item.status];
+                return (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.25, delay: i * 0.05 }}
+                    className="bg-white border border-slate-100 rounded-2xl p-5 md:p-6 shadow-sm hover:shadow-md hover:border-slate-200/80 transition-all duration-300 flex flex-col md:flex-row md:items-center justify-between gap-6"
+                  >
+                    {/* LEFT SECTION - PARCEL TYPE */}
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-xl text-slate-500 flex-shrink-0">
+                        📦
+                      </div>
+                      <div>
+                        <h4 className="text-base font-bold text-slate-800">{item.parcelName}</h4>
+                        <div className="font-mono text-xs text-slate-400 mt-0.5">#{item.trackingId}</div>
+                        <div className="flex gap-2 mt-2">
+                          <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">
+                            {item.type}
+                          </span>
+                          <span className="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase">
+                            {item.weight}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CENTER SECTION - ROUTE & ETA ONLY */}
+                    <div className="flex-1 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-[10px] font-bold text-amber-600 tracking-wider uppercase">● PICKUP ADDRESS</div>
+                          <div className="text-slate-800 text-xs mt-1 leading-relaxed">
+                            <span className="font-bold text-slate-900 block">{item.pickupDistrict}</span>
+                            {item.pickupAddress}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-bold text-emerald-600 tracking-wider uppercase">● DELIVERY ADDRESS</div>
+                          <div className="text-slate-800 text-xs mt-1 leading-relaxed">
+                            <span className="font-bold text-slate-900 block">{item.deliveryDistrict}</span>
+                            {item.deliveryAddress}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 pt-1">
+                        <span className="text-xs text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg font-bold">
+                          📍 {item.distance}
+                        </span>
+                        <span className="text-xs text-slate-400 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                          <FiClock className="text-slate-400" /> {item.eta}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* RIGHT SECTION - EARNINGS AND ACTIONS */}
+                    <div className="flex flex-row md:flex-col justify-between md:items-end items-center gap-3 border-t md:border-t-0 border-slate-50 pt-4 md:pt-0">
+                      <div className="text-left md:text-right">
+                        <div className="text-[9px] font-bold text-slate-400 tracking-widest uppercase">EARNINGS</div>
+                        <div className="text-xl font-black text-emerald-600 mt-0.5">৳{item.earnings}</div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${
+                          item.paymentStatus === "PREPAID"
+                            ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+                            : "bg-amber-50 border-amber-100 text-amber-700"
+                        }`}>
+                          {item.paymentStatus}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2.5">
+                        <span className={`hidden sm:inline-block text-[10px] font-extrabold px-2.5 py-1 rounded-full border ${cfg?.bg} ${cfg?.border} ${cfg?.text}`}>
+                          {cfg?.label}
+                        </span>
+                        <button
+                          onClick={() => openDrawer(item)}
+                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs md:text-sm px-4.5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                        >
+                          {cfg?.actionLabel} <FiChevronRight />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* DETAILS DRAWER WITH SMOOTH FRAMER-MOTION SLIDER */}
+        <RiderDrawer
+          isOpen={drawerOpen}
+          onClose={closeDrawer}
+          parcel={selectedDelivery}
+          onAction={() => handleAction(selectedDelivery, getNextStatus(selectedDelivery.status))}
+          loadingAction={updateStatusMutation.isPending && updateStatusMutation.variables?.parcelId === selectedDelivery.id}
+        />
+
+      </div>
+    </div>
+  );
+}

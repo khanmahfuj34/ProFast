@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import RiderDrawer from '../../../components/RiderDrawer';
+
 
 const statusOptions = [
     { value: 'all', label: 'All Status' },
@@ -40,6 +42,8 @@ const DeliveryHistory = () => {
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
     const limit = 10;
+    const [selectedParcel, setSelectedParcel] = useState(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const queryKey = ['rider-delivery-history', page, search, status, fromDate, toDate];
 
@@ -293,12 +297,15 @@ const DeliveryHistory = () => {
                                                 </span>
                                             </td>
                                             <td className="px-5 py-4">
-                                                <Link
-                                                    to={`/dashboard/assigned-deliveries`}
-                                                    className="px-3 py-1.5 text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition"
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedParcel(d);
+                                                        setDrawerOpen(true);
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition cursor-pointer"
                                                 >
                                                     View Details
-                                                </Link>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -354,8 +361,18 @@ const DeliveryHistory = () => {
                     )}
                 </div>
             </div>
+
+            <RiderDrawer
+                isOpen={drawerOpen}
+                onClose={() => {
+                    setDrawerOpen(false);
+                    setTimeout(() => setSelectedParcel(null), 300);
+                }}
+                parcel={selectedParcel}
+            />
         </div>
     );
 };
+
 
 export default DeliveryHistory;
