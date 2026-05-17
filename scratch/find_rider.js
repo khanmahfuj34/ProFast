@@ -7,7 +7,7 @@ const client = new MongoClient(uri);
 async function findRider() {
     try {
         await client.connect();
-        const db = client.db("test"); // Change if DB name is different
+        const db = client.db("zep_shift_db"); // Change if DB name is different
         const rider = await db.collection("rider").findOne({ status: 'Approved' });
         console.log('Rider found:', rider ? rider.email : 'None');
     } catch (error) {

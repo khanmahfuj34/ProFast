@@ -1220,6 +1220,7 @@ app.get('/rider/assigned-deliveries', verifyJWT, verifyRider, async(req, res) =>
 
         // Map to dashboard-friendly format
         const deliveries = parcels.map(p => ({
+            ...p,
             id: p._id.toString(),
             name: p.parcelName || 'Unnamed Parcel',
             category: p.parcelType === 'document' ? 'Documents' : 'Electronics',
@@ -1749,6 +1750,7 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
                 (isDelivered ? new Date(p.updatedAt) : null);
 
             return {
+                ...p,
                 id: p._id.toString(),
                 trackingId: p.trackingId || `ZS-${new Date(p.createdAt).getFullYear()}-${p._id.toString().slice(-4)}`,
                 parcelName: p.parcelName || 'Unnamed Parcel',

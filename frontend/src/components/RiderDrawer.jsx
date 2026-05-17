@@ -125,11 +125,11 @@ const standardizeParcel = (d) => {
     : "N/A";
 
   const senderName = d.senderName || "N/A";
-  const senderPhone = d.senderPhone || "N/A";
-  const senderDivision = d.senderDivision || "N/A";
+  const senderPhone = d.senderPhone || d.phoneNumber || "N/A";
+  const senderDivision = d.senderDivision || d.division || "N/A";
   
   const receiverName = d.receiverName || "N/A";
-  const receiverPhone = d.receiverPhone || "N/A";
+  const receiverPhone = d.receiverPhone || d.receiverPhoneNumber || "N/A";
   const receiverDivision = d.receiverDivision || "N/A";
   
   const fragile = d.parcelType === "fragile" || d.fragile === true || d.fragile === "Yes" ? "Yes" : "No";
@@ -280,7 +280,7 @@ export default function RiderDrawer({ isOpen, onClose, parcel, onAction, loading
               </div>
 
               {/* DRAWER SCROLL CONTENT */}
-              <div className="flex-grow overflow-y-auto p-6 space-y-6 scrollbar-none">
+              <div className="grow overflow-y-auto p-6 space-y-6 scrollbar-none">
                 
                 {/* COMPLETION SUMMARY BANNER (IF DELIVERED) */}
                 {d.status === "delivered" && (
@@ -372,25 +372,25 @@ export default function RiderDrawer({ isOpen, onClose, parcel, onAction, loading
                   <InfoRow label="Division" val={d.senderDivision} />
                   <InfoRow label="District" val={d.pickupDistrict} />
                   <InfoRow label="Address" val={d.pickupAddress} />
-                  {d.senderPhone !== "N/A" && (
-                    <div className="flex gap-2 pt-3 border-t border-slate-100">
+                  <div className="flex gap-2 pt-3 border-t border-slate-100">
+                    {d.senderPhone !== "N/A" && (
                       <button 
-                        className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+                        className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs rounded-xl transition cursor-pointer"
                         onClick={() => window.open(`tel:${d.senderPhone}`)}
                       >
                         📞 Call Sender
                       </button>
-                      <button 
-                        className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
-                        onClick={() => {
-                          navigator.clipboard.writeText(d.pickupAddress);
-                          toast.success("Pickup address copied!");
-                        }}
-                      >
-                        📋 Copy Address
-                      </button>
-                    </div>
-                  )}
+                    )}
+                    <button 
+                      className="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl transition cursor-pointer"
+                      onClick={() => {
+                        const address = `${d.pickupAddress}, ${d.pickupDistrict}, Bangladesh`;
+                        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
+                      }}
+                    >
+                      🧭 Google Map
+                    </button>
+                  </div>
                 </RiderDrawerSection>
 
                 {/* RECEIVER INFO */}
@@ -411,7 +411,10 @@ export default function RiderDrawer({ isOpen, onClose, parcel, onAction, loading
                     )}
                     <button 
                       className="flex-1 py-2 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl transition cursor-pointer"
-                      onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.deliveryAddress)}`)}
+                      onClick={() => {
+                        const address = `${d.deliveryAddress}, ${d.deliveryDistrict}, Bangladesh`;
+                        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, "_blank");
+                      }}
                     >
                       🧭 Google Map
                     </button>
