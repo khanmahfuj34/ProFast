@@ -330,9 +330,22 @@ export default function AssignedDeliveries() {
   };
 
   const filtered = useMemo(() => {
-    return activeFilter === "all"
+    const statusPriority = {
+      driver_accepted: 1,
+      picked_up: 2,
+      on_the_way: 3,
+      delivered: 4,
+    };
+
+    const baseList = activeFilter === "all"
       ? parcels
       : parcels.filter((d) => d.deliveryStatus === activeFilter);
+
+    return [...baseList].sort((a, b) => {
+      const priorityA = statusPriority[a.deliveryStatus] || 99;
+      const priorityB = statusPriority[b.deliveryStatus] || 99;
+      return priorityA - priorityB;
+    });
   }, [parcels, activeFilter]);
 
   const counts = useMemo(() => {

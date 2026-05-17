@@ -258,26 +258,6 @@ const DashboardLayout = () => {
                 </li>
                 <li>
                   <NavLink
-                    to="/dashboard/assigned-deliveries"
-                    data-tip="Active Orders"
-                    className={({ isActive }) =>
-                      `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                        isActive
-                          ? 'bg-emerald-600 text-white shadow-lg'
-                          : 'text-gray-300 hover:bg-slate-700'
-                      } is-drawer-close:px-0 is-drawer-close:justify-center`
-                    }
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round" strokeWidth="2" fill="none" stroke="currentColor" className="w-5 h-5">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span className="font-medium is-drawer-close:hidden flex-1">Active Orders</span>
-                    <span className="is-drawer-close:hidden px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full border border-amber-500/30">1</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink
                     to="/dashboard/delivery-history"
                     data-tip="Delivery History"
                     className={({ isActive }) =>
