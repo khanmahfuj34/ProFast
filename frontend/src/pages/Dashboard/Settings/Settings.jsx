@@ -1,8 +1,17 @@
 import React from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, Navigate } from 'react-router-dom';
 import { RiUserSettingsLine, RiLockPasswordLine, RiNotification3Line } from 'react-icons/ri';
+import useAuth from '../../../hooks/useAuth';
 
 const Settings = () => {
+    const { userProfile, loading } = useAuth();
+
+    if (loading) return null;
+
+    if (userProfile?.role === 'rider') {
+        return <Navigate to="/dashboard/rider/settings" replace />;
+    }
+
     return (
         <div className="min-h-screen bg-[#f8fafc]">
             {/* Header Section */}

@@ -300,7 +300,7 @@ const DashboardLayout = () => {
                 </li>
                 <li>
                   <NavLink
-                    to="/dashboard/settings"
+                    to="/dashboard/rider/settings"
                     data-tip="Settings"
                     className={({ isActive }) =>
                       `is-drawer-close:tooltip is-drawer-close:tooltip-right flex items-center w-full gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${

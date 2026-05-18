@@ -47,6 +47,7 @@ import DeliveryHistory from "../pages/Dashboard/DeliveryHistory/DeliveryHistory"
 import TrackParcel from "../pages/TrackParcel/TrackParcel";
 import ParcelRequests from "../pages/Dashboard/RiderDashboard/ParcelRequests";
 import RiderEarnings from "../pages/Dashboard/RiderEarnings/RiderEarnings";
+import RiderSettings from "../pages/Dashboard/RiderSettings/RiderSettings";
 import Notifications from "../pages/Dashboard/Notifications/Notification";
 import Settings from "../pages/Dashboard/Settings/Settings";
 import ProfileSettings from "../pages/Dashboard/Settings/ProfileSettings";
@@ -210,6 +211,10 @@ export const router = createBrowserRouter([
           {
             path: 'rider/earnings',
             element: <PrivateRoute><RiderEarnings /></PrivateRoute>
+          },
+          {
+            path: 'rider/settings',
+            element: <PrivateRoute><RiderSettings /></PrivateRoute>
           },
           {
             path: 'notifications',
