@@ -112,37 +112,43 @@ export default function SecuritySection({ sessions, onLogoutAll, onUpdatePasswor
             </div>
 
             <div className="space-y-3">
-              {(sessions || []).map((s) => (
-                <div key={s.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center">
-                      <FiSmartphone className="w-5 h-5" />
+              {!sessions || sessions.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-6 font-semibold bg-slate-50 rounded-2xl border border-slate-100">
+                  N/A - No active external sessions found.
+                </p>
+              ) : (
+                sessions.map((s) => (
+                  <div key={s.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center">
+                        <FiSmartphone className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                          {s.device || "N/A"}
+                          {s.isCurrent && (
+                            <span className="bg-emerald-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                              THIS DEVICE
+                            </span>
+                          )}
+                        </h5>
+                        <p className="text-xs text-slate-500">{s.location || "N/A"} • IP: {s.ip || "N/A"}</p>
+                        <span className="text-[10px] font-bold text-slate-400">Last Active: {s.lastActive || "N/A"}</span>
+                      </div>
                     </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        {s.device}
-                        {s.isCurrent && (
-                          <span className="bg-emerald-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
-                            THIS DEVICE
-                          </span>
-                        )}
-                      </h5>
-                      <p className="text-xs text-slate-500">{s.location} • IP: {s.ip}</p>
-                      <span className="text-[10px] font-bold text-slate-400">Last Active: {s.lastActive}</span>
-                    </div>
+                    {s.isCurrent ? (
+                      <FiCheckCircle className="text-emerald-600 w-5 h-5" />
+                    ) : (
+                      <button
+                        onClick={() => onLogoutAll()}
+                        className="text-xs font-bold text-rose-600 hover:text-rose-700 underline cursor-pointer"
+                      >
+                        Revoke
+                      </button>
+                    )}
                   </div>
-                  {s.isCurrent ? (
-                    <FiCheckCircle className="text-emerald-600 w-5 h-5" />
-                  ) : (
-                    <button
-                      onClick={() => onLogoutAll()}
-                      className="text-xs font-bold text-rose-600 hover:text-rose-700 underline"
-                    >
-                      Revoke
-                    </button>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex justify-between items-center">

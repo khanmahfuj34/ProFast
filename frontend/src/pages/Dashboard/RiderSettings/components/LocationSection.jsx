@@ -1,15 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiMapPin, FiEdit2, FiCheck, FiX } from "react-icons/fi";
 import SettingsCard from "./SettingsCard";
 
 export default function LocationSection({ profile, onUpdate, isUpdating }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    division: profile?.division || "Dhaka",
-    district: profile?.district || "Dhaka",
-    currentAddress: profile?.currentAddress || "Mirpur 10, Dhaka 1216, Bangladesh",
-    preferredDeliveryArea: profile?.preferredDeliveryArea || "Mirpur, Pallabi, Kallyanpur, Shyamoli"
+    division: "",
+    district: "",
+    currentAddress: "",
+    preferredDeliveryArea: ""
   });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        division: profile.division || "",
+        district: profile.district || "",
+        currentAddress: profile.currentAddress || "",
+        preferredDeliveryArea: profile.preferredDeliveryArea || ""
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     await onUpdate(formData);
@@ -17,12 +28,14 @@ export default function LocationSection({ profile, onUpdate, isUpdating }) {
   };
 
   const handleCancel = () => {
-    setFormData({
-      division: profile?.division || "Dhaka",
-      district: profile?.district || "Dhaka",
-      currentAddress: profile?.currentAddress || "Mirpur 10, Dhaka 1216, Bangladesh",
-      preferredDeliveryArea: profile?.preferredDeliveryArea || "Mirpur, Pallabi, Kallyanpur, Shyamoli"
-    });
+    if (profile) {
+      setFormData({
+        division: profile.division || "",
+        district: profile.district || "",
+        currentAddress: profile.currentAddress || "",
+        preferredDeliveryArea: profile.preferredDeliveryArea || ""
+      });
+    }
     setIsEditing(false);
   };
 
@@ -71,12 +84,13 @@ export default function LocationSection({ profile, onUpdate, isUpdating }) {
           <div>
             <span className="text-xs text-slate-400 font-semibold block mb-1">Division</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.division || "Dhaka"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.division || "N/A"}</p>
             ) : (
               <input
                 type="text"
                 value={formData.division}
                 onChange={(e) => setFormData({ ...formData, division: e.target.value })}
+                placeholder="Enter division"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
               />
             )}
@@ -85,12 +99,13 @@ export default function LocationSection({ profile, onUpdate, isUpdating }) {
           <div>
             <span className="text-xs text-slate-400 font-semibold block mb-1">District</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.district || "Dhaka"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.district || "N/A"}</p>
             ) : (
               <input
                 type="text"
                 value={formData.district}
                 onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                placeholder="Enter district"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
               />
             )}
@@ -99,12 +114,13 @@ export default function LocationSection({ profile, onUpdate, isUpdating }) {
           <div className="sm:col-span-2">
             <span className="text-xs text-slate-400 font-semibold block mb-1">Current Address</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.currentAddress || "Mirpur 10, Dhaka 1216, Bangladesh"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.currentAddress || "N/A"}</p>
             ) : (
               <input
                 type="text"
                 value={formData.currentAddress}
                 onChange={(e) => setFormData({ ...formData, currentAddress: e.target.value })}
+                placeholder="Enter current address"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
               />
             )}
@@ -113,7 +129,7 @@ export default function LocationSection({ profile, onUpdate, isUpdating }) {
           <div className="sm:col-span-2">
             <span className="text-xs text-slate-400 font-semibold block mb-1">Preferred Delivery Area</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.preferredDeliveryArea || "Mirpur, Pallabi, Kallyanpur, Shyamoli"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.preferredDeliveryArea || "N/A"}</p>
             ) : (
               <input
                 type="text"

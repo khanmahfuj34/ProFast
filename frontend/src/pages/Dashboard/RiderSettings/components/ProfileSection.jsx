@@ -1,16 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiUser, FiEdit2, FiCheck, FiX, FiCamera } from "react-icons/fi";
 import SettingsCard from "./SettingsCard";
 
 export default function ProfileSection({ profile, onUpdate, isUpdating }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: profile?.name || "",
-    phone: profile?.phone || "",
-    gender: profile?.gender || "Male",
-    dateOfBirth: profile?.dateOfBirth || "",
-    photo: profile?.photo || ""
+    name: "",
+    phone: "",
+    gender: "",
+    dateOfBirth: "",
+    photo: ""
   });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        phone: profile.phone || "",
+        gender: profile.gender || "",
+        dateOfBirth: profile.dateOfBirth || "",
+        photo: profile.photo || ""
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     await onUpdate(formData);
@@ -18,13 +30,15 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
   };
 
   const handleCancel = () => {
-    setFormData({
-      name: profile?.name || "",
-      phone: profile?.phone || "",
-      gender: profile?.gender || "Male",
-      dateOfBirth: profile?.dateOfBirth || "",
-      photo: profile?.photo || ""
-    });
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        phone: profile.phone || "",
+        gender: profile.gender || "",
+        dateOfBirth: profile.dateOfBirth || "",
+        photo: profile.photo || ""
+      });
+    }
     setIsEditing(false);
   };
 
@@ -73,8 +87,8 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
           {/* Avatar Area */}
           <div className="relative">
             <img
-              src={formData.photo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80"}
-              alt={formData.name}
+              src={formData.photo || profile?.photo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80"}
+              alt={profile?.name || "Avatar"}
               className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-emerald-50 shadow-sm"
             />
             {isEditing && (
@@ -95,12 +109,13 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
             <div>
               <span className="text-xs text-slate-400 font-semibold block mb-1">Name</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.name || "Rider Rider"}</p>
+                <p className="text-sm font-bold text-slate-900">{profile?.name || "N/A"}</p>
               ) : (
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter name"
                   className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
                 />
               )}
@@ -108,18 +123,19 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
 
             <div>
               <span className="text-xs text-slate-400 font-semibold block mb-1">Email</span>
-              <p className="text-sm font-bold text-slate-600 select-all">{profile?.email}</p>
+              <p className="text-sm font-bold text-slate-600 select-all">{profile?.email || "N/A"}</p>
             </div>
 
             <div>
               <span className="text-xs text-slate-400 font-semibold block mb-1">Phone</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.phone || "+880 1712 345 678"}</p>
+                <p className="text-sm font-bold text-slate-900">{profile?.phone || "N/A"}</p>
               ) : (
                 <input
                   type="text"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="Enter phone number"
                   className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
                 />
               )}
@@ -128,13 +144,14 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
             <div>
               <span className="text-xs text-slate-400 font-semibold block mb-1">Gender</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.gender || "Male"}</p>
+                <p className="text-sm font-bold text-slate-900">{profile?.gender || "N/A"}</p>
               ) : (
                 <select
                   value={formData.gender}
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                   className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
                 >
+                  <option value="">Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
@@ -145,7 +162,7 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
             <div className="sm:col-span-2">
               <span className="text-xs text-slate-400 font-semibold block mb-1">Date of Birth</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.dateOfBirth || "12 May 1998"}</p>
+                <p className="text-sm font-bold text-slate-900">{profile?.dateOfBirth || "N/A"}</p>
               ) : (
                 <input
                   type="date"

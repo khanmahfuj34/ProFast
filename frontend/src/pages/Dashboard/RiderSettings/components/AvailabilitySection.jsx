@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiClock, FiEdit2, FiCheck, FiX } from "react-icons/fi";
 import SettingsCard from "./SettingsCard";
 
@@ -6,13 +6,24 @@ const ALL_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function AvailabilitySection({ profile, onUpdate, isUpdating }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [isOnline, setIsOnline] = useState(profile?.isOnline !== undefined ? profile.isOnline : true);
+  const [isOnline, setIsOnline] = useState(false);
   
   const [formData, setFormData] = useState({
-    availableDays: profile?.availableDays || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    availableHours: profile?.availableHours || "08:00 AM - 10:00 PM",
-    dayOffMode: profile?.dayOffMode || "Sunday"
+    availableDays: [],
+    availableHours: "",
+    dayOffMode: ""
   });
+
+  useEffect(() => {
+    if (profile) {
+      setIsOnline(profile.isOnline !== undefined ? profile.isOnline : false);
+      setFormData({
+        availableDays: Array.isArray(profile.availableDays) ? profile.availableDays : [],
+        availableHours: profile.availableHours || "",
+        dayOffMode: profile.dayOffMode || ""
+      });
+    }
+  }, [profile]);
 
   const handleToggleOnline = async () => {
     const nextState = !isOnline;
@@ -35,11 +46,13 @@ export default function AvailabilitySection({ profile, onUpdate, isUpdating }) {
   };
 
   const handleCancel = () => {
-    setFormData({
-      availableDays: profile?.availableDays || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-      availableHours: profile?.availableHours || "08:00 AM - 10:00 PM",
-      dayOffMode: profile?.dayOffMode || "Sunday"
-    });
+    if (profile) {
+      setFormData({
+        availableDays: Array.isArray(profile.availableDays) ? profile.availableDays : [],
+        availableHours: profile.availableHours || "",
+        dayOffMode: profile.dayOffMode || ""
+      });
+    }
     setIsEditing(false);
   };
 
@@ -115,38 +128,55 @@ export default function AvailabilitySection({ profile, onUpdate, isUpdating }) {
           <div className="space-y-3">
             <div>
               <span className="text-xs text-slate-400 font-semibold block mb-1.5">Available Days</span>
-              <div className="flex flex-wrap gap-1.5">
-                {ALL_DAYS.map((day) => {
-                  const isActive = formData.availableDays.includes(day);
-                  return (
-                    <button
-                      key={day}
-                      disabled={!isEditing}
-                      onClick={() => handleDayToggle(day)}
-                      className={`px-2.5 py-1 rounded-xl text-xs font-extrabold transition ${
-                        isActive
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs"
-                          : "bg-slate-200/60 text-slate-500 border border-transparent"
-                      } ${isEditing ? "cursor-pointer hover:scale-105" : "cursor-default"}`}
-                    >
-                      {day}
-                    </button>
-                  );
-                })}
-              </div>
+              {!isEditing ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {profile?.availableDays && profile.availableDays.length > 0 ? (
+                    profile.availableDays.map((day) => (
+                      <span
+                        key={day}
+                        className="px-2.5 py-1 rounded-xl text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs"
+                      >
+                        {day}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs font-bold text-slate-400">N/A</span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {ALL_DAYS.map((day) => {
+                    const isActive = formData.availableDays.includes(day);
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => handleDayToggle(day)}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-extrabold transition cursor-pointer hover:scale-105 ${
+                          isActive
+                            ? "bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs"
+                            : "bg-slate-200/60 text-slate-500 border border-transparent"
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-2">
               <div>
                 <span className="text-xs text-slate-400 font-semibold block mb-1">Available Hours</span>
                 {!isEditing ? (
-                  <p className="text-xs font-bold text-slate-900">{profile?.availableHours || "08:00 AM - 10:00 PM"}</p>
+                  <p className="text-xs font-bold text-slate-900">{profile?.availableHours || "N/A"}</p>
                 ) : (
                   <input
                     type="text"
                     value={formData.availableHours}
                     onChange={(e) => setFormData({ ...formData, availableHours: e.target.value })}
-                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                    placeholder="e.g. 09:00 AM - 06:00 PM"
+                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
                   />
                 )}
               </div>
@@ -154,13 +184,14 @@ export default function AvailabilitySection({ profile, onUpdate, isUpdating }) {
               <div>
                 <span className="text-xs text-slate-400 font-semibold block mb-1">Day Off Mode</span>
                 {!isEditing ? (
-                  <p className="text-xs font-bold text-slate-900">{profile?.dayOffMode || "Sunday"}</p>
+                  <p className="text-xs font-bold text-slate-900">{profile?.dayOffMode || "N/A"}</p>
                 ) : (
                   <select
                     value={formData.dayOffMode}
                     onChange={(e) => setFormData({ ...formData, dayOffMode: e.target.value })}
-                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800"
+                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
                   >
+                    <option value="">Select Day Off</option>
                     <option value="Sunday">Sunday</option>
                     <option value="Friday">Friday</option>
                     <option value="None">None</option>

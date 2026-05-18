@@ -1,15 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiTruck, FiEdit2, FiCheck, FiX } from "react-icons/fi";
 import SettingsCard from "./SettingsCard";
 
 export default function VehicleSection({ profile, onUpdate, isUpdating }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    bikeType: profile?.bikeType || "Yamaha FZS V3",
-    bikeRegistration: profile?.bikeRegistration || "Dhaka Metro LA-11-1234",
-    drivingLicense: profile?.drivingLicense || "DL-987654321",
-    nidNumber: profile?.nidNumber || "19987654321000123"
+    bikeType: "",
+    bikeRegistration: "",
+    drivingLicense: "",
+    nidNumber: ""
   });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        bikeType: profile.bikeType || "",
+        bikeRegistration: profile.bikeRegistration || "",
+        drivingLicense: profile.drivingLicense || "",
+        nidNumber: profile.nidNumber || ""
+      });
+    }
+  }, [profile]);
 
   const handleSave = async () => {
     await onUpdate(formData);
@@ -17,12 +28,14 @@ export default function VehicleSection({ profile, onUpdate, isUpdating }) {
   };
 
   const handleCancel = () => {
-    setFormData({
-      bikeType: profile?.bikeType || "Yamaha FZS V3",
-      bikeRegistration: profile?.bikeRegistration || "Dhaka Metro LA-11-1234",
-      drivingLicense: profile?.drivingLicense || "DL-987654321",
-      nidNumber: profile?.nidNumber || "19987654321000123"
-    });
+    if (profile) {
+      setFormData({
+        bikeType: profile.bikeType || "",
+        bikeRegistration: profile.bikeRegistration || "",
+        drivingLicense: profile.drivingLicense || "",
+        nidNumber: profile.nidNumber || ""
+      });
+    }
     setIsEditing(false);
   };
 
@@ -71,12 +84,13 @@ export default function VehicleSection({ profile, onUpdate, isUpdating }) {
           <div>
             <span className="text-xs text-slate-400 font-semibold block mb-1">Bike Type</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.bikeType || "Yamaha FZS V3"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.bikeType || "N/A"}</p>
             ) : (
               <input
                 type="text"
                 value={formData.bikeType}
                 onChange={(e) => setFormData({ ...formData, bikeType: e.target.value })}
+                placeholder="Enter bike model"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
               />
             )}
@@ -85,12 +99,13 @@ export default function VehicleSection({ profile, onUpdate, isUpdating }) {
           <div>
             <span className="text-xs text-slate-400 font-semibold block mb-1">Bike Registration</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.bikeRegistration || "Dhaka Metro LA-11-1234"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.bikeRegistration || "N/A"}</p>
             ) : (
               <input
                 type="text"
                 value={formData.bikeRegistration}
                 onChange={(e) => setFormData({ ...formData, bikeRegistration: e.target.value })}
+                placeholder="Enter registration plate"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
               />
             )}
@@ -99,12 +114,13 @@ export default function VehicleSection({ profile, onUpdate, isUpdating }) {
           <div>
             <span className="text-xs text-slate-400 font-semibold block mb-1">Driving License</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.drivingLicense || "DL-987654321"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.drivingLicense || "N/A"}</p>
             ) : (
               <input
                 type="text"
                 value={formData.drivingLicense}
                 onChange={(e) => setFormData({ ...formData, drivingLicense: e.target.value })}
+                placeholder="Enter license number"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
               />
             )}
@@ -113,12 +129,13 @@ export default function VehicleSection({ profile, onUpdate, isUpdating }) {
           <div>
             <span className="text-xs text-slate-400 font-semibold block mb-1">NID Number</span>
             {!isEditing ? (
-              <p className="text-sm font-bold text-slate-900">{profile?.nidNumber || "19987654321000123"}</p>
+              <p className="text-sm font-bold text-slate-900">{profile?.nidNumber || "N/A"}</p>
             ) : (
               <input
                 type="text"
                 value={formData.nidNumber}
                 onChange={(e) => setFormData({ ...formData, nidNumber: e.target.value })}
+                placeholder="Enter NID number"
                 className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
               />
             )}
