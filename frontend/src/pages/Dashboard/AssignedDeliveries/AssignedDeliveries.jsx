@@ -493,7 +493,7 @@ export default function AssignedDeliveries() {
                 key={tab.key}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs md:text-sm font-semibold transition-all duration-200 cursor-pointer whitespace-nowrap ${
                   activeFilter === tab.key 
-                    ? "bg-slate-900 text-white shadow-sm" 
+                    ? "bg-green-500 text-white shadow-sm" 
                     : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                 }`}
                 onClick={() => setActiveFilter(tab.key)}
