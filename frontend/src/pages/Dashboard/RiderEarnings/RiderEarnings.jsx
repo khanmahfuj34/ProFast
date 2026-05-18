@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import useAuth from "../../../hooks/useAuth";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
@@ -24,10 +24,25 @@ export default function RiderEarnings() {
 
   // State
   const [dateRange, setDateRange] = useState("30d");
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+
+  // Debounce search input to prevent API spam and screen flashing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const handleStatusChange = (newStatus) => {
+    setStatusFilter(newStatus);
+    setPage(1);
+  };
 
   // Fetch Earnings Dashboard Data
   const {
@@ -49,7 +64,8 @@ export default function RiderEarnings() {
       });
       return res.data;
     },
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    placeholderData: keepPreviousData
   });
 
   // Handle Socket.IO realtime earnings refresh
@@ -156,10 +172,10 @@ export default function RiderEarnings() {
         <EarningsHistoryTable
           deliveries={history.deliveries}
           pagination={history.pagination}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          searchQuery={searchInput}
+          setSearchQuery={setSearchInput}
           statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
+          setStatusFilter={handleStatusChange}
           onPageChange={setPage}
           onExportTable={handleExportExcel}
         />
