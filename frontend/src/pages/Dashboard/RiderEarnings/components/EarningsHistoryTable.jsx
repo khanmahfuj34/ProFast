@@ -101,7 +101,7 @@ export default function EarningsHistoryTable({
                 <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
                   <td className="py-4 px-4 font-semibold text-slate-900 whitespace-nowrap">{item.date}</td>
                   <td className="py-4 px-4 font-mono font-bold text-emerald-600 whitespace-nowrap">{item.trackingId}</td>
-                  <td className="py-4 px-4 text-slate-800 font-bold whitespace-nowrap">{item.customer}</td>
+                  <td className="py-4 px-4 text-slate-800 font-bold whitespace-nowrap">{item.customerName || item.customer}</td>
                   <td className="py-4 px-4 text-slate-600 max-w-[180px] truncate">{item.parcelName}</td>
                   <td className="py-4 px-4">
                     <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wide">
@@ -140,7 +140,7 @@ export default function EarningsHistoryTable({
 
               <div className="space-y-1">
                 <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                  <FiUser className="text-slate-400" /> {item.customer}
+                  <FiUser className="text-slate-400" /> {item.customerName || item.customer}
                 </div>
                 <div className="text-xs text-slate-600 flex items-center gap-1.5">
                   <FiBox className="text-slate-400" /> {item.parcelName} ({item.deliveryType})

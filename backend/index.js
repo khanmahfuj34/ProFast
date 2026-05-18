@@ -1903,11 +1903,11 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
 
         const pendingPayout = enrichedDelivered
             .filter(p => p.paymentStatus === 'Pending' || p.paymentStatus === 'Processing')
-            .reduce((sum, p) => sum + p.earning, 0) || (totalEarnings > 0 ? Math.round(totalEarnings * 0.25) : 1230);
+            .reduce((sum, p) => sum + p.earning, 0);
 
         const totalPaidOut = enrichedDelivered
             .filter(p => p.paymentStatus === 'Paid')
-            .reduce((sum, p) => sum + p.earning, 0) || (totalEarnings > 0 ? Math.round(totalEarnings * 0.75) : 12450);
+            .reduce((sum, p) => sum + p.earning, 0);
 
         // Next payout date (upcoming Sunday)
         const nextSunday = new Date();
@@ -1915,7 +1915,7 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
         const nextPayoutDateFormatted = nextSunday.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 
         // Breakdown section (Base fare, Distance fare, Surge/Bonus, Other incentives)
-        const baseVal = totalEarnings > 0 ? totalEarnings : 4890;
+        const baseVal = totalEarnings;
         const baseFare = Math.round(baseVal * 0.687);
         const distanceFare = Math.round(baseVal * 0.196);
         const surgeBonus = Math.round(baseVal * 0.086);
@@ -1939,7 +1939,7 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
             const amt = dayParcels.reduce((s, p) => s + p.earning, 0);
             dailyData.push({
                 date: d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
-                amount: amt > 0 ? amt : Math.round(Math.random() * 400 + 200) // realistic fallback if no parcels on that day
+                amount: amt
             });
         }
 
@@ -1951,7 +1951,7 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
             const amt = weekParcels.reduce((s, p) => s + p.earning, 0);
             weeklyData.push({
                 date: `Wk ${4 - i}`,
-                amount: amt > 0 ? amt : Math.round(Math.random() * 2000 + 1500)
+                amount: amt
             });
         }
 
@@ -1964,7 +1964,7 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
             const amt = monthParcels.reduce((s, p) => s + p.earning, 0);
             monthlyData.push({
                 date: d.toLocaleDateString('en-US', { month: 'short' }),
-                amount: amt > 0 ? amt : Math.round(Math.random() * 8000 + 5000)
+                amount: amt
             });
         }
 
@@ -2003,23 +2003,26 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
         const totalPages = Math.ceil(totalRecords / limitNum) || 1;
         const skip = (pageNum - 1) * limitNum;
 
-        const paginatedDeliveries = tableParcels.slice(skip, skip + limitNum).map(p => ({
+        const mapDeliveryRow = p => ({
             id: p._id ? p._id.toString() : Math.random().toString(),
             date: p.deliveredDate.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
             trackingId: p.trackingId || `TRK-610838-${p._id ? p._id.toString().slice(-3).toUpperCase() : 'A34'}`,
-            customer: p.receiverName || p.senderName || 'Test Parcel',
+            customerName: p.receiverName || p.senderName || 'Valued Customer',
             parcelName: p.parcelName || 'Express Parcel',
             deliveryType: p.parcelType === 'document' ? 'Standard Document' : 'Express Delivery',
             earnings: p.earning,
             paymentStatus: p.paymentStatus
-        }));
+        });
+
+        const paginatedDeliveries = tableParcels.slice(skip, skip + limitNum).map(mapDeliveryRow);
+        const allFilteredDeliveries = tableParcels.map(mapDeliveryRow);
 
         res.send({
             success: true,
             stats: {
-                totalEarnings: totalEarnings > 0 ? totalEarnings : 4890,
+                totalEarnings,
                 earningsChange,
-                completedDeliveries: completedDeliveries > 0 ? completedDeliveries : 28,
+                completedDeliveries,
                 deliveriesChange,
                 pendingPayout,
                 nextPayoutDate: nextPayoutDateFormatted,
@@ -2033,19 +2036,14 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
             },
             payoutHistory,
             history: {
-                deliveries: paginatedDeliveries.length > 0 ? paginatedDeliveries : [
-                    { id: '1', date: 'May 31, 2025', trackingId: '#TRK-610838-A34', customer: 'Test Parcel', parcelName: 'Document Box', deliveryType: 'Express Delivery', earnings: 175, paymentStatus: 'Paid' },
-                    { id: '2', date: 'May 31, 2025', trackingId: '#TRK-610837-A22', customer: 'Azazj AK820', parcelName: 'Mechanical Keyboard', deliveryType: 'Standard Delivery', earnings: 140, paymentStatus: 'Paid' },
-                    { id: '3', date: 'May 30, 2025', trackingId: '#TRK-610836-B11', customer: 'Shakil Hossain', parcelName: 'Smart Watch', deliveryType: 'Express Delivery', earnings: 160, paymentStatus: 'Paid' },
-                    { id: '4', date: 'May 30, 2025', trackingId: '#TRK-610835-C09', customer: 'Rafiq Uddin', parcelName: 'Books Bundle', deliveryType: 'Standard Delivery', earnings: 145, paymentStatus: 'Paid' },
-                    { id: '5', date: 'May 29, 2025', trackingId: '#TRK-610834-D55', customer: 'Mehedi Hasan', parcelName: 'Laptop Stand', deliveryType: 'Express Delivery', earnings: 180, paymentStatus: 'Paid' }
-                ],
+                deliveries: paginatedDeliveries,
+                allFilteredDeliveries,
                 pagination: {
                     page: pageNum,
                     limit: limitNum,
-                    totalRecords: totalRecords > 0 ? totalRecords : 5,
-                    totalPages: totalRecords > 0 ? totalPages : 1,
-                    hasNextPage: pageNum < (totalRecords > 0 ? totalPages : 1),
+                    totalRecords,
+                    totalPages,
+                    hasNextPage: pageNum < totalPages,
                     hasPrevPage: pageNum > 1
                 }
             }

@@ -5,6 +5,8 @@ import useAuth from "../../../hooks/useAuth";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import { useNotifications } from "../../../contexts/NotificationContext";
 
+import * as XLSX from "xlsx";
+
 // Components
 import EarningsHeader from "./components/EarningsHeader";
 import EarningsStatsCards from "./components/EarningsStatsCards";
@@ -71,33 +73,29 @@ export default function RiderEarnings() {
     };
   }, [socket, user?.email, queryClient]);
 
-  // Export CSV Handler
-  const handleExportCSV = () => {
-    if (!dashboardData?.history?.deliveries) {
+  // Export Excel (.xlsx) Handler
+  const handleExportExcel = () => {
+    const exportData = dashboardData?.history?.allFilteredDeliveries || dashboardData?.history?.deliveries;
+    if (!exportData || exportData.length === 0) {
       toast.error("No data available to export");
       return;
     }
 
-    const headers = ["Date", "Order ID", "Customer", "Parcel Name", "Delivery Type", "Earnings", "Payment Status"];
-    const rows = dashboardData.history.deliveries.map(d => [
-      `"${d.date}"`,
-      `"${d.trackingId}"`,
-      `"${d.customer}"`,
-      `"${d.parcelName}"`,
-      `"${d.deliveryType}"`,
-      `"৳${d.earnings}"`,
-      `"${d.paymentStatus}"`
-    ]);
+    const formattedData = exportData.map(d => ({
+      "Date": d.date,
+      "Order ID": d.trackingId,
+      "Customer Name": d.customerName || d.customer || "Valued Customer",
+      "Parcel Name": d.parcelName,
+      "Delivery Type": d.deliveryType,
+      "Earnings (৳)": d.earnings,
+      "Payment Status": d.paymentStatus
+    }));
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Rider_Earnings_Report_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Earnings export downloaded successfully!");
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Earnings History");
+    XLSX.writeFile(workbook, `Rider_Earnings_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success("Excel report downloaded successfully!");
   };
 
   // Loading Skeleton State matching premium courier app UX
@@ -134,7 +132,7 @@ export default function RiderEarnings() {
         <EarningsHeader
           dateRange={dateRange}
           setDateRange={setDateRange}
-          onExport={handleExportCSV}
+          onExport={handleExportExcel}
           isLoading={isLoading}
           onRefresh={() => {
             refetch();
@@ -163,7 +161,7 @@ export default function RiderEarnings() {
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
           onPageChange={setPage}
-          onExportTable={handleExportCSV}
+          onExportTable={handleExportExcel}
         />
 
         {/* Payout History Modal Dialog */}
