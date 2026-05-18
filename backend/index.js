@@ -19,6 +19,7 @@ const supportService = require('./services/supportService');
 const riderService = require('./services/riderService');
 const riderMatchingService = require('./services/riderMatchingService');
 const riderRoutes = require('./routes/riderRoutes');
+const riderSettingsRoutes = require('./routes/riderSettingsRoutes');
 const setupRiderSocket = require('./socket/riderSocket');
 const coverageData = require('./data/coverageData');
 const migrateRegionToDivision = require('./utils/migrateRegionToDivision');
@@ -319,6 +320,7 @@ app.use('/notification-settings', verifyJWT, notificationSettingsRoutes);
 app.use('/security', verifyJWT, securityRoutes);
 app.use('/support', verifyJWT, supportRoutes);
 app.use('/riders', verifyJWT, riderRoutes);
+app.use('/api/rider-settings', riderSettingsRoutes(() => usersCollection, () => riderCollection, verifyJWT, verifyRider));
 app.use('/coverage', coverageRoutes);
 
 // ============ 🔐 AUTH ROUTES ============

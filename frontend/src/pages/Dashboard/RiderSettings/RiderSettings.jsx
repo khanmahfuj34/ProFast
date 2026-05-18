@@ -1,42 +1,186 @@
 import React from "react";
-import { motion } from "framer-motion";
-import { FiSettings, FiClock, FiShield, FiBell } from "react-icons/fi";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import useAuth from "../../../hooks/useAuth";
+import useAxiosSecure from "../../../hooks/useAxiosSecure";
+
+// Components
+import SettingsHeader from "./components/SettingsHeader";
+import ProfileSection from "./components/ProfileSection";
+import LocationSection from "./components/LocationSection";
+import VehicleSection from "./components/VehicleSection";
+import AvailabilitySection from "./components/AvailabilitySection";
+import SecuritySection from "./components/SecuritySection";
+import SupportSection from "./components/SupportSection";
 
 export default function RiderSettings() {
+  const { user } = useAuth();
+  const axiosSecure = useAxiosSecure();
+  const queryClient = useQueryClient();
+
+  // Fetch Rider Profile & Settings
+  const {
+    data: profile,
+    isLoading: isProfileLoading
+  } = useQuery({
+    queryKey: ["rider-settings-profile", user?.email],
+    queryFn: async () => {
+      const res = await axiosSecure.get("/api/rider-settings/profile");
+      return res.data;
+    },
+    enabled: !!user?.email
+  });
+
+  // Fetch Active Sessions
+  const {
+    data: sessions,
+    isLoading: isSessionsLoading
+  } = useQuery({
+    queryKey: ["rider-settings-sessions", user?.email],
+    queryFn: async () => {
+      const res = await axiosSecure.get("/api/rider-settings/security/sessions");
+      return res.data;
+    },
+    enabled: !!user?.email
+  });
+
+  // Mutations
+  const updateProfileMutation = useMutation({
+    mutationFn: async (updatedData) => {
+      const res = await axiosSecure.put("/api/rider-settings/profile", updatedData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["rider-settings-profile"]);
+      toast.success("Profile information updated successfully!");
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to update profile.")
+  });
+
+  const updateLocationMutation = useMutation({
+    mutationFn: async (updatedData) => {
+      const res = await axiosSecure.put("/api/rider-settings/location", updatedData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["rider-settings-profile"]);
+      toast.success("Location coverage updated successfully!");
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to update location.")
+  });
+
+  const updateVehicleMutation = useMutation({
+    mutationFn: async (updatedData) => {
+      const res = await axiosSecure.put("/api/rider-settings/vehicle", updatedData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["rider-settings-profile"]);
+      toast.success("Vehicle records updated successfully!");
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to update vehicle.")
+  });
+
+  const updateAvailabilityMutation = useMutation({
+    mutationFn: async (updatedData) => {
+      const res = await axiosSecure.put("/api/rider-settings/availability", updatedData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["rider-settings-profile"]);
+      toast.success("Availability schedule updated successfully!");
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to update availability.")
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: async (newPassword) => {
+      const res = await axiosSecure.put("/api/rider-settings/security/password", { password: newPassword });
+      return res.data;
+    },
+    onSuccess: () => toast.success("Account password updated successfully!"),
+    onError: (err) => toast.error(err?.response?.data?.message || "Failed to update password.")
+  });
+
+  const logoutAllMutation = useMutation({
+    mutationFn: async () => {
+      const res = await axiosSecure.post("/api/rider-settings/security/logout-all");
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["rider-settings-sessions"]);
+      toast.success("Logged out from all external devices.");
+    },
+    onError: (err) => toast.error("Failed to revoke external sessions.")
+  });
+
+  const supportMutation = useMutation({
+    mutationFn: async (ticketData) => {
+      const res = await axiosSecure.post("/api/rider-settings/support/contact", ticketData);
+      return res.data;
+    },
+    onSuccess: (data) => toast.success(data?.message || "Support ticket submitted!"),
+    onError: (err) => toast.error("Failed to submit ticket.")
+  });
+
+  if (isProfileLoading || isSessionsLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 lg:p-8 font-sans animate-pulse space-y-6 max-w-7xl mx-auto">
+        <div className="h-28 bg-slate-200 rounded-3xl" />
+        <div className="h-64 bg-slate-200 rounded-3xl" />
+        <div className="h-64 bg-slate-200 rounded-3xl" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 lg:p-8 font-sans flex items-center justify-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="max-w-2xl w-full bg-white border border-slate-100 rounded-3xl p-8 md:p-12 text-center shadow-sm"
-      >
-        <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-          <FiSettings className="w-10 h-10 animate-spin-slow" />
-        </div>
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 lg:p-8 font-sans pb-16">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Top Header Banner */}
+        <SettingsHeader />
 
-        <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-          Rider Settings Coming Soon
-        </h2>
-        <p className="text-slate-500 text-sm md:text-base mt-2 max-w-md mx-auto leading-relaxed">
-          We are currently building a premium, custom settings suite tailored specifically for courier management, preferences, and payouts.
-        </p>
+        {/* Profile Section */}
+        <ProfileSection
+          profile={profile}
+          onUpdate={(data) => updateProfileMutation.mutateAsync(data)}
+          isUpdating={updateProfileMutation.isPending}
+        />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-8 border-t border-slate-100">
-          <div className="p-4 rounded-2xl bg-slate-50 text-slate-700 flex flex-col items-center">
-            <FiClock className="text-emerald-600 text-lg mb-1.5" />
-            <span className="text-xs font-bold">Shift Preferences</span>
-          </div>
-          <div className="p-4 rounded-2xl bg-slate-50 text-slate-700 flex flex-col items-center">
-            <FiShield className="text-emerald-600 text-lg mb-1.5" />
-            <span className="text-xs font-bold">Security & PIN</span>
-          </div>
-          <div className="p-4 rounded-2xl bg-slate-50 text-slate-700 flex flex-col items-center">
-            <FiBell className="text-emerald-600 text-lg mb-1.5" />
-            <span className="text-xs font-bold">Payout Alerts</span>
-          </div>
-        </div>
-      </motion.div>
+        {/* Location Section */}
+        <LocationSection
+          profile={profile}
+          onUpdate={(data) => updateLocationMutation.mutateAsync(data)}
+          isUpdating={updateLocationMutation.isPending}
+        />
+
+        {/* Vehicle Section */}
+        <VehicleSection
+          profile={profile}
+          onUpdate={(data) => updateVehicleMutation.mutateAsync(data)}
+          isUpdating={updateVehicleMutation.isPending}
+        />
+
+        {/* Availability Section */}
+        <AvailabilitySection
+          profile={profile}
+          onUpdate={(data) => updateAvailabilityMutation.mutateAsync(data)}
+          isUpdating={updateAvailabilityMutation.isPending}
+        />
+
+        {/* Security Section */}
+        <SecuritySection
+          sessions={sessions}
+          onLogoutAll={() => logoutAllMutation.mutateAsync()}
+          onUpdatePassword={(pwd) => updatePasswordMutation.mutateAsync(pwd)}
+          isUpdating={updatePasswordMutation.isPending || logoutAllMutation.isPending}
+        />
+
+        {/* Support Section */}
+        <SupportSection
+          onSubmitSupport={(ticket) => supportMutation.mutateAsync(ticket)}
+          isSubmitting={supportMutation.isPending}
+        />
+      </div>
     </div>
   );
 }
