@@ -32,7 +32,7 @@ const AdminLayout = () => {
   if (!isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex">
+    <div className="min-h-screen bg-slate-50 flex">
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
@@ -52,18 +52,18 @@ const AdminLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Navbar */}
-        <header className="sticky top-0 z-40 border-b border-slate-700/50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-lg">
+        <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
             {/* Left Section */}
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleSidebar}
-                className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Toggle sidebar"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-white"
+                  className="h-6 w-6 text-gray-600"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -81,12 +81,12 @@ const AdminLayout = () => {
               {/* Desktop Collapse Toggle */}
               <button
                 onClick={toggleSidebarCollapse}
-                className="hidden lg:flex p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`h-6 w-6 text-white transition-transform duration-300 ${
+                  className={`h-6 w-6 text-gray-600 transition-transform duration-300 ${
                     sidebarCollapsed ? 'rotate-180' : ''
                   }`}
                   fill="none"
@@ -102,7 +102,7 @@ const AdminLayout = () => {
                 </svg>
               </button>
               
-              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500 hidden sm:block">
+              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600 hidden sm:block">
                 ProFast Admin
               </h1>
             </div>
@@ -110,10 +110,10 @@ const AdminLayout = () => {
             {/* Right Section */}
             <div className="flex items-center gap-6">
               {/* Search */}
-              <div className="hidden md:flex items-center gap-2 bg-slate-700/30 px-4 py-2 rounded-lg border border-slate-600/30 hover:border-slate-500/50 transition-colors">
+              <div className="hidden md:flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 focus-within:border-emerald-500/50 transition-colors">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-slate-400"
+                  className="h-5 w-5 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -128,15 +128,15 @@ const AdminLayout = () => {
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="bg-transparent text-white placeholder-slate-500 outline-none text-sm"
+                  className="bg-transparent text-gray-800 placeholder-gray-400 outline-none text-sm"
                 />
               </div>
 
               {/* Notifications */}
-              <button className="relative p-2 hover:bg-slate-700 rounded-lg transition-colors group">
+              <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors group">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 text-slate-300 group-hover:text-white transition-colors"
+                  className="h-6 w-6 text-gray-500 group-hover:text-gray-700 transition-colors"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -152,22 +152,22 @@ const AdminLayout = () => {
               </button>
 
               {/* User Profile */}
-              <div className="flex items-center gap-3 pl-6 border-l border-slate-700">
+              <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div className="text-right hidden sm:block">
-                  <p className="text-white font-semibold text-sm">{user?.displayName || 'Admin'}</p>
-                  <p className="text-slate-400 text-xs">Administrator</p>
+                  <p className="text-gray-800 font-semibold text-sm">{user?.displayName || 'Admin'}</p>
+                  <p className="text-gray-500 text-xs">Administrator</p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
                   {user?.displayName?.charAt(0).toUpperCase() || 'A'}
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500 hover:text-red-600"
                   title="Logout"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-slate-300 hover:text-white transition-colors"
+                    className="h-5 w-5 transition-colors"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -193,7 +193,7 @@ const AdminLayout = () => {
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-slate-700/50 bg-slate-900/50 px-6 py-4 text-center text-sm text-slate-400">
+        <footer className="border-t border-gray-200 bg-white px-6 py-4 text-center text-sm text-gray-500">
           <p>© 2026 ProFast Logistics. All rights reserved. | Admin Dashboard v1.0</p>
         </footer>
       </div>

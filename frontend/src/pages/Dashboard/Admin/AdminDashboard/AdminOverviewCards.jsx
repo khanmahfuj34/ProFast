@@ -83,7 +83,7 @@ const AdminOverviewCards = ({ stats = {}, isLoading = false, error = null }) => 
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
       {error && (
         <div className="col-span-full bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-700 font-semibold">Error loading dashboard stats</p>
@@ -94,26 +94,26 @@ const AdminOverviewCards = ({ stats = {}, isLoading = false, error = null }) => 
       {cards.map((card) => (
         <div
           key={card.id}
-          className={`bg-gradient-to-br ${card.color} rounded-lg shadow-md p-6 text-white hover:shadow-lg transition-all duration-300 transform hover:scale-105`}
+          className={`bg-gradient-to-br ${card.color} rounded-lg shadow-md p-4 lg:p-3.5 xl:p-4 text-white hover:shadow-lg transition-all duration-300 transform hover:scale-105`}
         >
           {isLoading ? (
-            <div className="animate-pulse space-y-3">
-              <div className="h-4 bg-white/20 rounded w-24"></div>
-              <div className="h-8 bg-white/20 rounded w-16"></div>
-              <div className="h-3 bg-white/20 rounded w-32"></div>
-              <div className="h-3 bg-white/20 rounded w-20"></div>
+            <div className="animate-pulse space-y-2">
+              <div className="h-3.5 bg-white/20 rounded w-20"></div>
+              <div className="h-6 bg-white/20 rounded w-16"></div>
+              <div className="h-2.5 bg-white/20 rounded w-28"></div>
+              <div className="h-2.5 bg-white/20 rounded w-16"></div>
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-3xl">{card.icon}</div>
-                <MdTrendingUp className="text-xl opacity-75" />
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="text-2xl">{card.icon}</div>
+                <MdTrendingUp className="text-lg opacity-75 shrink-0" />
               </div>
-              <p className="text-sm font-semibold opacity-90">{card.label}</p>
-              <p className="text-3xl font-bold mt-2">{card.value}</p>
-              <div className="mt-3 flex items-center justify-between">
-                <p className="text-xs opacity-75">{card.subtext}</p>
-                <span className={`text-xs font-semibold px-2 py-1 rounded ${
+              <p className="text-xs font-semibold opacity-90 truncate" title={card.label}>{card.label}</p>
+              <p className="text-2xl lg:text-xl xl:text-2xl font-bold mt-1.5 truncate" title={card.value}>{card.value}</p>
+              <div className="mt-2.5 flex flex-col sm:flex-row sm:items-center lg:flex-col xl:flex-row xl:items-center justify-between gap-1">
+                <p className="text-[10px] sm:text-xs opacity-75 truncate" title={card.subtext}>{card.subtext}</p>
+                <span className={`text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 rounded whitespace-nowrap self-start sm:self-auto lg:self-start xl:self-auto ${
                   card.change === 'positive' ? 'bg-white/20' : 'bg-white/10'
                 }`}>
                   {card.trend}

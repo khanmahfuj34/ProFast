@@ -143,13 +143,13 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
         title={isCollapsed ? item.label : ''}
         className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group relative overflow-hidden ${
           active
-            ? 'bg-gradient-to-r from-[#10B981] to-[#059669] text-white shadow-lg shadow-emerald-500/50'
-            : 'text-gray-300 hover:text-white hover:bg-slate-700/50'
+            ? 'bg-gradient-to-r from-[#10B981] to-[#059669] text-white shadow-lg shadow-emerald-500/30'
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
         } ${isCollapsed ? 'justify-center' : ''}`}
       >
         {/* Glow effect for active items */}
         {active && (
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 to-teal-400/20 blur-xl -z-10 animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-teal-400/10 blur-xl -z-10 animate-pulse" />
         )}
 
         {/* Icon */}
@@ -157,7 +157,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
 
         {/* Label - Hidden when collapsed */}
         {!isCollapsed && (
-          <span className={`text-sm flex-1 transition-all duration-300 ${active ? 'font-bold text-white' : 'font-semibold text-gray-300 group-hover:text-white group-hover:translate-x-0.5'}`}>
+          <span className={`text-sm flex-1 transition-all duration-300 ${active ? 'font-bold text-white' : 'font-semibold text-gray-600 group-hover:text-gray-900 group-hover:translate-x-0.5'}`}>
             {item.label}
           </span>
         )}
@@ -168,7 +168,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
             className={`px-2.5 py-0.5 rounded-full text-xs font-bold transition-all duration-300 ${
               active
                 ? 'bg-white/20 text-white border border-white/30'
-                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 group-hover:bg-emerald-500/30'
+                : 'bg-emerald-50 text-emerald-600 border border-emerald-200 group-hover:bg-emerald-100'
             }`}
           >
             {item.badge}
@@ -181,7 +181,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
   const SectionTitle = ({ title }) => (
     !isCollapsed && (
       <div className="px-4 py-3 mt-2 first:mt-0">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest letter-spacing">
+        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest letter-spacing">
           {title}
         </h3>
       </div>
@@ -190,16 +190,16 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
 
   return (
     <div
-      className={`fixed lg:static inset-y-0 left-0 z-40 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 shadow-2xl transform transition-all duration-300 lg:translate-x-0 ${
+      className={`fixed lg:static inset-y-0 left-0 z-40 bg-white border-r border-gray-200 shadow-md transform transition-all duration-300 lg:translate-x-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } ${isCollapsed ? 'w-20 lg:w-20' : 'w-64 lg:w-64'} overflow-y-auto`}
     >
       {/* Header */}
-      <div className="sticky top-0 bg-gradient-to-b from-slate-900 via-slate-800/95 to-slate-800/50 backdrop-blur-sm p-6 border-b border-slate-700/50">
+      <div className="sticky top-0 bg-white p-6 border-b border-gray-200">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/50">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -210,15 +210,15 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">ProFast</h1>
-                <p className="text-xs text-emerald-400 font-medium">Admin Panel</p>
+                <h1 className="text-lg font-bold text-gray-800">ProFast</h1>
+                <p className="text-xs text-emerald-600 font-medium">Admin Panel</p>
               </div>
             </div>
           )}
           
           <div className="flex items-center gap-1 ml-auto">
             {isCollapsed ? (
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/50">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -233,12 +233,12 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
             {/* Desktop Collapse Button */}
             <button
               onClick={onToggleCollapse}
-              className="hidden lg:p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              className="hidden lg:p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className={`h-5 w-5 text-gray-300 transition-transform duration-300 ${
+                className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${
                   isCollapsed ? 'rotate-180' : ''
                 }`}
                 fill="none"
@@ -252,11 +252,11 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
             {/* Mobile Close Button */}
             <button
               onClick={onClose}
-              className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-300"
+                className="h-5 w-5 text-gray-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -285,9 +285,9 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       </nav>
 
       {/* Footer Info */}
-      <div className="sticky bottom-0 bg-gradient-to-t from-slate-900 via-slate-800/50 to-transparent p-4 border-t border-slate-700/30 mt-auto">
-        <div className="bg-slate-700/30 border border-slate-600/30 rounded-lg p-3 text-xs text-slate-300 text-center">
-          <p className="font-medium text-emerald-400 mb-1">Admin Dashboard</p>
+      <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 mt-auto">
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 text-center">
+          <p className="font-medium text-emerald-600 mb-1">Admin Dashboard</p>
           <p>v1.0 • ProFast Logistics</p>
         </div>
       </div>

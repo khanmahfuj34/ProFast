@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
-import AdminTopNavbar from './AdminDashboard/AdminTopNavbar';
 import AdminOverviewCards from './AdminDashboard/AdminOverviewCards';
 import AdminAnalytics from './AdminDashboard/AdminAnalytics';
 import AdminActivityFeed from './AdminDashboard/AdminActivityFeed';
@@ -207,9 +206,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navbar */}
-      <AdminTopNavbar userProfile={userProfile} unreadNotifications={0} />
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Header */}
