@@ -9,15 +9,6 @@ const getStats = async (req, res) => {
     }
 };
 
-const getRidersStatus = async (req, res) => {
-    try {
-        const statuses = await deliveryControlService.getRidersStatus();
-        res.json({ success: true, statuses });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
 const getRequests = async (req, res) => {
     try {
         const requests = await deliveryControlService.getRequests();
@@ -52,7 +43,6 @@ const assignManually = async (req, res) => {
 
 module.exports = {
     getStats,
-    getRidersStatus,
     getRequests,
     getFailedAssignments,
     assignManually

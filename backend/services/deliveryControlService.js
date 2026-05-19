@@ -37,27 +37,6 @@ const getStats = async () => {
     };
 };
 
-const getRidersStatus = async () => {
-    const totalRiders = await riderCollection.countDocuments({ status: 'Approved' });
-    const onlineRiders = await riderCollection.countDocuments({ status: 'Approved', isOnline: true, workStatus: 'Available' });
-    const busyRiders = await riderCollection.countDocuments({ status: 'Approved', isOnline: true, workStatus: 'Busy' });
-    const offlineRiders = await riderCollection.countDocuments({ status: 'Approved', isOnline: false });
-
-    const topRiders = await riderCollection.find({ status: 'Approved' })
-        .sort({ "rating": -1 })
-        .limit(5)
-        .project({ name: 1, email: 1, isOnline: true, totalDeliveries: 1 })
-        .toArray();
-
-    return {
-        totalRiders,
-        onlineRiders,
-        busyRiders,
-        offlineRiders,
-        topRiders
-    };
-};
-
 const getRequests = async () => {
     return await parcelsCollection.find({
         status: { $in: ['pending', 'driver_accepted', 'picked-up', 'on_the_way', 'delivered', 'cancelled'] }
@@ -103,7 +82,6 @@ const assignManually = async (trackingId, riderEmail) => {
 module.exports = {
     init,
     getStats,
-    getRidersStatus,
     getRequests,
     getFailedAssignments,
     assignManually

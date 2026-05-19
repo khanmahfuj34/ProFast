@@ -4,9 +4,8 @@ import { io } from 'socket.io-client';
 import StatsCards from './StatsCards';
 import FiltersBar from './FiltersBar';
 import RequestTable from './RequestTable';
-import RiderStatusPanel from './RiderStatusPanel';
-import LiveMapPanel from './LiveMapPanel';
 import FailedAssignments from './FailedAssignments';
+import ParcelDetailsModal from './ParcelDetailsModal';
 import useAuth from '../../../../hooks/useAuth';
 import useAxiosSecure from '../../../../hooks/useAxiosSecure';
 
@@ -39,15 +38,6 @@ const DeliveryControl = () => {
     }
   });
 
-  const { data: riderStatus = {}, isLoading: isRiderStatusLoading } = useQuery({
-    queryKey: ['riderStatus'],
-    queryFn: async () => {
-      const res = await axiosSecure.get('/api/delivery-control/riders-status');
-      return res.data.statuses;
-    },
-    refetchInterval: 30000 // Refetch every 30s just in case
-  });
-
   const { data: failedAssignments = [] } = useQuery({
     queryKey: ['failedAssignments'],
     queryFn: async () => {
@@ -55,6 +45,19 @@ const DeliveryControl = () => {
       return res.data.failed;
     }
   });
+
+  const [selectedParcel, setSelectedParcel] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const openDrawer = (parcel) => {
+    setSelectedParcel(parcel);
+    setIsDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+    setTimeout(() => setSelectedParcel(null), 300); // clear after animation
+  };
 
   // Socket IO Setup
   useEffect(() => {
@@ -65,15 +68,19 @@ const DeliveryControl = () => {
 
     // Listen to admin matching updates
     newSocket.on('admin_matching_update', () => {
-      queryClient.invalidateQueries(['deliveryRequests']);
-      queryClient.invalidateQueries(['deliveryStats']);
-      queryClient.invalidateQueries(['failedAssignments']);
+      queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
+      queryClient.invalidateQueries({ queryKey: ['failedAssignments'] });
     });
     
     newSocket.on('dashboard_stats_updated', () => {
-      queryClient.invalidateQueries(['deliveryRequests']);
-      queryClient.invalidateQueries(['deliveryStats']);
-      queryClient.invalidateQueries(['riderStatus']);
+      queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
+    });
+
+    newSocket.on('parcel_status_updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
     });
 
     return () => newSocket.close();
@@ -114,44 +121,37 @@ const DeliveryControl = () => {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Delivery Control</h1>
-          <p className="text-slate-550 dark:text-slate-400 text-sm">Monitor live delivery requests and rider activities</p>
+          <p className="text-slate-900 text-sm">Monitor live delivery requests and rider activities</p>
         </div>
 
         {/* Top Stats */}
         <StatsCards stats={stats} isLoading={isStatsLoading} />
 
-        <div className="flex flex-col xl:flex-row gap-6">
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col gap-6">
-            
-            <div className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800/80 rounded-xl overflow-hidden shadow-xl">
-              <FiltersBar 
-                activeTab={activeTab} setActiveTab={setActiveTab}
-                searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-                districtFilter={districtFilter} setDistrictFilter={setDistrictFilter}
-                statusFilter={statusFilter} setStatusFilter={setStatusFilter}
-                paymentFilter={paymentFilter} setPaymentFilter={setPaymentFilter}
-              />
-              <RequestTable 
-                requests={filteredRequests} 
-                isLoading={isRequestsLoading} 
-              />
-            </div>
-            
-            {failedAssignments.length > 0 && (
-              <FailedAssignments failedAssignments={failedAssignments} />
-            )}
-            
-          </div>
-
-          {/* Right Sidebar Area */}
-          <div className="w-full xl:w-[340px] flex flex-col gap-6">
-            <RiderStatusPanel riderStatus={riderStatus} isLoading={isRiderStatusLoading} />
-            <LiveMapPanel requests={requests} riderStatus={riderStatus} />
-          </div>
+        <div className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800/80 rounded-xl overflow-hidden shadow-xl">
+          <FiltersBar 
+            activeTab={activeTab} setActiveTab={setActiveTab}
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+            districtFilter={districtFilter} setDistrictFilter={setDistrictFilter}
+            statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+            paymentFilter={paymentFilter} setPaymentFilter={setPaymentFilter}
+          />
+          <RequestTable 
+            requests={filteredRequests} 
+            isLoading={isRequestsLoading} 
+            onViewDetails={openDrawer}
+          />
         </div>
+        
+        {failedAssignments.length > 0 && (
+          <FailedAssignments failedAssignments={failedAssignments} />
+        )}
 
       </div>
+      <ParcelDetailsModal 
+        isOpen={isDrawerOpen} 
+        onClose={closeDrawer} 
+        parcel={selectedParcel} 
+      />
     </div>
   );
 };
