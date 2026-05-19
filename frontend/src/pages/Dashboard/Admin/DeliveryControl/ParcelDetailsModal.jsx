@@ -113,7 +113,7 @@ const ParcelDetailsModal = ({ isOpen, onClose, parcel }) => {
             </motion.div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+            <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent overscroll-contain">
               <div className="p-6 space-y-5">
 
                 {/* Status Badge */}
