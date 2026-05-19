@@ -108,13 +108,13 @@ const DeliveryControl = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#0F172A] p-4 lg:p-6 text-slate-200 w-full overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 lg:p-6 text-slate-850 dark:text-slate-200 w-full overflow-x-hidden font-sans">
       <div className="flex flex-col gap-6">
         
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Delivery Control</h1>
-          <p className="text-slate-400 text-sm">Monitor live delivery requests and rider activities</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Delivery Control</h1>
+          <p className="text-slate-550 dark:text-slate-400 text-sm">Monitor live delivery requests and rider activities</p>
         </div>
 
         {/* Top Stats */}
@@ -124,7 +124,7 @@ const DeliveryControl = () => {
           {/* Main Content Area */}
           <div className="flex-1 flex flex-col gap-6">
             
-            <div className="bg-[#1E293B] border border-slate-700/50 rounded-xl overflow-hidden shadow-xl">
+            <div className="bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800/80 rounded-xl overflow-hidden shadow-xl">
               <FiltersBar 
                 activeTab={activeTab} setActiveTab={setActiveTab}
                 searchQuery={searchQuery} setSearchQuery={setSearchQuery}

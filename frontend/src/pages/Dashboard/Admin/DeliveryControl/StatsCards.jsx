@@ -7,19 +7,19 @@ const StatCard = ({ icon: Icon, value, title, subtitle, colorClass, index }) => 
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.05 }}
-    className="bg-[#1E293B] border border-slate-700/50 rounded-xl p-4 flex flex-col gap-3 shadow-lg hover:border-slate-600 transition-colors"
+    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4 flex flex-col gap-3 shadow-lg hover:shadow-xl hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300"
   >
     <div className="flex justify-between items-start">
-      <div className={`p-2.5 rounded-lg bg-opacity-10 ${colorClass.bg} ${colorClass.text}`}>
+      <div className={`p-2.5 rounded-lg bg-opacity-10 dark:bg-opacity-20 ${colorClass.bg} ${colorClass.text}`}>
         <Icon className="w-6 h-6" />
       </div>
       {/* Optional: Add small refresh icon or live dot here */}
     </div>
     
     <div>
-      <div className="text-3xl font-bold text-white mb-1">{value || 0}</div>
-      <div className="text-sm font-medium text-slate-300">{title}</div>
-      <div className="text-xs text-slate-500 mt-0.5">{subtitle}</div>
+      <div className="text-3xl font-bold text-slate-900 dark:text-white mb-1">{value || 0}</div>
+      <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</div>
+      <div className="text-xs text-slate-500 dark:text-slate-450 mt-0.5">{subtitle}</div>
     </div>
   </motion.div>
 );
@@ -29,7 +29,7 @@ const StatsCards = ({ stats, isLoading }) => {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-32 bg-slate-800 animate-pulse rounded-xl border border-slate-700/50"></div>
+          <div key={i} className="h-32 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-xl border border-slate-200 dark:border-slate-800"></div>
         ))}
       </div>
     );

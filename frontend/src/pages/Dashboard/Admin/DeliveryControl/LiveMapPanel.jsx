@@ -36,17 +36,16 @@ const LiveMapPanel = ({ requests, riderStatus }) => {
   // ready to be plugged in with actual coordinates.
 
   return (
-    <div className="bg-[#1E293B] border border-slate-700/50 rounded-xl overflow-hidden shadow-xl flex flex-col h-[400px]">
-      <div className="p-4 border-b border-slate-700/50 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-white">Live Map Overview</h2>
-        <button className="text-slate-400 hover:text-white transition-colors">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden shadow-xl flex flex-col h-[400px]">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Live Map Overview</h2>
+        <button className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors">
           <MdFullscreen className="w-5 h-5" />
         </button>
       </div>
       
-      <div className="flex-1 relative bg-[#0F172A]">
-        {/* Note: In dark mode, standard OSM tiles are bright. Using a dark matter tile layer or CSS filter is ideal */}
-        <div className="absolute inset-0 z-0 map-dark-filter">
+      <div className="flex-1 relative bg-slate-100 dark:bg-slate-950">
+        <div className="absolute inset-0 z-0">
           <MapContainer 
             center={center} 
             zoom={11} 
@@ -63,18 +62,18 @@ const LiveMapPanel = ({ requests, riderStatus }) => {
             {/* Example Marker */}
             <Marker position={[23.8103, 90.4125]} icon={iconOnline}>
               <Popup>
-                <div className="text-slate-800">
+                <div className="text-slate-805">
                   <div className="font-bold text-sm">Rider Rakib</div>
-                  <div className="text-xs text-emerald-600">Online - Available</div>
+                  <div className="text-xs text-emerald-600 font-semibold">Online - Available</div>
                 </div>
               </Popup>
             </Marker>
 
             <Marker position={[23.7503, 90.3925]} icon={iconOnDelivery}>
               <Popup>
-                <div className="text-slate-800">
+                <div className="text-slate-805">
                   <div className="font-bold text-sm">Rider Tuhin</div>
-                  <div className="text-xs text-amber-600">On Delivery - TRK-12345</div>
+                  <div className="text-xs text-amber-600 font-semibold">On Delivery - TRK-12345</div>
                 </div>
               </Popup>
             </Marker>
@@ -82,37 +81,49 @@ const LiveMapPanel = ({ requests, riderStatus }) => {
           </MapContainer>
         </div>
         
-        {/* CSS to make map dark */}
+        {/* CSS to make map dark only in dark mode */}
         <style dangerouslySetInnerHTML={{__html: `
-          .map-tiles {
+          .dark .map-tiles {
             filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
           }
           .leaflet-container {
+            background-color: #E2E8F0;
+          }
+          .dark .leaflet-container {
             background-color: #0F172A;
           }
           .leaflet-control-zoom a {
+            background-color: #ffffff !important;
+            color: #475569 !important;
+            border: 1px solid #cbd5e1 !important;
+          }
+          .dark .leaflet-control-zoom a {
             background-color: #1E293B !important;
             color: #94A3B8 !important;
-            border-color: #334155 !important;
+            border: 1px solid #334155 !important;
           }
           .leaflet-control-zoom a:hover {
+            color: #0f172a !important;
+            background-color: #f1f5f9 !important;
+          }
+          .dark .leaflet-control-zoom a:hover {
             color: #F8FAFC !important;
             background-color: #334155 !important;
           }
         `}} />
       </div>
 
-      <div className="p-3 bg-[#1E293B] border-t border-slate-700/50 flex justify-between gap-2 text-xs">
-        <div className="flex items-center gap-1.5 text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+      <div className="p-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between gap-2 text-xs font-semibold">
+        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-350">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900 shadow-sm"></span>
           Online Riders
         </div>
-        <div className="flex items-center gap-1.5 text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-355">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 border border-white dark:border-slate-900 shadow-sm"></span>
           On Delivery
         </div>
-        <div className="flex items-center gap-1.5 text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+        <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-355">
+          <span className="w-2.5 h-2.5 rounded-full bg-purple-500 border border-white dark:border-slate-900 shadow-sm"></span>
           Picked Up
         </div>
       </div>
