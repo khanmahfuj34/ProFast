@@ -38,7 +38,7 @@ import AdminSettings from "../pages/Dashboard/Admin/Settings";
 import AdminZoneManager from "../pages/Dashboard/Admin/ZoneManager";
 import AdminLiveTracking from "../pages/Dashboard/Admin/LiveTracking";
 import AdminReports from "../pages/Dashboard/Admin/Reports";
-import AssignRider from "../pages/Dashboard/Admin/AssignRider/AssignRider";
+import DeliveryControl from "../pages/Dashboard/Admin/DeliveryControl/DeliveryControl";
 // Admin-only pages imported for /admin routes
 import ApproveRiders from "../pages/Dashboard/Admin/ApproveRiders/ApproveRiders";
 import RiderDetailPage from "../pages/Dashboard/Admin/ApproveRiders/RiderDetailPage";
@@ -273,8 +273,8 @@ export const router = createBrowserRouter([
             element: <AdminPaymentHistory />
           },
           {
-            path: 'assign-rider',
-            element: <AssignRider />
+            path: 'delivery-control',
+            element: <DeliveryControl />
           },
           {
             path: 'approve-riders',

@@ -38,9 +38,9 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       title: 'OPERATIONS',
       items: [
         {
-          label: 'Assign Rider',
+          label: 'Delivery Control',
           icon: MdDeliveryDining,
-          path: '/admin/assign-rider',
+          path: '/admin/delivery-control',
           badge: '12',
         },
         {

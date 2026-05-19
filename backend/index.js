@@ -21,8 +21,11 @@ const riderMatchingService = require('./services/riderMatchingService');
 const riderRoutes = require('./routes/riderRoutes');
 const riderSettingsRoutes = require('./routes/riderSettingsRoutes');
 const setupRiderSocket = require('./socket/riderSocket');
+const setupDeliverySocket = require('./socket/deliverySocket');
 const coverageData = require('./data/coverageData');
 const migrateRegionToDivision = require('./utils/migrateRegionToDivision');
+const deliveryControlRoutes = require('./routes/deliveryControlRoutes');
+const deliveryControlService = require('./services/deliveryControlService');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
@@ -173,10 +176,12 @@ async function run() {
         supportService.init(db);
         riderService.init(db, io, parcelRequestsCollection);
         riderMatchingService.init(db, io, parcelRequestsCollection);
+        deliveryControlService.init(db, io);
         coverageService.init(db);
         await coverageService.seedCoverageData(coverageData);
         setupNotificationSocket(io);
         setupRiderSocket(io);
+        setupDeliverySocket(io);
 
         // Run Rider Location Standardization Migration
         await migrateRegionToDivision(riderCollection);
@@ -322,6 +327,7 @@ app.use('/support', verifyJWT, supportRoutes);
 app.use('/riders', verifyJWT, riderRoutes);
 app.use('/api/rider-settings', riderSettingsRoutes(() => usersCollection, () => riderCollection, verifyJWT, verifyRider));
 app.use('/coverage', coverageRoutes);
+app.use('/api/delivery-control', verifyJWT, verifyAdmin, deliveryControlRoutes);
 
 // ============ 🔐 AUTH ROUTES ============
 
