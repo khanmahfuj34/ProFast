@@ -190,9 +190,9 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
 
   return (
     <div
-      className={`fixed lg:static inset-y-0 left-0 z-40 bg-white border-r border-gray-200 shadow-md transform transition-all duration-300 lg:translate-x-0 ${
+      className={`fixed md:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 shadow-md transform transition-all duration-300 md:translate-x-0 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } ${isCollapsed ? 'w-20 lg:w-20' : 'w-64 lg:w-64'} overflow-y-auto`}
+      } ${isCollapsed ? 'w-20 md:w-20' : 'w-64 md:w-64'} overflow-y-auto`}
     >
       {/* Header */}
       <div className="sticky top-0 bg-white p-6 border-b border-gray-200">
@@ -201,7 +201,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <svg
-                  xmlns="http://www.w3.org/2000/svg"
+                  xmlns="http://www.w3.org/2000/lg"
                   viewBox="0 0 24 24"
                   fill="white"
                   className="w-6 h-6"
@@ -233,7 +233,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
             {/* Desktop Collapse Button */}
             <button
               onClick={onToggleCollapse}
-              className="hidden lg:p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="hidden md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               <svg
@@ -252,7 +252,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
             {/* Mobile Close Button */}
             <button
               onClick={onClose}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

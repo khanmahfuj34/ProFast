@@ -14,17 +14,56 @@ const getStats = async () => {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const pending = await parcelsCollection.countDocuments({ status: 'pending' });
-    const accepted = await parcelsCollection.countDocuments({ status: 'driver_accepted' });
-    const pickedUp = await parcelsCollection.countDocuments({ status: 'picked-up' });
-    const onTheWay = await parcelsCollection.countDocuments({ status: 'on_the_way' });
-    const deliveredToday = await parcelsCollection.countDocuments({ 
-        status: 'delivered', 
-        deliveryDate: { $gte: startOfDay } 
+    const pending = await parcelsCollection.countDocuments({
+        $or: [
+            { status: { $in: ['pending', 'pending_rider', 'pending_rider_response', 'pending-pickup', 'awaiting-payment'] } },
+            { deliveryStatus: { $in: ['pending', 'pending_rider', 'pending_rider_response', 'pending-pickup', 'awaiting-payment'] } }
+        ]
     });
-    const cancelledToday = await parcelsCollection.countDocuments({ 
-        status: 'cancelled', 
-        updatedAt: { $gte: startOfDay } 
+    const accepted = await parcelsCollection.countDocuments({
+        $or: [
+            { status: { $in: ['accepted', 'driver_accepted', 'driver_assigned'] } },
+            { deliveryStatus: { $in: ['accepted', 'driver_accepted', 'driver_assigned'] } }
+        ]
+    });
+    const pickedUp = await parcelsCollection.countDocuments({
+        $or: [
+            { status: { $in: ['picked-up', 'picked_up'] } },
+            { deliveryStatus: { $in: ['picked-up', 'picked_up'] } }
+        ]
+    });
+    const onTheWay = await parcelsCollection.countDocuments({
+        $or: [
+            { status: 'on_the_way' },
+            { deliveryStatus: 'on_the_way' }
+        ]
+    });
+    const deliveredToday = await parcelsCollection.countDocuments({
+        $and: [
+            {
+                $or: [
+                    { status: 'delivered' },
+                    { deliveryStatus: 'delivered' }
+                ]
+            },
+            {
+                $or: [
+                    { deliveryDate: { $gte: startOfDay } },
+                    { updatedAt: { $gte: startOfDay } }
+                ]
+            }
+        ]
+    });
+    const cancelledToday = await parcelsCollection.countDocuments({
+        $and: [
+            {
+                $or: [
+                    { status: 'cancelled' },
+                    { deliveryStatus: 'cancelled' }
+                ]
+            },
+            { updatedAt: { $gte: startOfDay } }
+        ]
     });
 
     return {
@@ -39,7 +78,10 @@ const getStats = async () => {
 
 const getRequests = async () => {
     return await parcelsCollection.find({
-        status: { $in: ['pending', 'driver_accepted', 'picked-up', 'on_the_way', 'delivered', 'cancelled'] }
+        $or: [
+            { status: { $in: ['pending', 'accepted', 'driver_accepted', 'driver_assigned', 'picked-up', 'picked_up', 'on_the_way', 'delivered', 'cancelled', 'pending-pickup', 'pending_rider', 'pending_rider_response', 'awaiting-payment'] } },
+            { deliveryStatus: { $in: ['pending', 'accepted', 'driver_accepted', 'driver_assigned', 'picked-up', 'picked_up', 'on_the_way', 'delivered', 'cancelled', 'pending-pickup', 'pending_rider', 'pending_rider_response', 'awaiting-payment'] } }
+        ]
     }).sort({ createdAt: -1 }).limit(100).toArray();
 };
 

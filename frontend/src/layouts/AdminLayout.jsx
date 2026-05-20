@@ -36,7 +36,7 @@ const AdminLayout = () => {
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={closeSidebar}
         />
       )}
@@ -50,7 +50,7 @@ const AdminLayout = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navbar */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
           <div className="flex items-center justify-between px-6 py-4">
@@ -58,7 +58,7 @@ const AdminLayout = () => {
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleSidebar}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Toggle sidebar"
               >
                 <svg
@@ -81,7 +81,7 @@ const AdminLayout = () => {
               {/* Desktop Collapse Toggle */}
               <button
                 onClick={toggleSidebarCollapse}
-                className="hidden lg:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="hidden md:flex p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 <svg
