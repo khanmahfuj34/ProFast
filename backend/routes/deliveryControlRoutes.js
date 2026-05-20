@@ -7,5 +7,6 @@ router.get('/stats', deliveryControlController.getStats);
 router.get('/requests', deliveryControlController.getRequests);
 router.get('/failed-assignments', deliveryControlController.getFailedAssignments);
 router.post('/failed-assignments/:trackingId/assign', deliveryControlController.assignManually);
+router.get('/rider/:email', deliveryControlController.getRiderDetails);
 
 module.exports = router;

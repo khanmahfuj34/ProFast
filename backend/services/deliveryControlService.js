@@ -94,6 +94,35 @@ const getFailedAssignments = async () => {
     }).sort({ createdAt: -1 }).toArray();
 };
 
+const getRiderDetails = async (riderEmail) => {
+    if (!riderEmail) return null;
+    const rider = await riderCollection.findOne({ email: riderEmail });
+    if (!rider) return null;
+
+    // Count active deliveries for this rider
+    const activeDeliveries = await parcelsCollection.countDocuments({
+        riderEmail: riderEmail,
+        status: { $in: ['accepted', 'driver_accepted', 'picked-up', 'picked_up', 'on_the_way'] }
+    });
+
+    return {
+        name: rider.fullName || rider.name || '',
+        email: rider.email || '',
+        phone: rider.phone || '',
+        photo: rider.photo || rider.photoURL || '',
+        isOnline: !!rider.isOnline,
+        lastSeen: rider.lastSeen || null,
+        bikeType: rider.bikeType || '',
+        bikeRegistration: rider.bikeRegistration || '',
+        drivingLicense: rider.drivingLicense || '',
+        nidNumber: rider.nidNumber || '',
+        nidVerified: rider.status === 'Approved',
+        activeDeliveries,
+        division: rider.division || '',
+        district: rider.district || '',
+    };
+};
+
 const assignManually = async (trackingId, riderEmail) => {
     const parcel = await parcelsCollection.findOne({ trackingId });
     if (!parcel) throw new Error("Parcel not found");
@@ -126,5 +155,6 @@ module.exports = {
     getStats,
     getRequests,
     getFailedAssignments,
+    getRiderDetails,
     assignManually
 };

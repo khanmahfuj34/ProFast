@@ -41,9 +41,26 @@ const assignManually = async (req, res) => {
     }
 };
 
+const getRiderDetails = async (req, res) => {
+    try {
+        const { email } = req.params;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Rider email is required" });
+        }
+        const rider = await deliveryControlService.getRiderDetails(email);
+        if (!rider) {
+            return res.status(404).json({ success: false, message: "Rider not found" });
+        }
+        res.json({ success: true, rider });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getStats,
     getRequests,
     getFailedAssignments,
+    getRiderDetails,
     assignManually
 };
