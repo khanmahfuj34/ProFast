@@ -15,7 +15,7 @@ const riderService = {
         io = socketIo;
     },
 
-    updateOnlineStatus: async (email, isOnline, socketId = null) => {
+    updateOnlineStatus: async(email, isOnline, socketId = null) => {
         if (!riderCollection) throw new Error("Rider collection not initialized");
 
         // If rider is coming online, cancel any pending disconnect timeout
@@ -33,10 +33,8 @@ const riderService = {
             }
         };
 
-        const result = await riderCollection.findOneAndUpdate(
-            { email: email },
-            updateDoc,
-            { returnDocument: 'after' }
+        const result = await riderCollection.findOneAndUpdate({ email: email },
+            updateDoc, { returnDocument: 'after' }
         );
 
         if (result) {
@@ -51,27 +49,26 @@ const riderService = {
         return result;
     },
 
-    handleDisconnect: async (socketId) => {
+    handleDisconnect: async(socketId) => {
         if (!riderCollection) return;
 
         const rider = await riderCollection.findOne({ socketId: socketId });
         if (rider) {
             console.log(`⏳ [Grace Period] Rider ${rider.email} disconnected. Waiting 15s before marking offline...`);
-            
+
             // Clear any existing timeout for this email just in case
             if (disconnectTimeouts.has(rider.email)) {
                 clearTimeout(disconnectTimeouts.get(rider.email));
             }
 
-            const timeout = setTimeout(async () => {
-                await riderCollection.updateOne(
-                    { email: rider.email, socketId: socketId }, // Ensure it's still the same session
-                    { 
-                        $set: { 
-                            isOnline: false, 
+            const timeout = setTimeout(async() => {
+                await riderCollection.updateOne({ email: rider.email, socketId: socketId }, // Ensure it's still the same session
+                    {
+                        $set: {
+                            isOnline: false,
                             lastSeen: new Date(),
-                            socketId: null 
-                        } 
+                            socketId: null
+                        }
                     }
                 );
 
@@ -80,7 +77,7 @@ const riderService = {
                     isOnline: false,
                     riderId: rider._id
                 });
-                
+
                 disconnectTimeouts.delete(rider.email);
                 console.log(`🏍️ [Grace Period] Rider ${rider.email} marked offline after 15s timeout`);
             }, 15000); // 15 seconds grace period
@@ -89,11 +86,11 @@ const riderService = {
         }
     },
 
-    getRiderByEmail: async (email) => {
+    getRiderByEmail: async(email) => {
         return await riderCollection.findOne({ email: email });
     },
 
-    acceptParcel: async (riderEmail, parcelId) => {
+    acceptParcel: async(riderEmail, parcelId) => {
         if (!riderCollection || !parcelsCollection) throw new Error("Collections not initialized");
 
         // 1. Check if rider is approved and online
@@ -102,70 +99,54 @@ const riderService = {
 
         // 2. Atomically attempt to accept the parcel
         // Accept if the parcel is still waiting for a rider
-        const result = await parcelsCollection.findOneAndUpdate(
-            { 
-                _id: new ObjectId(parcelId), 
-                status: { $in: ['pending_rider', 'pending_rider_response', 'pending', 'paid', 'pending-pickup'] },
-                $or: [
-                    { riderEmail: { $exists: false } },
-                    { riderEmail: null },
-                    { riderEmail: '' }
-                ]
+        const result = await parcelsCollection.findOneAndUpdate({
+            _id: new ObjectId(parcelId),
+            status: { $in: ['pending_rider', 'pending_rider_response', 'pending', 'paid', 'pending-pickup'] },
+            $or: [
+                { riderEmail: { $exists: false } },
+                { riderEmail: null },
+                { riderEmail: '' }
+            ]
+        }, {
+            $set: {
+                status: 'accepted',
+                deliveryStatus: 'accepted',
+                riderId: rider._id.toString(), // Fix: use rider._id instead of email
+                riderEmail: riderEmail,
+                assignedRider: riderEmail,
+                riderName: rider.fullName || rider.name || 'Rider',
+                assignmentStatus: 'assigned',
+                acceptedAt: new Date(),
+                assignedAt: new Date(),
+                updatedAt: new Date()
             },
-            { 
-                $set: { 
-                    status: 'driver_accepted',
-                    deliveryStatus: 'driver_accepted',
-                    riderId: rider._id.toString(), // Fix: use rider._id instead of email
-                    riderEmail: riderEmail,
-                    assignedRider: riderEmail,
-                    riderName: rider.fullName || rider.name || 'Rider',
-                    assignmentStatus: 'assigned',
-                    acceptedAt: new Date(),
-                    assignedAt: new Date(),
-                    updatedAt: new Date()
-                },
-                $push: {
-                    activityLog: {
-                        status: 'driver_accepted',
-                        timestamp: new Date(),
-                        updatedBy: riderEmail,
-                        role: 'rider',
-                        message: `Parcel accepted by rider: ${rider.fullName || 'Rider'}`
-                    }
+            $push: {
+                activityLog: {
+                    status: 'accepted',
+                    timestamp: new Date(),
+                    updatedBy: riderEmail,
+                    role: 'rider',
+                    message: `Parcel accepted by rider: ${rider.fullName || 'Rider'}`
                 }
-            },
-            { returnDocument: 'after' }
-        );
+            }
+        }, { returnDocument: 'after' });
 
         if (!result) {
             const checkParcel = await parcelsCollection.findOne({ _id: new ObjectId(parcelId) });
             if (checkParcel && checkParcel.riderEmail && checkParcel.riderEmail !== riderEmail) {
-                await parcelRequestsCollection.updateOne(
-                    { parcelId: new ObjectId(parcelId), riderEmail: riderEmail },
-                    { $set: { status: 'closed', closedAt: new Date() } }
-                );
+                await parcelRequestsCollection.updateOne({ parcelId: new ObjectId(parcelId), riderEmail: riderEmail }, { $set: { status: 'closed', closedAt: new Date() } });
                 throw new Error("This request has already been accepted by another rider");
             }
             throw new Error("Delivery request is no longer available");
         }
 
         // 3. Update related parcel requests
-        await parcelRequestsCollection.updateOne(
-            { parcelId: new ObjectId(parcelId), riderEmail: riderEmail },
-            { $set: { status: 'accepted', acceptedAt: new Date() } }
-        );
-        
-        await parcelRequestsCollection.updateMany(
-            { parcelId: new ObjectId(parcelId), riderEmail: { $ne: riderEmail }, status: 'pending' },
-            { $set: { status: 'closed', closedAt: new Date() } }
-        );
+        await parcelRequestsCollection.updateOne({ parcelId: new ObjectId(parcelId), riderEmail: riderEmail }, { $set: { status: 'accepted', acceptedAt: new Date() } });
+
+        await parcelRequestsCollection.updateMany({ parcelId: new ObjectId(parcelId), riderEmail: { $ne: riderEmail }, status: 'pending' }, { $set: { status: 'closed', closedAt: new Date() } });
 
         // 4. Update Rider Work Status
-        await riderCollection.updateOne(
-            { email: riderEmail },
-            { $set: { workStatus: 'in_delivery', updatedAt: new Date() } }
-        );
+        await riderCollection.updateOne({ email: riderEmail }, { $set: { workStatus: 'in_delivery', updatedAt: new Date() } });
 
         // 5. Notify the User (Sender)
         try {
@@ -175,9 +156,9 @@ const riderService = {
                 title: 'Rider Assigned',
                 message: `Rider ${rider.fullName || 'Rider'} has accepted your parcel and is heading to pickup.`,
                 relatedId: result._id,
-                metadata: { 
-                    status: 'driver_accepted', 
-                    riderName: rider.fullName, 
+                metadata: {
+                    status: 'accepted',
+                    riderName: rider.fullName,
                     trackingId: result.trackingId,
                     stage: 'Heading to Pickup'
                 }
@@ -198,7 +179,7 @@ const riderService = {
         io.to(result.senderEmail).emit('parcel_status_updated', {
             parcelId: result._id,
             trackingId: result.trackingId,
-            status: 'driver_accepted',
+            status: 'accepted',
             message: 'Rider is on the way to pick up your parcel'
         });
 
