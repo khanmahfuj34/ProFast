@@ -50,7 +50,7 @@ const AdminRecentTransactions = ({ payments = [], isLoading = false }) => {
             </tr>
           </thead>
           <tbody>
-            {payments.length === 0 ? (
+            {(!Array.isArray(payments) || payments.length === 0) ? (
               <tr>
                 <td colSpan="5" className="text-center py-8 text-gray-500">
                   No transactions found
