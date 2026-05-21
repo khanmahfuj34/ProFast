@@ -40,9 +40,25 @@ const clearNotifications = async (req, res) => {
     }
 };
 
+const broadcastNotification = async (req, res) => {
+    try {
+        const { title, message, audience, type } = req.body;
+        
+        if (!title || !message || !audience) {
+            return res.status(400).send({ success: false, message: 'Missing required fields' });
+        }
+
+        const result = await notificationService.broadcastNotification({ title, message, audience, type });
+        res.send({ success: true, message: `Notification broadcasted to ${result.count} users`, count: result.count });
+    } catch (error) {
+        res.status(500).send({ success: false, message: error.message });
+    }
+};
+
 module.exports = {
     getNotifications,
     markAsRead,
     markAllAsRead,
-    clearNotifications
+    clearNotifications,
+    broadcastNotification
 };

@@ -68,12 +68,6 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       title: 'FINANCE',
       items: [
         {
-          label: 'All Payments',
-          icon: MdPayments,
-          path: '/admin/payments',
-          badge: null,
-        },
-        {
           label: 'Payment History',
           icon: MdHistory,
           path: '/admin/payments-history',

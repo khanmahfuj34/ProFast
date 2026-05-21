@@ -5,6 +5,7 @@ const http = require('http');
 const { Server: SocketIOServer } = require('socket.io');
 require('dotenv').config(); // ✅ MUST load before anything that reads process.env
 const notificationRoutes = require('./routes/notificationRoutes');
+const adminNotificationRoutes = require('./routes/adminNotificationRoutes');
 const userRoutes = require('./routes/userRoutes');
 const notificationSettingsRoutes = require('./routes/notificationSettingsRoutes');
 const securityRoutes = require('./routes/securityRoutes');
@@ -318,6 +319,7 @@ function generateTrackingId() {
 
 // ============ 🔔 NOTIFICATION ROUTES ============
 app.use('/notifications', verifyJWT, notificationRoutes);
+app.use('/admin/notifications', verifyJWT, verifyAdmin, adminNotificationRoutes);
 
 // ============ 👤 USER ROUTES ============
 app.use('/users', verifyJWT, userRoutes);
@@ -2785,12 +2787,17 @@ app.get('/admin/parcels', verifyJWT, verifyAdmin, async(req, res) => {
 // GET /admin/analytics - Get analytics data for admin dashboard (Admin only)
 app.get('/admin/analytics', verifyJWT, verifyAdmin, async(req, res) => {
     try {
-        const { range = '7d' } = req.query;
+        const { range = '7d', customStart, customEnd } = req.query;
         const now = new Date();
 
         // Calculate date range based on filter
         let startDate = new Date();
-        if (range === '7d') {
+        let endDate = now;
+
+        if (range === 'today') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+        } else if (range === '7d') {
             startDate.setDate(now.getDate() - 7);
         } else if (range === '30d') {
             startDate.setDate(now.getDate() - 30);
@@ -2798,11 +2805,18 @@ app.get('/admin/analytics', verifyJWT, verifyAdmin, async(req, res) => {
             startDate.setMonth(now.getMonth() - 3);
         } else if (range === '1y') {
             startDate.setFullYear(now.getFullYear() - 1);
+        } else if (range === 'custom') {
+            if (customStart && customEnd) {
+                startDate = new Date(customStart);
+                // Set endDate to end of the day
+                endDate = new Date(customEnd);
+                endDate.setHours(23, 59, 59, 999);
+            }
         }
 
         // Fetch all parcels in range
         const parcels = await parcelsCollection.find({
-            createdAt: { $gte: startDate, $lte: now }
+            createdAt: { $gte: startDate, $lte: endDate }
         }).toArray();
 
         // Group by date and status

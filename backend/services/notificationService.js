@@ -4,11 +4,14 @@ const notificationSettingsService = require('./notificationSettingsService');
 let notificationsCollection;
 let io;
 
+let usersCollection;
+
 /**
  * Initialize the notification service with DB and IO instances
  */
 const init = (db, socketIo) => {
     notificationsCollection = db.collection("notifications");
+    usersCollection = db.collection("users");
     io = socketIo;
     console.log("✅ Notification Service Initialized");
 };
@@ -105,11 +108,56 @@ const clearReadNotifications = async (email) => {
     });
 };
 
+/**
+ * Broadcast a notification to a specific audience
+ */
+const broadcastNotification = async (data) => {
+    try {
+        if (!notificationsCollection || !usersCollection) return { count: 0 };
+
+        let query = {};
+        if (data.audience === 'Users') query = { role: 'user' };
+        else if (data.audience === 'Riders') query = { role: 'rider' };
+        else if (data.audience === 'Everyone') query = { role: { $in: ['user', 'rider'] } };
+        else return { count: 0 };
+
+        const targetUsers = await usersCollection.find(query).toArray();
+        if (targetUsers.length === 0) return { count: 0 };
+
+        const notifications = targetUsers.map(user => ({
+            recipientEmail: user.email,
+            type: data.type || 'system',
+            title: data.title,
+            message: data.message,
+            recipientRole: user.role,
+            senderRole: 'admin',
+            isRead: false,
+            createdAt: new Date()
+        }));
+
+        const result = await notificationsCollection.insertMany(notifications);
+
+        if (io) {
+            targetUsers.forEach((user, index) => {
+                const notif = { ...notifications[index], _id: result.insertedIds[index] };
+                io.to(user.email).emit('new_notification', notif);
+            });
+        }
+
+        console.log(`📣 Broadcast notification sent to ${targetUsers.length} users (${data.audience})`);
+        return { count: targetUsers.length };
+    } catch (error) {
+        console.error('❌ Error broadcasting notification:', error.message);
+        throw error;
+    }
+};
+
 module.exports = {
     init,
     createNotification,
     getUserNotifications,
     markAsRead,
     markAllAsRead,
-    clearReadNotifications
+    clearReadNotifications,
+    broadcastNotification
 };

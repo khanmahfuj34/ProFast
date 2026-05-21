@@ -30,8 +30,7 @@ import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard";
 import AdminManageUsers from "../pages/Dashboard/Admin/ManageUsers/ManageUsers";
 import AdminManageRiders from "../pages/Dashboard/Admin/ManageRiders";
 import AdminParcelOversight from "../pages/Dashboard/Admin/ParcelOversight";
-import AdminPaymentHistory from "../pages/Dashboard/Admin/AdminPaymentHistory";
-import AdminPayments from "../pages/Dashboard/Admin/AllPayments";
+    import AdminPaymentHistory from "../pages/Dashboard/Admin/AdminPaymentHistory";
 import AdminNotifications from "../pages/Dashboard/Admin/Notifications";
 import AdminSupportTickets from "../pages/Dashboard/Admin/SupportTickets";
 import AdminSettings from "../pages/Dashboard/Admin/Settings";
@@ -263,10 +262,6 @@ export const router = createBrowserRouter([
           {
             path: 'parcels',
             element: <AdminParcelOversight />
-          },
-          {
-            path: 'payments',
-            element: <AdminPayments />
           },
           {
             path: 'payments-history',
