@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
     FiBell, FiInfo, FiPackage, FiDollarSign, FiTruck, 
     FiCheckCircle, FiXCircle, FiClock, FiTrash2, FiChevronRight,
-    FiInbox, FiChevronLeft, FiShare2
+    FiInbox, FiChevronLeft, FiShare2, FiAlertTriangle, FiGift, FiTool, FiRadio, FiCpu
 } from 'react-icons/fi';
 import { useNotifications } from '../../../contexts/NotificationContext';
 // Removed date-fns import as it was causing resolution errors
@@ -32,7 +32,12 @@ const TYPE_ICONS = {
     promotion: <FiShare2 className="text-purple-500" />,
     rider: <FiTruck className="text-indigo-500" />,
     success: <FiCheckCircle className="text-lime-500" />,
-    error: <FiXCircle className="text-red-500" />
+    error: <FiXCircle className="text-red-500" />,
+    announcement: <FiRadio className="text-sky-500" />,
+    maintenance: <FiTool className="text-slate-500" />,
+    offer: <FiGift className="text-pink-500" />,
+    warning: <FiAlertTriangle className="text-orange-500" />,
+    system_update: <FiCpu className="text-indigo-500" />
 };
 
 const TYPE_BG = {
@@ -42,7 +47,12 @@ const TYPE_BG = {
     promotion: 'bg-purple-50',
     rider: 'bg-indigo-50',
     success: 'bg-lime-50',
-    error: 'bg-red-50'
+    error: 'bg-red-50',
+    announcement: 'bg-sky-50',
+    maintenance: 'bg-slate-50',
+    offer: 'bg-pink-50',
+    warning: 'bg-orange-50',
+    system_update: 'bg-indigo-50'
 };
 
 const Notification = () => {
@@ -116,7 +126,7 @@ const Notification = () => {
                     
                     {/* Filter Tabs */}
                     <div className="flex items-center p-2 bg-slate-50 border-b border-slate-100 gap-1 overflow-x-auto no-scrollbar">
-                        {['all', 'unread', 'parcel', 'payment', 'system'].map((tab) => (
+                        {['all', 'unread', 'parcel', 'payment', 'announcement', 'offer', 'system', 'warning', 'maintenance', 'system_update'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setFilter(tab)}
@@ -126,7 +136,7 @@ const Notification = () => {
                                     : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                                 }`}
                             >
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                {tab.replace('_', ' ').charAt(0).toUpperCase() + tab.replace('_', ' ').slice(1)}
                                 {tab === 'unread' && unreadCount > 0 && (
                                     <span className="ml-2 px-1.5 py-0.5 bg-lime-500 text-white rounded-full text-[10px]">
                                         {unreadCount}

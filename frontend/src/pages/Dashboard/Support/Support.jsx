@@ -16,8 +16,10 @@ import {
     RiQuestionLine,
     RiLoader4Line
 } from 'react-icons/ri';
+import { io } from 'socket.io-client';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import CreateTicketModal from './CreateTicketModal';
+import UserSupportTicketModal from './UserSupportTicketModal';
 
 const Support = () => {
     const axiosSecure = useAxiosSecure();
@@ -25,6 +27,28 @@ const Support = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedTicket, setSelectedTicket] = useState(null);
+
+    // Socket Connection for Real-time Ticket Updates
+    React.useEffect(() => {
+        const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+            withCredentials: true,
+            transports: ['polling', 'websocket']
+        });
+
+        socket.on('support_ticket_updated', (ticket) => {
+            queryClient.invalidateQueries(['myTickets']);
+            setSelectedTicket(prev => prev?.ticketId === ticket.ticketId ? ticket : prev);
+        });
+
+        socket.on('support_ticket_replied', () => {
+            queryClient.invalidateQueries(['myTickets']);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [queryClient]);
 
     // Fetch My Tickets
     const { data: ticketsData, isLoading } = useQuery({
@@ -158,7 +182,11 @@ const Support = () => {
                                 </tr>
                             ) : (
                                 ticketsData?.map((ticket) => (
-                                    <tr key={ticket.ticketId} className="group hover:bg-slate-50/50 transition-all cursor-pointer">
+                                    <tr 
+                                        key={ticket.ticketId} 
+                                        onClick={() => setSelectedTicket(ticket)}
+                                        className="group hover:bg-slate-50/50 transition-all cursor-pointer"
+                                    >
                                         <td className="px-8 py-6">
                                             <span className="font-black text-slate-900 text-sm">{ticket.ticketId}</span>
                                         </td>
@@ -249,6 +277,12 @@ const Support = () => {
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)} 
                 onSuccess={() => queryClient.invalidateQueries(['myTickets'])}
+            />
+
+            <UserSupportTicketModal 
+                ticket={selectedTicket}
+                isOpen={!!selectedTicket}
+                onClose={() => setSelectedTicket(null)}
             />
         </div>
     );

@@ -27,6 +27,7 @@ const coverageData = require('./data/coverageData');
 const migrateRegionToDivision = require('./utils/migrateRegionToDivision');
 const deliveryControlRoutes = require('./routes/deliveryControlRoutes');
 const deliveryControlService = require('./services/deliveryControlService');
+const adminSupportRoutes = require('./routes/adminSupportRoutes');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
@@ -174,7 +175,7 @@ async function run() {
         notificationService.init(db, io);
         userService.init(db);
         notificationSettingsService.init(db);
-        supportService.init(db);
+        supportService.init(db, io);
         riderService.init(db, io, parcelRequestsCollection);
         riderMatchingService.init(db, io, parcelRequestsCollection);
         deliveryControlService.init(db, io);
@@ -326,6 +327,7 @@ app.use('/users', verifyJWT, userRoutes);
 app.use('/notification-settings', verifyJWT, notificationSettingsRoutes);
 app.use('/security', verifyJWT, securityRoutes);
 app.use('/support', verifyJWT, supportRoutes);
+app.use('/admin/support', verifyJWT, verifyAdmin, adminSupportRoutes);
 app.use('/riders', verifyJWT, riderRoutes);
 app.use('/api/rider-settings', riderSettingsRoutes(() => usersCollection, () => riderCollection, verifyJWT, verifyRider));
 app.use('/coverage', coverageRoutes);
