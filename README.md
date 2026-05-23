@@ -1,18 +1,9 @@
-# React + Vite
+# 🚚 ProFast Logistics Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ProFast is a modern full-stack logistics and parcel delivery management platform inspired by systems like Pathao, RedX, and DHL. The platform is designed with a scalable enterprise-style architecture where Users, Riders, and Admins can manage the complete delivery workflow in real time. Users can create parcel delivery requests, track delivery progress, receive instant notifications, and communicate through a built-in support ticket system. Riders can receive live parcel requests, accept deliveries, update delivery statuses, manage earnings, and access a professional rider dashboard with real-time operational features.
 
-Currently, two official plugins are available:
+The Admin Panel is built as a complete logistics control center where admins can monitor all deliveries, manage riders, approve rider applications, handle support tickets, send broadcast notifications, and track platform analytics. The Delivery Control system includes real-time parcel monitoring, delivery status tracking, rider activity management, and professional delivery details modals with sender, receiver, rider, payment, and timeline information.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+ProFast also includes a real-time notification system powered by Socket.IO, allowing instant updates for parcel requests, delivery progress, support replies, and admin announcements. The platform is built using React.js, Tailwind CSS, Node.js, Express.js, MongoDB, JWT authentication, and Socket.IO. The project follows a modular architecture with reusable components, scalable backend services, and responsive enterprise-level dashboard design.
 
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+In future updates, ProFast will introduce advanced enterprise logistics features including Smart Zone Management, AI Rider Assignment, Geo Coverage Mapping, Smart Routing, Live Zone Heatmaps, and Delivery Density Analytics to transform the platform into a fully intelligent logistics ecosystem.
