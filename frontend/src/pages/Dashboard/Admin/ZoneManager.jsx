@@ -350,7 +350,7 @@ const ZoneManager = () => {
                 <h3 className="text-2xl font-black tracking-tight text-white mb-2">
                   {selectedFeature || 'Zone Management'}
                 </h3>
-                
+
                 <div className="w-12 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 mb-6" />
 
                 {/* Message */}
