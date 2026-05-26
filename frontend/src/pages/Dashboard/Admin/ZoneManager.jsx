@@ -2,10 +2,32 @@ import React, { useState } from 'react';
 import {
   RiMapPin2Line, RiTruckLine, RiBox3Line, RiGroupLine, RiBarChartBoxLine, RiSparklingLine,
   RiShieldCheckLine, RiRadarLine, RiRoadMapLine, RiBrainLine, RiArrowRightSLine,
-  RiEyeLine, RiEdit2Line, RiFlashlightLine, RiGlobalLine, RiMapPinTimeLine
+  RiEyeLine, RiEdit2Line, RiFlashlightLine, RiGlobalLine, RiMapPinTimeLine,
+  RiCloseLine
 } from 'react-icons/ri';
+import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ZoneManager = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState('');
+
+  const handleFeatureClick = (featureName) => {
+    setSelectedFeature(featureName);
+    setIsModalOpen(true);
+    toast.success(`Opening preview for ${featureName}...`, {
+      icon: '✨',
+      style: {
+        borderRadius: '16px',
+        background: '#0f172a',
+        color: '#fff',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        fontSize: '14px',
+        fontWeight: '600',
+      },
+    });
+  };
+
   const [zones] = useState([
     {
       id: 1,
@@ -83,9 +105,13 @@ const ZoneManager = () => {
             </p>
           </div>
 
-          <button className="flex-shrink-0 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-sm hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 shadow-lg shadow-emerald-500/20 flex items-center gap-2">
+          <button
+            onClick={() => handleFeatureClick('Add New Zone')}
+            className="group relative flex-shrink-0 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-sm hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/30 active:scale-95 transition-all duration-300 shadow-lg shadow-emerald-500/20 flex items-center gap-2 overflow-hidden"
+          >
             <RiFlashlightLine size={16} />
-            Add New Zone
+            <span>Add New Zone</span>
+            <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-md uppercase font-black tracking-wider group-hover:bg-white/30 transition-colors">Preview</span>
           </button>
         </div>
 
@@ -185,11 +211,19 @@ const ZoneManager = () => {
                   {zone.status === 'active' ? 'Service available in this zone' : 'Zone temporarily inactive'}
                 </div>
                 <div className="flex gap-3">
-                  <button className="px-5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition-all text-sm font-bold flex items-center gap-2">
+                  <button
+                    onClick={() => handleFeatureClick(`Edit ${zone.name}`)}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 text-slate-700 hover:scale-[1.03] active:scale-[0.97] transition-all text-sm font-bold flex items-center gap-2 group/btn"
+                  >
                     <RiEdit2Line size={15} /> Edit
+                    <span className="text-[9px] bg-slate-200/60 px-1.5 py-0.5 rounded text-slate-500 uppercase font-bold group-hover/btn:bg-slate-300/80 transition-colors">Preview</span>
                   </button>
-                  <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:opacity-90 hover:shadow-lg hover:shadow-emerald-500/30 transition-all text-sm font-bold flex items-center gap-2">
+                  <button
+                    onClick={() => handleFeatureClick(`View ${zone.name}`)}
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:opacity-90 hover:scale-[1.03] active:scale-[0.97] hover:shadow-lg hover:shadow-emerald-500/20 transition-all text-sm font-bold flex items-center gap-2 group/btn"
+                  >
                     <RiEyeLine size={15} /> View
+                    <span className="text-[9px] bg-white/25 px-1.5 py-0.5 rounded uppercase font-bold group-hover/btn:bg-white/35 transition-colors">Preview</span>
                   </button>
                 </div>
               </div>
@@ -227,8 +261,11 @@ const ZoneManager = () => {
               </div>
               <h3 className="relative z-10 font-black text-slate-900 text-lg leading-snug mb-2">{title}</h3>
               <p className="relative z-10 text-slate-500 text-sm leading-relaxed mb-6">{desc}</p>
-              <div className="relative z-10 flex items-center gap-1.5 text-emerald-600 text-sm font-bold">
-                Preview Feature <RiArrowRightSLine size={16} className="group-hover:translate-x-1 transition-transform duration-200" />
+              <div
+                onClick={() => handleFeatureClick(title)}
+                className="relative z-10 flex items-center gap-1.5 text-emerald-600 text-sm font-bold cursor-pointer group/link hover:text-emerald-700 transition-colors"
+              >
+                Preview Feature <RiArrowRightSLine size={16} className="group-hover/link:translate-x-1 transition-transform duration-200" />
               </div>
             </div>
           ))}
@@ -252,6 +289,114 @@ const ZoneManager = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Coming Soon Modal ── */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
+            />
+
+            {/* Modal Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="relative w-full max-w-[500px] overflow-hidden rounded-[32px] border border-slate-700/60 bg-gradient-to-b from-slate-900 to-slate-950 p-8 shadow-2xl text-white z-10"
+            >
+              {/* Decorative Blur Backgrounds */}
+              <div className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-cyan-500/10 blur-2xl" />
+
+              {/* Close Button */}
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-6 right-6 p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:scale-105 active:scale-95 transition-all text-slate-400 hover:text-white"
+              >
+                <RiCloseLine size={20} />
+              </button>
+
+              {/* Header Icon & Badges */}
+              <div className="flex flex-col items-center text-center mt-4">
+                <div className="relative mb-6">
+                  {/* Glowing Animated Outer Ring */}
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                    className="absolute inset-0 rounded-3xl bg-emerald-500/20 blur-md"
+                  />
+                  <div className="relative w-18 h-18 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 border border-emerald-500/40 flex items-center justify-center shadow-lg shadow-emerald-500/10 p-4">
+                    <RiSparklingLine className="text-emerald-400 animate-pulse" size={36} />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-black uppercase tracking-widest shadow-inner">
+                    Coming Soon
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-[10px] font-black uppercase tracking-widest shadow-inner">
+                    Preview Mode
+                  </span>
+                </div>
+
+                <h3 className="text-2xl font-black tracking-tight text-white mb-2">
+                  {selectedFeature || 'Zone Management'}
+                </h3>
+                
+                <div className="w-12 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 mb-6" />
+
+                {/* Message */}
+                <div className="space-y-4 text-slate-300 font-medium px-4">
+                  <p className="text-base leading-relaxed">
+                    Zone Management features are currently under development.
+                  </p>
+                  <p className="text-sm text-slate-400 leading-relaxed border-t border-white/5 pt-4">
+                    Smart coverage and AI routing features coming soon.
+                  </p>
+                </div>
+
+                {/* Simulated Development Progress indicator */}
+                <div className="w-full mt-8 rounded-2xl bg-white/5 border border-white/10 p-5 text-left">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Feature Pipeline</span>
+                    <span className="text-xs font-bold text-emerald-400">In Active Sprint</span>
+                  </div>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span>Smart Zone Boundary Engine (Done)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      <span>Rider Distribution Simulation (Done)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-medium text-amber-400">
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      <span>AI Proximity Routing (In Development)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action button */}
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="w-full mt-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl hover:shadow-emerald-500/25 transition-all duration-200 shadow-md shadow-emerald-500/10"
+                >
+                  Understood, Continue Previewing
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
