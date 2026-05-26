@@ -8,8 +8,15 @@ import {
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import { useNotifications } from '../../../contexts/NotificationContext';
 
 const LiveTracking = () => {
+  const axiosSecure = useAxiosSecure();
+  const queryClient = useQueryClient();
+  const { socket } = useNotifications();
+
   // --- Component State ---
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('All');
@@ -20,109 +27,219 @@ const LiveTracking = () => {
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
   const [comingSoonFeature, setComingSoonFeature] = useState('');
 
-  // --- Mock Dataset ---
-  const initialDeliveries = [
-    {
-      id: 'PF-TRK-78491',
-      rider: {
-        name: 'Rahat Al-Momin',
-        phone: '+880 1712-345678',
-        status: 'Online', // Online, Busy, Offline
-        vehicle: 'Yamaha FZs V3',
-        rating: '4.9',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120'
-      },
-      status: 'In Transit', // Assigned, Picked Up, In Transit, Delayed
-      progress: 72,
-      eta: '14 mins',
-      delay: false,
-      sender: { name: 'Acme Corp BD', district: 'Gulshan, Dhaka', address: 'House 14, Road 2, Gulshan-1' },
-      receiver: { name: 'Mr. Rafiqul Islam', district: 'Dhanmondi, Dhaka', address: 'Flat 4B, House 89, Road 8A' },
-      timeline: [
-        { name: 'Created', done: true, time: '10:15 AM' },
-        { name: 'Picked Up', done: true, time: '10:45 AM' },
-        { name: 'In Transit', done: true, time: '11:00 AM' },
-        { name: 'Delivered', done: false, time: null }
-      ]
+  // --- Data Fetching Queries ---
+  const { data: parcelsData, isLoading: parcelsLoading } = useQuery({
+    queryKey: ['deliveryRequests'],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/api/delivery-control/requests');
+      return res.data?.requests || [];
     },
-    {
-      id: 'PF-TRK-90218',
-      rider: {
-        name: 'Nabil Chowdhury',
-        phone: '+880 1819-987654',
-        status: 'Busy',
-        vehicle: 'Suzuki Gixxer',
-        rating: '4.7',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120'
-      },
-      status: 'Delayed',
-      progress: 45,
-      eta: '32 mins',
-      delay: true,
-      delayReason: 'Heavy gridlock at Banani Crossing',
-      sender: { name: 'LafargeHolcim', district: 'Tejgaon, Dhaka', address: 'Plot 23, Tejgaon Industrial Area' },
-      receiver: { name: 'Dr. Tanvir Ahmed', district: 'Uttara, Dhaka', address: 'Sector 4, Road 11, House 3' },
-      timeline: [
-        { name: 'Created', done: true, time: '09:30 AM' },
-        { name: 'Picked Up', done: true, time: '10:05 AM' },
-        { name: 'In Transit', done: true, time: '10:20 AM' },
-        { name: 'Delivered', done: false, time: null }
-      ]
-    },
-    {
-      id: 'PF-TRK-11024',
-      rider: {
-        name: 'Sumon Talukder',
-        phone: '+880 1911-223344',
-        status: 'Online',
-        vehicle: 'Runner Turbo 125',
-        rating: '4.8',
-        avatar: 'https://images.unsplash.com/photo-1628157582853-a796fa650a6a?auto=format&fit=crop&q=80&w=120'
-      },
-      status: 'Picked Up',
-      progress: 25,
-      eta: '48 mins',
-      delay: false,
-      sender: { name: 'Sheba XYZ', district: 'Mirpur, Dhaka', address: 'Section 10, Block C, House 25' },
-      receiver: { name: 'Mrs. Khaleda Begum', district: 'Banani, Dhaka', address: 'House 56, Road 18, Banani' },
-      timeline: [
-        { name: 'Created', done: true, time: '10:40 AM' },
-        { name: 'Picked Up', done: true, time: '11:15 AM' },
-        { name: 'In Transit', done: false, time: null },
-        { name: 'Delivered', done: false, time: null }
-      ]
-    },
-    {
-      id: 'PF-TRK-38501',
-      rider: {
-        name: 'Mahbub Hasan',
-        phone: '+880 1673-889900',
-        status: 'Offline',
-        vehicle: 'Vespa VXL 150',
-        rating: '4.5',
-        avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=120'
-      },
-      status: 'Assigned',
-      progress: 10,
-      eta: '55 mins',
-      delay: false,
-      sender: { name: 'ProFast Hub 1', district: 'Motijheel, Dhaka', address: '28 Dilkusha C/A' },
-      receiver: { name: 'Ekushey Book Stall', district: 'Savar, Dhaka', address: 'Jahangirnagar University Campus' },
-      timeline: [
-        { name: 'Created', done: true, time: '11:20 AM' },
-        { name: 'Picked Up', done: false, time: null },
-        { name: 'In Transit', done: false, time: null },
-        { name: 'Delivered', done: false, time: null }
-      ]
-    }
-  ];
+    refetchInterval: 30000,
+    staleTime: 10000
+  });
 
-  const recentLogs = [
-    { time: '11:28 AM', trackingId: 'PF-TRK-11024', text: 'Sumon Talukder picked up parcel from Mirpur' },
-    { time: '11:15 AM', trackingId: 'PF-TRK-78491', text: 'Rahat Al-Momin entered Dhanmondi Zone' },
-    { time: '11:02 AM', trackingId: 'PF-TRK-38501', text: 'System auto-assigned Mahbub Hasan to parcel' },
-    { time: '10:50 AM', trackingId: 'PF-TRK-90218', text: 'Delayed status triggered due to Banani crossing traffic' }
-  ];
+  const { data: ridersData, isLoading: ridersLoading } = useQuery({
+    queryKey: ['ridersList'],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/riders');
+      return res.data?.riders || [];
+    },
+    refetchInterval: 30000,
+    staleTime: 10000
+  });
+
+  // --- Real-time Socket Listener ---
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['ridersList'] });
+    };
+
+    socket.on('admin_matching_update', handleUpdate);
+    socket.on('dashboard_stats_updated', handleUpdate);
+    socket.on('parcel_status_updated', handleUpdate);
+    socket.on('rider_status_changed', handleUpdate);
+    socket.on('admin_dashboard_update', handleUpdate);
+    socket.on('delivery_updated', handleUpdate);
+
+    return () => {
+      socket.off('admin_matching_update', handleUpdate);
+      socket.off('dashboard_stats_updated', handleUpdate);
+      socket.off('parcel_status_updated', handleUpdate);
+      socket.off('rider_status_changed', handleUpdate);
+      socket.off('admin_dashboard_update', handleUpdate);
+      socket.off('delivery_updated', handleUpdate);
+    };
+  }, [socket, queryClient]);
+
+  // --- Helper Utilities for Database Mapping ---
+  const getNormalizedStatus = (parcel) => {
+    const rawStatus = parcel.status || parcel.deliveryStatus || 'pending';
+    const s = rawStatus.toLowerCase().replace(/_/g, '-');
+    if (s.includes('delivered')) return 'Delivered';
+    if (s.includes('cancelled')) return 'Cancelled';
+    if (s.includes('picked') || s === 'picked-up') return 'Picked Up';
+    if (s.includes('way') || s === 'on-the-way' || s === 'in-transit') return 'In Transit';
+    if (s.includes('accept') || s.includes('assigned')) return 'Assigned';
+    return 'Pending';
+  };
+
+  const getProgressPercent = (status) => {
+    switch (status) {
+      case 'Pending': return 10;
+      case 'Assigned': return 25;
+      case 'Picked Up': return 50;
+      case 'In Transit': return 75;
+      case 'Delivered': return 100;
+      case 'Cancelled': return 0;
+      default: return 10;
+    }
+  };
+
+  const getParcelMinutes = (status) => {
+    switch (status) {
+      case 'Pending': return 60;
+      case 'Assigned': return 50;
+      case 'Picked Up': return 40;
+      case 'In Transit': return 20;
+      case 'Delayed': return 45;
+      default: return 30;
+    }
+  };
+
+  const getEtaText = (status, parcel) => {
+    if (status === 'Delivered') return 'Delivered';
+    if (status === 'Cancelled') return 'Cancelled';
+    const baseMinutes = getParcelMinutes(status);
+    const start = new Date(parcel.updatedAt || parcel.createdAt || Date.now());
+    const elapsedMinutes = Math.floor((Date.now() - start.getTime()) / (1000 * 60));
+    const remaining = Math.max(5, baseMinutes - elapsedMinutes);
+    return `${remaining} mins`;
+  };
+
+  const isDelayed = (parcel) => {
+    const rawStatus = parcel.status || parcel.deliveryStatus || 'pending';
+    const s = rawStatus.toLowerCase();
+    if (s.includes('delivered') || s.includes('cancelled')) {
+      return false;
+    }
+    const lastUpdateTime = new Date(parcel.updatedAt || parcel.createdAt || Date.now());
+    const diffMinutes = (Date.now() - lastUpdateTime.getTime()) / (1000 * 60);
+    return diffMinutes > 20;
+  };
+
+  const getMilestoneTimeline = (parcel) => {
+    const log = parcel.activityLog || [];
+    const createdLog = log.find(entry => entry.status === 'pending' || entry.message?.toLowerCase().includes('register') || entry.message?.toLowerCase().includes('create'));
+    const acceptedLog = log.find(entry => entry.status === 'accepted' || entry.status === 'driver_accepted' || entry.status === 'driver_assigned');
+    const pickedLog = log.find(entry => entry.status === 'picked-up' || entry.status === 'picked_up' || entry.message?.toLowerCase().includes('picked'));
+    const transitLog = log.find(entry => entry.status === 'on_the_way' || entry.status === 'on-the-way' || entry.message?.toLowerCase().includes('transit') || entry.message?.toLowerCase().includes('way'));
+    const deliveredLog = log.find(entry => entry.status === 'delivered' || entry.message?.toLowerCase().includes('delivered'));
+    
+    const createdTime = createdLog ? new Date(createdLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(parcel.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const acceptedTime = acceptedLog ? new Date(acceptedLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (parcel.acceptedAt ? new Date(parcel.acceptedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null);
+    const pickedTime = pickedLog ? new Date(pickedLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+    const transitTime = transitLog ? new Date(transitLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+    const deliveredTime = deliveredLog ? new Date(deliveredLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
+
+    const currentStatus = getNormalizedStatus(parcel);
+
+    return [
+      { name: 'Created', done: true, time: createdTime },
+      { name: 'Assigned', done: ['Assigned', 'Picked Up', 'In Transit', 'Delivered'].includes(currentStatus), time: acceptedTime },
+      { name: 'Picked Up', done: ['Picked Up', 'In Transit', 'Delivered'].includes(currentStatus), time: pickedTime },
+      { name: 'In Transit', done: ['In Transit', 'Delivered'].includes(currentStatus), time: transitTime },
+      { name: 'Delivered', done: currentStatus === 'Delivered', time: deliveredTime }
+    ];
+  };
+
+  const getRiderStatus = (rider) => {
+    if (!rider.isOnline) return 'Offline';
+    const workStatus = (rider.workStatus || '').toLowerCase();
+    if (workStatus === 'busy' || workStatus === 'in_delivery' || workStatus === 'in-delivery') {
+      return 'Busy';
+    }
+    return 'Online';
+  };
+
+  const formatParcel = (parcel, riders) => {
+    const trackingId = parcel.trackingId || `TRK-${parcel._id}`;
+    const riderEmail = parcel.riderEmail || parcel.assignedRider;
+    const riderObj = riders.find(r => r.email === riderEmail);
+    
+    const riderInfo = riderObj ? {
+      name: riderObj.fullName || riderObj.name || 'Rider',
+      phone: riderObj.phone || riderObj.phoneNumber || 'N/A',
+      status: getRiderStatus(riderObj),
+      vehicle: riderObj.bikeBrand || riderObj.bikeType || 'Courier Bike',
+      rating: riderObj.rating || '4.8',
+      avatar: riderObj.photo || riderObj.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120'
+    } : {
+      name: 'Awaiting Assignment',
+      phone: 'N/A',
+      status: 'Offline',
+      vehicle: 'N/A',
+      rating: '5.0',
+      avatar: 'https://images.unsplash.com/photo-1628157582853-a796fa650a6a?auto=format&fit=crop&q=80&w=120'
+    };
+
+    const currentStatus = getNormalizedStatus(parcel);
+    const progressVal = getProgressPercent(currentStatus);
+    const etaVal = getEtaText(currentStatus, parcel);
+    const delayed = isDelayed(parcel);
+
+    return {
+      _raw: parcel,
+      id: trackingId,
+      rider: riderInfo,
+      status: delayed ? 'Delayed' : currentStatus,
+      progress: progressVal,
+      eta: etaVal,
+      delay: delayed,
+      delayReason: delayed ? 'No telemetry update for more than 20 minutes' : '',
+      sender: {
+        name: parcel.senderName || 'N/A',
+        district: parcel.senderDistrict || 'N/A',
+        address: parcel.senderAddress || 'N/A'
+      },
+      receiver: {
+        name: parcel.receiverName || 'N/A',
+        district: parcel.receiverDistrict || 'N/A',
+        address: parcel.receiverAddress || 'N/A'
+      },
+      timeline: getMilestoneTimeline(parcel)
+    };
+  };
+
+  const getAverageETA = (activeParcels) => {
+    if (!activeParcels || activeParcels.length === 0) return '—';
+    const totalMins = activeParcels.reduce((sum, p) => {
+      const status = getNormalizedStatus(p);
+      return sum + getParcelMinutes(status);
+    }, 0);
+    const avg = Math.round(totalMins / activeParcels.length);
+    return `${avg} min`;
+  };
+
+  const getRecentActivities = (parcels) => {
+    const allLogs = [];
+    parcels.forEach(parcel => {
+      if (parcel.activityLog && Array.isArray(parcel.activityLog)) {
+        parcel.activityLog.forEach(log => {
+          allLogs.push({
+            time: new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            dateObj: new Date(log.timestamp),
+            trackingId: parcel.trackingId || `TRK-${parcel._id}`,
+            text: log.message || `${log.status} status updated`
+          });
+        });
+      }
+    });
+    allLogs.sort((a, b) => b.dateObj - a.dateObj);
+    return allLogs.slice(0, 5);
+  };
 
   // --- Auto-Refresh Logic ---
   useEffect(() => {
@@ -141,10 +258,13 @@ const LiveTracking = () => {
     return () => clearInterval(timer);
   }, [isAutoRefreshPaused]);
 
-  const triggerRefresh = () => {
+  const triggerRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] }),
+        queryClient.invalidateQueries({ queryKey: ['ridersList'] })
+      ]);
       toast.success('Live Tracking feeds synchronized successfully.', {
         icon: '🔄',
         style: {
@@ -156,7 +276,11 @@ const LiveTracking = () => {
           fontSize: '13px'
         }
       });
-    }, 800);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleActionClick = (featureName) => {
@@ -174,24 +298,46 @@ const LiveTracking = () => {
     });
   };
 
-  // --- Filtering Logic ---
-  const filteredDeliveries = initialDeliveries.filter((del) => {
+  // --- Data Calculations & Processing ---
+  const allParcels = parcelsData || [];
+  const allRiders = ridersData || [];
+  const approvedRiders = allRiders.filter(r => r.status?.toLowerCase() === 'approved' || r.status === 'Approved');
+
+  const activeParcels = allParcels.filter(p => {
+    const norm = getNormalizedStatus(p);
+    return norm !== 'Delivered' && norm !== 'Cancelled';
+  });
+
+  const formattedDeliveries = activeParcels.map(p => formatParcel(p, allRiders));
+
+  const filteredDeliveries = formattedDeliveries.filter((del) => {
     const matchesSearch = del.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       del.rider.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesDistrict = selectedDistrict === 'All' ||
-      del.sender.district.includes(selectedDistrict) ||
-      del.receiver.district.includes(selectedDistrict);
+      del.sender.district.toLowerCase().includes(selectedDistrict.toLowerCase()) ||
+      del.receiver.district.toLowerCase().includes(selectedDistrict.toLowerCase());
 
     return matchesSearch && matchesDistrict;
   });
 
-  // Stats calculation
-  const totalActive = initialDeliveries.length;
-  const ridersOnline = initialDeliveries.filter(d => d.rider.status === 'Online').length;
-  const ridersBusy = initialDeliveries.filter(d => d.rider.status === 'Busy').length;
-  const ridersOffline = initialDeliveries.filter(d => d.rider.status === 'Offline').length;
-  const totalDelayed = initialDeliveries.filter(d => d.delay).length;
+  const recentLogs = getRecentActivities(allParcels);
+
+  const totalActive = activeParcels.length;
+  const ridersOnline = approvedRiders.filter(r => getRiderStatus(r) === 'Online').length;
+  const ridersBusy = approvedRiders.filter(r => getRiderStatus(r) === 'Busy').length;
+  const ridersOffline = approvedRiders.filter(r => getRiderStatus(r) === 'Offline').length;
+  const totalDelayed = formattedDeliveries.filter(d => d.delay).length;
+  const avgFleetEta = getAverageETA(activeParcels);
+
+  if (parcelsLoading || ridersLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 bg-slate-50 text-slate-500">
+        <div className="w-16 h-16 border-4 border-sky-200 border-t-sky-500 rounded-full animate-spin" />
+        <p className="text-sm font-bold uppercase tracking-wider animate-pulse">Syncing Telemetry Feeds...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12 text-slate-800 bg-slate-50 min-h-screen">
@@ -279,7 +425,7 @@ const LiveTracking = () => {
           },
           {
             title: 'Average Fleet ETA',
-            value: '37 min',
+            value: avgFleetEta,
             sub: 'Target: under 45m',
             icon: RiMapPinTimeLine,
             color: 'text-indigo-500 bg-indigo-50 border-indigo-100',
@@ -358,12 +504,12 @@ const LiveTracking = () => {
             <div>
               <h3 className="font-black text-slate-900 text-base">Delayed Dispatch Alert</h3>
               <p className="text-slate-600 text-sm font-medium mt-0.5">
-                Rider <span className="font-bold text-slate-800">Nabil Chowdhury</span> reporting delays due to: <span className="italic">"Heavy gridlock at Banani Crossing"</span>.
+                Rider <span className="font-bold text-slate-800">{formattedDeliveries.find(d => d.delay)?.rider.name || 'Dispatcher'}</span> reporting delays due to: <span className="italic">"{formattedDeliveries.find(d => d.delay)?.delayReason || 'Route delay'}"</span>.
               </p>
             </div>
           </div>
           <button
-            onClick={() => handleActionClick('Rider Delay Resolution')}
+            onClick={() => handleActionClick(`Rider Delay Resolution - ${formattedDeliveries.find(d => d.delay)?.id}`)}
             className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-md shadow-amber-600/10 flex items-center gap-1.5"
           >
             Resolve Delay <RiArrowRightSLine size={14} />
@@ -399,8 +545,12 @@ const LiveTracking = () => {
                   className="group relative overflow-hidden bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm hover:border-sky-300 hover:shadow-lg transition-all duration-300"
                 >
                   {/* Subtle Top-border status accent */}
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${delivery.status === 'Delayed' ? 'bg-amber-400' :
-                      delivery.status === 'In Transit' ? 'bg-sky-400' : 'bg-emerald-400'
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${
+                      delivery.status === 'Delayed' ? 'bg-amber-400' :
+                      delivery.status === 'In Transit' ? 'bg-sky-400' :
+                      delivery.status === 'Picked Up' ? 'bg-sky-400' :
+                      delivery.status === 'Assigned' ? 'bg-teal-400' :
+                      delivery.status === 'Pending' ? 'bg-slate-400' : 'bg-emerald-400'
                     }`} />
 
                   {/* Header Row */}
@@ -419,9 +569,13 @@ const LiveTracking = () => {
 
                     <div className="flex items-center gap-3">
                       {/* Live Badge */}
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${delivery.status === 'Delayed' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                          delivery.status === 'Delayed' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
                           delivery.status === 'In Transit' ? 'bg-sky-50 text-sky-700 border-sky-200' :
-                            'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          delivery.status === 'Picked Up' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                          delivery.status === 'Assigned' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                          delivery.status === 'Pending' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                          'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}>
                         {delivery.status}
                       </span>
