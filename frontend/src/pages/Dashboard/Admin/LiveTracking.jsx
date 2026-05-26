@@ -178,11 +178,11 @@ const LiveTracking = () => {
   const filteredDeliveries = initialDeliveries.filter((del) => {
     const matchesSearch = del.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       del.rider.name.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesDistrict = selectedDistrict === 'All' || 
-      del.sender.district.includes(selectedDistrict) || 
+
+    const matchesDistrict = selectedDistrict === 'All' ||
+      del.sender.district.includes(selectedDistrict) ||
       del.receiver.district.includes(selectedDistrict);
-    
+
     return matchesSearch && matchesDistrict;
   });
 
@@ -195,7 +195,7 @@ const LiveTracking = () => {
 
   return (
     <div className="space-y-6 pb-12 text-slate-800 bg-slate-50 min-h-screen">
-      
+
       {/* ─── Hero Header & Refresh Controls ─── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div>
@@ -215,23 +215,23 @@ const LiveTracking = () => {
         {/* Auto Refresh Circle & Button */}
         <div className="flex items-center gap-4 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/60 self-start md:self-auto">
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => setIsAutoRefreshPaused(!isAutoRefreshPaused)}
               className="p-2 bg-white rounded-xl border border-slate-200/80 text-slate-500 hover:text-slate-800 hover:shadow-sm active:scale-95 transition-all"
               title={isAutoRefreshPaused ? 'Resume Auto-refresh' : 'Pause Auto-refresh'}
             >
               {isAutoRefreshPaused ? <RiPlayLine size={16} /> : <RiPauseLine size={16} />}
             </button>
-            <button 
+            <button
               onClick={triggerRefresh}
               className={`p-2 bg-white rounded-xl border border-slate-200/80 text-slate-500 hover:text-slate-800 hover:shadow-sm active:scale-95 transition-all ${isRefreshing ? 'animate-spin' : ''}`}
             >
               <RiRefreshLine size={16} />
             </button>
           </div>
-          
+
           <div className="h-6 w-[1px] bg-slate-200" />
-          
+
           <div className="flex items-center gap-2 pr-2">
             <div className="relative flex items-center justify-center w-8 h-8">
               {/* Circular progress simulated */}
@@ -336,11 +336,10 @@ const LiveTracking = () => {
                     style: { borderRadius: '10px', fontSize: '12px' }
                   });
                 }}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
-                  selectedDistrict === district
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${selectedDistrict === district
                     ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
                     : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                }`}
+                  }`}
               >
                 {district}
               </button>
@@ -363,7 +362,7 @@ const LiveTracking = () => {
               </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => handleActionClick('Rider Delay Resolution')}
             className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-md shadow-amber-600/10 flex items-center gap-1.5"
           >
@@ -374,7 +373,7 @@ const LiveTracking = () => {
 
       {/* ─── Main Content Layout ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column: Active Delivery List (7 Cols) */}
         <div className="lg:col-span-7 space-y-5">
           <div className="flex items-center justify-between">
@@ -400,10 +399,9 @@ const LiveTracking = () => {
                   className="group relative overflow-hidden bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm hover:border-sky-300 hover:shadow-lg transition-all duration-300"
                 >
                   {/* Subtle Top-border status accent */}
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${
-                    delivery.status === 'Delayed' ? 'bg-amber-400' :
-                    delivery.status === 'In Transit' ? 'bg-sky-400' : 'bg-emerald-400'
-                  }`} />
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${delivery.status === 'Delayed' ? 'bg-amber-400' :
+                      delivery.status === 'In Transit' ? 'bg-sky-400' : 'bg-emerald-400'
+                    }`} />
 
                   {/* Header Row */}
                   <div className="flex flex-wrap items-start justify-between gap-3 mb-5">
@@ -421,11 +419,10 @@ const LiveTracking = () => {
 
                     <div className="flex items-center gap-3">
                       {/* Live Badge */}
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                        delivery.status === 'Delayed' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
-                        delivery.status === 'In Transit' ? 'bg-sky-50 text-sky-700 border-sky-200' :
-                        'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${delivery.status === 'Delayed' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                          delivery.status === 'In Transit' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                            'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        }`}>
                         {delivery.status}
                       </span>
                       {/* ETA */}
@@ -459,10 +456,9 @@ const LiveTracking = () => {
                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         style={{ width: `${delivery.progress}%` }}
-                        className={`h-full rounded-full transition-all duration-700 ${
-                          delivery.status === 'Delayed' ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
-                          'bg-gradient-to-r from-sky-400 to-emerald-400'
-                        }`}
+                        className={`h-full rounded-full transition-all duration-700 ${delivery.status === 'Delayed' ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
+                            'bg-gradient-to-r from-sky-400 to-emerald-400'
+                          }`}
                       />
                     </div>
                   </div>
@@ -477,10 +473,9 @@ const LiveTracking = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-extrabold text-slate-800 leading-tight">{delivery.rider.name}</p>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            delivery.rider.status === 'Online' ? 'bg-emerald-400 animate-pulse' :
-                            delivery.rider.status === 'Busy' ? 'bg-amber-400 animate-pulse' : 'bg-slate-300'
-                          }`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${delivery.rider.status === 'Online' ? 'bg-emerald-400 animate-pulse' :
+                              delivery.rider.status === 'Busy' ? 'bg-amber-400 animate-pulse' : 'bg-slate-300'
+                            }`} />
                         </div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{delivery.rider.vehicle} · ⭐ {delivery.rider.rating}</p>
                       </div>
@@ -510,7 +505,7 @@ const LiveTracking = () => {
 
         {/* Right Column: Smart Map Preview & Activity Logs (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
-          
+
           {/* Smart Map Preview Box */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm overflow-hidden flex flex-col h-[400px] relative">
             <div className="flex items-center justify-between mb-4 shrink-0">
@@ -525,7 +520,7 @@ const LiveTracking = () => {
 
             {/* Stylized Vector Map Backdrop */}
             <div className="flex-1 bg-slate-100 rounded-2xl border border-slate-200 overflow-hidden relative p-4 flex flex-col justify-end">
-              
+
               {/* Simulated Map lines / Roads */}
               <div className="absolute inset-0 opacity-20 pointer-events-none">
                 <div className="absolute w-[2px] h-full bg-slate-600 left-1/3 top-0" />
@@ -658,7 +653,7 @@ const LiveTracking = () => {
                 <h3 className="text-xl font-black tracking-tight text-slate-900 mb-2">
                   {comingSoonFeature || 'Live GPS Tracking'}
                 </h3>
-                
+
                 <div className="w-8 h-1 rounded-full bg-sky-500 mb-5" />
 
                 <div className="space-y-3 font-medium text-slate-600">
@@ -724,7 +719,7 @@ const LiveTracking = () => {
               </div>
 
               <div className="space-y-5">
-                
+
                 {/* Visual Route Header */}
                 <div className="bg-sky-50/50 border border-sky-100 rounded-2xl p-4 flex justify-between items-center gap-4">
                   <div>
@@ -766,7 +761,7 @@ const LiveTracking = () => {
                       <h4 className="font-extrabold text-sm text-slate-900 leading-tight">{selectedDelivery.rider.name}</h4>
                       <p className="text-xs text-slate-500 font-semibold mt-0.5">{selectedDelivery.rider.vehicle} · ⭐ {selectedDelivery.rider.rating}</p>
                     </div>
-                    <a 
+                    <a
                       href={`tel:${selectedDelivery.rider.phone}`}
                       onClick={(e) => {
                         e.preventDefault();
@@ -813,7 +808,7 @@ const LiveTracking = () => {
                     <span className="font-bold">Live GPS tracking functionality is currently under development.</span> Real-time telemetry positioning and rider trajectory tracing will be integrated in the upcoming phase.
                   </div>
                 </div>
-                
+
                 {/* Footer action buttons */}
                 <div className="flex gap-3 pt-2">
                   <button
