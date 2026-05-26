@@ -137,7 +137,7 @@ const LiveTracking = () => {
     const pickedLog = log.find(entry => entry.status === 'picked-up' || entry.status === 'picked_up' || entry.message?.toLowerCase().includes('picked'));
     const transitLog = log.find(entry => entry.status === 'on_the_way' || entry.status === 'on-the-way' || entry.message?.toLowerCase().includes('transit') || entry.message?.toLowerCase().includes('way'));
     const deliveredLog = log.find(entry => entry.status === 'delivered' || entry.message?.toLowerCase().includes('delivered'));
-    
+
     const createdTime = createdLog ? new Date(createdLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(parcel.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const acceptedTime = acceptedLog ? new Date(acceptedLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (parcel.acceptedAt ? new Date(parcel.acceptedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null);
     const pickedTime = pickedLog ? new Date(pickedLog.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : null;
@@ -168,7 +168,7 @@ const LiveTracking = () => {
     const trackingId = parcel.trackingId || `TRK-${parcel._id}`;
     const riderEmail = parcel.riderEmail || parcel.assignedRider;
     const riderObj = riders.find(r => r.email === riderEmail);
-    
+
     const riderInfo = riderObj ? {
       name: riderObj.fullName || riderObj.name || 'Rider',
       phone: riderObj.phone || riderObj.phoneNumber || 'N/A',
@@ -483,8 +483,8 @@ const LiveTracking = () => {
                   });
                 }}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${selectedDistrict === district
-                    ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
-                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                  ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                   }`}
               >
                 {district}
@@ -545,12 +545,11 @@ const LiveTracking = () => {
                   className="group relative overflow-hidden bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm hover:border-sky-300 hover:shadow-lg transition-all duration-300"
                 >
                   {/* Subtle Top-border status accent */}
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${
-                      delivery.status === 'Delayed' ? 'bg-amber-400' :
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${delivery.status === 'Delayed' ? 'bg-amber-400' :
                       delivery.status === 'In Transit' ? 'bg-sky-400' :
-                      delivery.status === 'Picked Up' ? 'bg-sky-400' :
-                      delivery.status === 'Assigned' ? 'bg-teal-400' :
-                      delivery.status === 'Pending' ? 'bg-slate-400' : 'bg-emerald-400'
+                        delivery.status === 'Picked Up' ? 'bg-sky-400' :
+                          delivery.status === 'Assigned' ? 'bg-teal-400' :
+                            delivery.status === 'Pending' ? 'bg-slate-400' : 'bg-emerald-400'
                     }`} />
 
                   {/* Header Row */}
@@ -569,13 +568,12 @@ const LiveTracking = () => {
 
                     <div className="flex items-center gap-3">
                       {/* Live Badge */}
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                          delivery.status === 'Delayed' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${delivery.status === 'Delayed' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
                           delivery.status === 'In Transit' ? 'bg-sky-50 text-sky-700 border-sky-200' :
-                          delivery.status === 'Picked Up' ? 'bg-sky-50 text-sky-700 border-sky-200' :
-                          delivery.status === 'Assigned' ? 'bg-teal-50 text-teal-700 border-teal-200' :
-                          delivery.status === 'Pending' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                          'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            delivery.status === 'Picked Up' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                              delivery.status === 'Assigned' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                                delivery.status === 'Pending' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                                  'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}>
                         {delivery.status}
                       </span>
@@ -611,7 +609,7 @@ const LiveTracking = () => {
                       <div
                         style={{ width: `${delivery.progress}%` }}
                         className={`h-full rounded-full transition-all duration-700 ${delivery.status === 'Delayed' ? 'bg-gradient-to-r from-amber-400 to-orange-400' :
-                            'bg-gradient-to-r from-sky-400 to-emerald-400'
+                          'bg-gradient-to-r from-sky-400 to-emerald-400'
                           }`}
                       />
                     </div>
@@ -628,7 +626,7 @@ const LiveTracking = () => {
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-extrabold text-slate-800 leading-tight">{delivery.rider.name}</p>
                           <span className={`w-1.5 h-1.5 rounded-full ${delivery.rider.status === 'Online' ? 'bg-emerald-400 animate-pulse' :
-                              delivery.rider.status === 'Busy' ? 'bg-amber-400 animate-pulse' : 'bg-slate-300'
+                            delivery.rider.status === 'Busy' ? 'bg-amber-400 animate-pulse' : 'bg-slate-300'
                             }`} />
                         </div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{delivery.rider.vehicle} · ⭐ {delivery.rider.rating}</p>
