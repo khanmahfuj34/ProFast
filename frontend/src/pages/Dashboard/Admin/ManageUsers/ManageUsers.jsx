@@ -328,81 +328,163 @@ const ManageUsers = () => {
                         <p className="text-gray-500 text-lg">No users found</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">#</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">User</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Role</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Admin Action</th>
-                                    <th className="px-6 py-3 text-left text-sm font-semibold">Other Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {users.map((user, index) => {
-                                    const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
-                                    return (
-                                        <tr key={user._id} className="hover:bg-gray-50 transition" data-aos="fade-up" data-aos-delay={index * 50}>
+                    <div className="space-y-6">
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">#</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">User</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Role</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Admin Action</th>
+                                        <th className="px-6 py-3 text-left text-sm font-semibold">Other Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {users.map((user, index) => {
+                                        const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
+                                        return (
+                                            <tr key={user._id} className="hover:bg-gray-50 transition" data-aos="fade-up" data-aos-delay={index * 50}>
+                                                <td className="px-6 py-4">
+                                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 text-white font-bold text-sm">
+                                                        {serialNumber}
+                                                    </span>
+                                                </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 text-white font-bold text-sm">
+                                                <div className="flex items-center gap-3">
+                                                    {user.photoURL ? (
+                                                        <img 
+                                                            src={user.photoURL} 
+                                                            alt={user.displayName}
+                                                            className="w-10 h-10 rounded-full object-cover border-2 border-blue-300 shadow-md"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center justify-center text-white font-bold">
+                                                            {user.displayName?.charAt(0)?.toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div className="font-semibold text-gray-900">{user.displayName || 'Unknown'}</div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-700">{user.email}</td>
+                                            <td className="px-6 py-4">
+                                                {getRoleBadge(user.role)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {user.role === 'admin' ? (
+                                                    <button
+                                                        onClick={() => handleRemoveAdmin(user._id, user.email, user.displayName || 'User')}
+                                                        className="btn btn-sm btn-error gap-2 text-white"
+                                                        title="Remove Admin Access"
+                                                    >
+                                                        ❌ Remove Admin
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleChangeRole(user._id, user.email, user.displayName || 'User', user.role)}
+                                                        className="btn btn-sm btn-ghost gap-2 text-blue-600 hover:bg-blue-50"
+                                                        title="Make Admin"
+                                                    >
+                                                        👑 Make Admin
+                                                    </button>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => handleOtherActions(user)}
+                                                    className="btn btn-sm btn-primary gap-2"
+                                                    title="More Actions"
+                                                >
+                                                    ⚙️ Actions
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Cards View */}
+                        <div className="block lg:hidden space-y-4">
+                            {users.map((user, index) => {
+                                const serialNumber = (currentPage - 1) * itemsPerPage + index + 1;
+                                return (
+                                    <div key={user._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 space-y-4">
+                                        <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                                            <div className="flex items-center gap-2">
+                                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 text-white text-xs font-bold">
                                                     {serialNumber}
                                                 </span>
-                                            </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                {user.photoURL ? (
-                                                    <img 
-                                                        src={user.photoURL} 
-                                                        alt={user.displayName}
-                                                        className="w-10 h-10 rounded-full object-cover border-2 border-blue-300 shadow-md"
-                                                    />
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center justify-center text-white font-bold">
-                                                        {user.displayName?.charAt(0)?.toUpperCase()}
-                                                    </div>
-                                                )}
-                                                <div className="font-semibold text-gray-900">{user.displayName || 'Unknown'}</div>
+                                                <span className="font-semibold text-slate-500 text-xs">User Profile</span>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-gray-700">{user.email}</td>
-                                        <td className="px-6 py-4">
-                                            {getRoleBadge(user.role)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {user.role === 'admin' ? (
-                                                <button
-                                                    onClick={() => handleRemoveAdmin(user._id, user.email, user.displayName || 'User')}
-                                                    className="btn btn-sm btn-error gap-2 text-white"
-                                                    title="Remove Admin Access"
-                                                >
-                                                    ❌ Remove Admin
-                                                </button>
+                                            <span className="text-xs text-slate-500">{new Date(user.createdAt).toLocaleDateString()}</span>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            {user.photoURL ? (
+                                                <img 
+                                                    src={user.photoURL} 
+                                                    alt={user.displayName}
+                                                    className="w-12 h-12 rounded-full object-cover border-2 border-blue-300 shadow-md"
+                                                />
                                             ) : (
-                                                <button
-                                                    onClick={() => handleChangeRole(user._id, user.email, user.displayName || 'User', user.role)}
-                                                    className="btn btn-sm btn-ghost gap-2 text-blue-600 hover:bg-blue-50"
-                                                    title="Make Admin"
-                                                >
-                                                    👑 Make Admin
-                                                </button>
+                                                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center justify-center text-white font-bold">
+                                                    {user.displayName?.charAt(0)?.toUpperCase()}
+                                                </div>
                                             )}
-                                        </td>
-                                        <td className="px-6 py-4">
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold text-slate-800 text-sm truncate">{user.displayName || 'Unknown'}</h4>
+                                                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl text-xs">
+                                            <div>
+                                                <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Role Status</p>
+                                                <div className="mt-1">
+                                                    {getRoleBadge(user.role)}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px] text-right">Access Controls</p>
+                                                <div className="mt-1">
+                                                    {user.role === 'admin' ? (
+                                                        <button
+                                                            onClick={() => handleRemoveAdmin(user._id, user.email, user.displayName || 'User')}
+                                                            className="btn btn-xs btn-error text-white border-none text-[10px]"
+                                                            title="Remove Admin Access"
+                                                        >
+                                                            ❌ Remove Admin
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleChangeRole(user._id, user.email, user.displayName || 'User', user.role)}
+                                                            className="btn btn-xs btn-outline btn-primary text-[10px]"
+                                                            title="Make Admin"
+                                                        >
+                                                            👑 Make Admin
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                                             <button
                                                 onClick={() => handleOtherActions(user)}
-                                                className="btn btn-sm btn-primary gap-2"
+                                                className="btn btn-xs btn-primary gap-2"
                                                 title="More Actions"
                                             >
                                                 ⚙️ Actions
                                             </button>
-                                        </td>
-                                    </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
                 

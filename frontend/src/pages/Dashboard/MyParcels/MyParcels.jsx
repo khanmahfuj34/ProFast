@@ -258,32 +258,48 @@ const MyParcels = () => {
                 <button
                     onClick={() => refetch()}
                     disabled={isFetching}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold text-sm hover:bg-lime-50 hover:border-lime-300 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-semibold transition disabled:opacity-50"
                 >
-                    <FiRefreshCw className={`text-lime-600 ${isFetching ? 'animate-spin' : ''}`} />
+                    <FiRefreshCw className={`text-sm ${isFetching ? 'animate-spin' : ''}`} />
                     {isFetching ? 'Refreshing…' : 'Refresh'}
                 </button>
             </div>
 
             {/* ── Stats Cards ── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                     icon={<FiPackage className="text-blue-500 text-xl" />}
-                    label="Total Parcels" value={stats.total}
-                    sub="All time parcels" accent="border-blue-200" />
+                    label="Total Parcels"
+                    value={stats.total}
+                    sub="All time parcels"
+                    accent="border-blue-200"
+                />
+
                 <StatCard
                     icon={<FiFilter className="text-amber-500 text-xl" />}
-                    label="Pending Parcels" value={stats.pending}
-                    sub="Waiting for delivery" accent="border-amber-200" />
+                    label="Pending Parcels"
+                    value={stats.pending}
+                    sub="Waiting for delivery"
+                    accent="border-amber-200"
+                />
+
                 <StatCard
                     icon={<FiDownload className="text-lime-500 text-xl" />}
-                    label="Delivered Parcels" value={stats.delivered}
-                    sub="Successfully delivered" accent="border-lime-200" />
+                    label="Delivered Parcels"
+                    value={stats.delivered}
+                    sub="Successfully delivered"
+                    accent="border-lime-200"
+                />
+
                 <StatCard
                     icon={<FiXCircle className="text-red-400 text-xl" />}
-                    label="Cancelled Parcels" value={stats.cancelled}
-                    sub="Cancelled parcels" accent="border-red-200" />
+                    label="Cancelled Parcels"
+                    value={stats.cancelled}
+                    sub="Cancelled parcels"
+                    accent="border-red-200"
+                />
             </div>
+
 
             {/* ── Filters ── */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
@@ -353,150 +369,251 @@ const MyParcels = () => {
                 </div>
             )}
 
-            {/* ── Table ── */}
+            {/* ── Table & Cards ── */}
             {filtered.length > 0 && (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-                                    <th className="px-4 py-4 text-left font-semibold text-slate-300 w-10">#</th>
-                                    <th className="px-4 py-4 text-left font-semibold">Parcel Name</th>
-                                    <th className="px-4 py-4 text-left font-semibold">Tracking ID</th>
-                                    <th className="px-4 py-4 text-left font-semibold">Receiver Info</th>
-                                    <th className="px-4 py-4 text-left font-semibold">Delivery Status</th>
-                                    <th className="px-4 py-4 text-left font-semibold">Payment</th>
-                                    <th className="px-4 py-4 text-right font-semibold">Cost</th>
-                                    <th className="px-4 py-4 text-left font-semibold">Date</th>
-                                    <th className="px-4 py-4 text-center font-semibold">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {paginated.map((parcel, i) => {
-                                    const payStatus = parcel.paymentStatus || 'unpaid';
-                                    const isPaid = payStatus === 'paid';
-                                    const delivStatus = parcel.deliveryStatus || 'awaiting-payment';
-                                    const isCancellable = !['delivered', 'cancelled', 'on-the-way'].includes(delivStatus);
-                                    const serial = (currentPage - 1) * PAGE_SIZE + i + 1;
+                <div className="space-y-4">
+                    {/* Desktop Table View (Hidden on mobile/tablet) */}
+                    <div className="hidden lg:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
+                                        <th className="px-4 py-4 text-left font-semibold text-slate-300 w-10">#</th>
+                                        <th className="px-4 py-4 text-left font-semibold">Parcel Name</th>
+                                        <th className="px-4 py-4 text-left font-semibold">Tracking ID</th>
+                                        <th className="px-4 py-4 text-left font-semibold">Receiver Info</th>
+                                        <th className="px-4 py-4 text-left font-semibold">Delivery Status</th>
+                                        <th className="px-4 py-4 text-left font-semibold">Payment</th>
+                                        <th className="px-4 py-4 text-right font-semibold">Cost</th>
+                                        <th className="px-4 py-4 text-left font-semibold">Date</th>
+                                        <th className="px-4 py-4 text-center font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {paginated.map((parcel, i) => {
+                                        const payStatus = parcel.paymentStatus || 'unpaid';
+                                        const isPaid = payStatus === 'paid';
+                                        const delivStatus = parcel.deliveryStatus || 'awaiting-payment';
+                                        const isCancellable = !['delivered', 'cancelled', 'on-the-way'].includes(delivStatus);
+                                        const serial = (currentPage - 1) * PAGE_SIZE + i + 1;
 
-                                    return (
-                                        <tr key={parcel._id || i}
-                                            className="border-b border-slate-100 hover:bg-lime-50/40 transition-colors group">
-                                            {/* Serial */}
-                                            <td className="px-4 py-4 text-slate-400 font-mono text-xs">{serial}</td>
-
-                                            {/* Parcel Name */}
-                                            <td className="px-4 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-lime-100 flex items-center justify-center flex-shrink-0">
-                                                        <FiPackage className="text-lime-600 text-sm" />
+                                        return (
+                                            <tr key={parcel._id || i}
+                                                className="border-b border-slate-100 hover:bg-lime-50/40 transition-colors group">
+                                                <td className="px-4 py-4 text-slate-400 font-mono text-xs">{serial}</td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-lime-100 flex items-center justify-center flex-shrink-0">
+                                                            <FiPackage className="text-lime-600 text-sm" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-semibold text-slate-800 leading-tight">{parcel.parcelName || 'N/A'}</p>
+                                                            <p className="text-xs text-slate-400">{fmt(parcel.parcelType)}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-semibold text-slate-800 leading-tight">{parcel.parcelName || 'N/A'}</p>
-                                                        <p className="text-xs text-slate-400">{fmt(parcel.parcelType)}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Tracking ID */}
-                                            <td className="px-4 py-4">
-                                                <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-lg">
-                                                    {parcel.trackingId || '—'}
-                                                </span>
-                                            </td>
-
-                                            {/* Receiver Info */}
-                                            <td className="px-4 py-4">
-                                                <p className="font-semibold text-slate-800 text-xs">{parcel.receiverName || '—'}</p>
-                                                <p className="text-xs text-slate-400">{parcel.receiverPhone || '—'}</p>
-                                            </td>
-
-                                            {/* Delivery Status */}
-                                            <td className="px-4 py-4">
-                                                <StatusBadge status={delivStatus} />
-                                            </td>
-
-                                            {/* Payment */}
-                                            <td className="px-4 py-4">
-                                                {isPaid ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-lime-100 text-lime-700 rounded-full text-xs font-semibold">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-lime-500" /> Paid
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-lg">
+                                                        {parcel.trackingId || '—'}
                                                     </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 rounded-full text-xs font-semibold">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Unpaid
-                                                    </span>
-                                                )}
-                                            </td>
-
-                                            {/* Cost */}
-                                            <td className="px-4 py-4 text-right">
-                                                <span className="font-bold text-slate-800">৳{parcel.totalPrice ?? 0}</span>
-                                            </td>
-
-                                            {/* Date */}
-                                            <td className="px-4 py-4 text-xs text-slate-500 whitespace-nowrap">
-                                                {fmtDate(parcel.createdAt)}
-                                            </td>
-
-                                            {/* Actions */}
-                                            <td className="px-4 py-4">
-                                                <div className="flex items-center justify-center gap-1.5">
-                                                    {/* View Details */}
-                                                    <button
-                                                        onClick={() => setSelectedParcel(parcel)}
-                                                        title="View Details"
-                                                        className="w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition">
-                                                        <FiEye className="text-sm" />
-                                                    </button>
-
-                                                    {/* Track Parcel */}
-                                                    <button
-                                                        onClick={() => {
-                                                            if (parcel.trackingId) {
-                                                                navigate(`/dashboard/track-parcel?id=${parcel.trackingId}`);
-                                                            } else {
-                                                                Swal.fire('No Tracking ID', 'This parcel does not have a tracking ID yet. Please complete payment first.', 'info');
-                                                            }
-                                                        }}
-                                                        title="Track Parcel"
-                                                        className="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition">
-                                                        <FiMapPin className="text-sm" />
-                                                    </button>
-
-                                                    {/* Pay Now / Download Invoice */}
-                                                    {!isPaid ? (
-                                                        <button
-                                                            onClick={() => handlePayment(parcel)}
-                                                            title="Pay Now"
-                                                            className="w-8 h-8 rounded-lg bg-lime-50 hover:bg-lime-100 text-lime-700 flex items-center justify-center transition">
-                                                            <FiDollarSign className="text-sm" />
-                                                        </button>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <p className="font-semibold text-slate-800 text-xs">{parcel.receiverName || '—'}</p>
+                                                    <p className="text-xs text-slate-400">{parcel.receiverPhone || '—'}</p>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <StatusBadge status={delivStatus} />
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    {isPaid ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-lime-100 text-lime-700 rounded-full text-xs font-semibold">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-lime-500" /> Paid
+                                                        </span>
                                                     ) : (
-                                                        <button
-                                                            onClick={() => handleDownloadInvoice(parcel)}
-                                                            title="Download Invoice"
-                                                            className="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center transition">
-                                                            <FiDownload className="text-sm" />
-                                                        </button>
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 rounded-full text-xs font-semibold">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Unpaid
+                                                        </span>
                                                     )}
+                                                </td>
+                                                <td className="px-4 py-4 text-right">
+                                                    <span className="font-bold text-slate-800">৳{parcel.totalPrice ?? 0}</span>
+                                                </td>
+                                                <td className="px-4 py-4 text-xs text-slate-500 whitespace-nowrap">
+                                                    {fmtDate(parcel.createdAt)}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <button
+                                                            onClick={() => setSelectedParcel(parcel)}
+                                                            title="View Details"
+                                                            className="w-8 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition cursor-pointer">
+                                                            <FiEye className="text-sm" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (parcel.trackingId) {
+                                                                    navigate(`/dashboard/track-parcel?id=${parcel.trackingId}`);
+                                                                } else {
+                                                                    Swal.fire('No Tracking ID', 'This parcel does not have a tracking ID yet. Please complete payment first.', 'info');
+                                                                }
+                                                            }}
+                                                            title="Track Parcel"
+                                                            className="w-8 h-8 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 flex items-center justify-center transition cursor-pointer">
+                                                            <FiMapPin className="text-sm" />
+                                                        </button>
+                                                        {!isPaid ? (
+                                                            <button
+                                                                onClick={() => handlePayment(parcel)}
+                                                                title="Pay Now"
+                                                                className="w-8 h-8 rounded-lg bg-lime-50 hover:bg-lime-100 text-lime-700 flex items-center justify-center transition cursor-pointer">
+                                                                <FiDollarSign className="text-sm" />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleDownloadInvoice(parcel)}
+                                                                title="Download Invoice"
+                                                                className="w-8 h-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center transition cursor-pointer">
+                                                                <FiDownload className="text-sm" />
+                                                            </button>
+                                                        )}
+                                                        {!isAdmin && isCancellable && (
+                                                            <button
+                                                                onClick={() => handleCancel(parcel)}
+                                                                title="Cancel Parcel"
+                                                                className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition cursor-pointer">
+                                                                <FiXCircle className="text-sm" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-                                                    {/* Cancel */}
-                                                    {!isAdmin && isCancellable && (
-                                                        <button
-                                                            onClick={() => handleCancel(parcel)}
-                                                            title="Cancel Parcel"
-                                                            className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center transition">
-                                                            <FiXCircle className="text-sm" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                    {/* Mobile/Tablet Stacked Cards View */}
+                    <div className="block lg:hidden space-y-4">
+                        {paginated.map((parcel, i) => {
+                            const payStatus = parcel.paymentStatus || 'unpaid';
+                            const isPaid = payStatus === 'paid';
+                            const delivStatus = parcel.deliveryStatus || 'awaiting-payment';
+                            const isCancellable = !['delivered', 'cancelled', 'on-the-way'].includes(delivStatus);
+                            const serial = (currentPage - 1) * PAGE_SIZE + i + 1;
+
+                            return (
+                                <div key={parcel._id || i} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                    <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-lime-100 text-lime-800 text-xs font-bold">
+                                                {serial}
+                                            </span>
+                                            <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                                                {parcel.trackingId || 'No Tracking ID'}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs text-slate-500">{fmtDate(parcel.createdAt)}</span>
+                                    </div>
+
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-lime-50 flex items-center justify-center shrink-0 border border-lime-100">
+                                            <FiPackage className="text-lime-600 text-lg" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-bold text-slate-800 text-sm truncate">{parcel.parcelName || 'N/A'}</h4>
+                                            <p className="text-xs text-slate-400 mt-0.5">{fmt(parcel.parcelType)}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl text-xs">
+                                        <div>
+                                            <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Receiver</p>
+                                            <p className="font-bold text-slate-700 mt-0.5 truncate">{parcel.receiverName || '—'}</p>
+                                            <p className="text-slate-500 mt-0.5">{parcel.receiverPhone || '—'}</p>
+                                        </div>
+                                        <div className="border-l border-slate-200 pl-3">
+                                            <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Delivery Status</p>
+                                            <div className="mt-1">
+                                                <StatusBadge status={delivStatus} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                                        <div>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Price</p>
+                                            <p className="text-lg font-black text-slate-800 mt-0.5">৳{parcel.totalPrice ?? 0}</p>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            {isPaid ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-lime-100 text-lime-700 rounded-full text-[10px] font-bold">
+                                                    Paid
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold">
+                                                    Unpaid
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons Row */}
+                                    <div className="flex flex-wrap justify-end gap-2 pt-2">
+                                        <button
+                                            onClick={() => setSelectedParcel(parcel)}
+                                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer border-none"
+                                            title="View Details"
+                                        >
+                                            <FiEye size={14} /> Details
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                if (parcel.trackingId) {
+                                                    navigate(`/dashboard/track-parcel?id=${parcel.trackingId}`);
+                                                } else {
+                                                    Swal.fire('No Tracking ID', 'This parcel does not have a tracking ID yet. Please complete payment first.', 'info');
+                                                }
+                                            }}
+                                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer border-none"
+                                            title="Track Parcel"
+                                        >
+                                            <FiMapPin size={14} /> Track
+                                        </button>
+
+                                        {!isPaid ? (
+                                            <button
+                                                onClick={() => handlePayment(parcel)}
+                                                className="px-3 py-1.5 bg-lime-50 hover:bg-lime-100 text-lime-700 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer border-none"
+                                                title="Pay Now"
+                                            >
+                                                <FiDollarSign size={14} /> Pay
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleDownloadInvoice(parcel)}
+                                                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer border-none"
+                                                title="Invoice"
+                                            >
+                                                <FiDownload size={14} /> Invoice
+                                            </button>
+                                        )}
+
+                                        {!isAdmin && isCancellable && (
+                                            <button
+                                                onClick={() => handleCancel(parcel)}
+                                                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-500 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer border-none"
+                                                title="Cancel Parcel"
+                                            >
+                                                <FiXCircle size={14} /> Cancel
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
 
                     {/* ── Pagination ── */}

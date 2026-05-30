@@ -42,112 +42,199 @@ const RequestTable = ({ requests, isLoading, onViewDetails }) => {
     );
   };
   return (
-    <div className="w-full overflow-hidden bg-white rounded-xl border border-slate-200">
-      <div className="overflow-x-auto overflow-y-auto max-h-[65vh] min-h-96 scrollbar-thin scrollbar-thumb-slate-300">
-        <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
-          <thead className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
-            <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
-              <th className="py-4 px-5 text-left whitespace-nowrap w-[12%]">Parcel ID</th>
-              <th className="py-4 px-5 text-left whitespace-nowrap w-[16%]">Sender</th>
-              <th className="py-4 px-5 text-left whitespace-nowrap w-[16%]">Receiver</th>
-              <th className="py-4 px-5 text-left whitespace-nowrap w-[16%]">Assigned</th>
-              <th className="py-4 px-5 text-center whitespace-nowrap w-[14%]">Status</th>
-              <th className="py-4 px-5 text-center whitespace-nowrap w-[12%]">Delivery Date</th>
-              <th className="py-4 px-5 text-center whitespace-nowrap w-[8%]">Payment</th>
-              <th className="py-4 px-5 text-center whitespace-nowrap w-[6%]">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {requests.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="p-8 text-center text-slate-500">
-                  No requests found matching your filters.
-                </td>
+    <div className="w-full space-y-4">
+
+      {/* ── Desktop Table View ── */}
+      <div className="hidden lg:block overflow-hidden bg-white rounded-xl border border-slate-200">
+        <div className="overflow-x-auto overflow-y-auto max-h-[65vh] min-h-96 scrollbar-thin scrollbar-thumb-slate-300">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1000px]">
+            <thead className="bg-slate-50/80 sticky top-0 z-10 backdrop-blur-sm">
+              <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                <th className="py-4 px-5 text-left whitespace-nowrap w-[12%]">Parcel ID</th>
+                <th className="py-4 px-5 text-left whitespace-nowrap w-[16%]">Sender</th>
+                <th className="py-4 px-5 text-left whitespace-nowrap w-[16%]">Receiver</th>
+                <th className="py-4 px-5 text-left whitespace-nowrap w-[16%]">Assigned</th>
+                <th className="py-4 px-5 text-center whitespace-nowrap w-[14%]">Status</th>
+                <th className="py-4 px-5 text-center whitespace-nowrap w-[12%]">Delivery Date</th>
+                <th className="py-4 px-5 text-center whitespace-nowrap w-[8%]">Payment</th>
+                <th className="py-4 px-5 text-center whitespace-nowrap w-[6%]">Action</th>
               </tr>
-            ) : (
-              requests.map((req, index) => (
-                <motion.tr
-                  key={req.trackingId || req._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="hover:bg-slate-50/80 transition-colors group cursor-default"
-                >
-                  <td className="py-4 px-5 align-middle">
-                    <div className="font-bold text-slate-900 text-sm whitespace-nowrap">{req.trackingId}</div>
-                    <div className="text-slate-600 text-xs font-medium mt-1 truncate">{req.parcelName || 'Unnamed Parcel'}</div>
-                    <div className="text-slate-400 text-[11px] font-medium mt-0.5 whitespace-nowrap">{req.parcelWeight} kg {req.deliveryFee ? `· ৳${req.deliveryFee}` : ''}</div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {requests.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="p-8 text-center text-slate-500">
+                    No requests found matching your filters.
                   </td>
-                  <td className="py-4 px-5 align-middle">
-                    <div className="text-sm font-bold text-slate-800 whitespace-nowrap">{req.senderName}</div>
-                    <div className="text-xs font-medium text-slate-500 mt-1 whitespace-nowrap">{req.senderPhone}</div>
-                    <div className="text-[11px] font-medium text-slate-400 mt-0.5 whitespace-nowrap truncate">{req.senderDistrict}</div>
-                  </td>
-                  <td className="py-4 px-5 align-middle">
-                    <div className="text-sm font-bold text-slate-800 whitespace-nowrap">{req.receiverName}</div>
-                    <div className="text-xs font-medium text-slate-500 mt-1 whitespace-nowrap">{req.receiverPhone}</div>
-                    <div className="text-[11px] font-medium text-slate-400 mt-0.5 whitespace-nowrap truncate">{req.receiverDistrict}</div>
-                  </td>
-                  <td className="py-4 px-5 align-middle">
-                    {req.riderEmail || req.assignedRider ? (
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                          {req.assignedRiderPhoto ? (
-                            <img src={req.assignedRiderPhoto} alt="Rider" className="w-full h-full object-cover rounded-full" />
-                          ) : (
-                            <MdPerson className="text-slate-400 w-4 h-4" />
-                          )}
+                </tr>
+              ) : (
+                requests.map((req, index) => (
+                  <motion.tr
+                    key={req.trackingId || req._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                    className="hover:bg-slate-50/80 transition-colors group cursor-default"
+                  >
+                    <td className="py-4 px-5 align-middle">
+                      <div className="font-bold text-slate-900 text-sm whitespace-nowrap">{req.trackingId}</div>
+                      <div className="text-slate-600 text-xs font-medium mt-1 truncate">{req.parcelName || 'Unnamed Parcel'}</div>
+                      <div className="text-slate-400 text-[11px] font-medium mt-0.5 whitespace-nowrap">{req.parcelWeight} kg {req.deliveryFee ? `· ৳${req.deliveryFee}` : ''}</div>
+                    </td>
+                    <td className="py-4 px-5 align-middle">
+                      <div className="text-sm font-bold text-slate-800 whitespace-nowrap">{req.senderName}</div>
+                      <div className="text-xs font-medium text-slate-500 mt-1 whitespace-nowrap">{req.senderPhone}</div>
+                      <div className="text-[11px] font-medium text-slate-400 mt-0.5 whitespace-nowrap truncate">{req.senderDistrict}</div>
+                    </td>
+                    <td className="py-4 px-5 align-middle">
+                      <div className="text-sm font-bold text-slate-800 whitespace-nowrap">{req.receiverName}</div>
+                      <div className="text-xs font-medium text-slate-500 mt-1 whitespace-nowrap">{req.receiverPhone}</div>
+                      <div className="text-[11px] font-medium text-slate-400 mt-0.5 whitespace-nowrap truncate">{req.receiverDistrict}</div>
+                    </td>
+                    <td className="py-4 px-5 align-middle">
+                      {req.riderEmail || req.assignedRider ? (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                            {req.assignedRiderPhoto ? (
+                              <img src={req.assignedRiderPhoto} alt="Rider" className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                              <MdPerson className="text-slate-400 w-4 h-4" />
+                            )}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-slate-800 whitespace-nowrap">{req.riderName || req.assignedRiderName || 'Rider'}</span>
+                            <span className="text-[11px] font-medium text-slate-500 mt-0.5 whitespace-nowrap truncate">{req.riderPhone || req.assignedRiderPhone || req.riderEmail}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-slate-800 whitespace-nowrap">{req.riderName || req.assignedRiderName || 'Rider'}</span>
-                          <span className="text-[11px] font-medium text-slate-500 mt-0.5 whitespace-nowrap truncate">{req.riderPhone || req.assignedRiderPhone || req.riderEmail}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center text-slate-400 text-[10px] tracking-widest uppercase font-bold whitespace-nowrap px-2.5 py-1.5 bg-slate-50 rounded-md border border-slate-200">— Not assigned</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-5 align-middle text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      {getStatusBadge(req?.deliveryStatus || req?.status)}
-                      {(req?.deliveryStatus || req?.status) === 'pending' && (
-                        <div className="flex items-center justify-center gap-1 text-[10px] uppercase font-bold tracking-wider text-red-500 mt-1.5 whitespace-nowrap">
-                          <MdAccessTime className="w-3 h-3" /> Waiting...
-                        </div>
+                      ) : (
+                        <span className="inline-flex items-center text-slate-400 text-[10px] tracking-widest uppercase font-bold whitespace-nowrap px-2.5 py-1.5 bg-slate-50 rounded-md border border-slate-200">— Not assigned</span>
                       )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-5 align-middle text-center">
-                    {((req?.deliveryStatus || req?.status) === 'delivered' && req.deliveredAt) ? (
-                      formatDate(req.deliveredAt)
-                    ) : (
-                      <span className="text-slate-400 font-medium">—</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-5 text-center align-middle">
-                    {(req.paymentStatus || '').toLowerCase() === 'paid' ? (
-                      <span className="inline-flex px-2.5 py-1 font-bold text-[10px] uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200/50 rounded-md shadow-sm">Paid</span>
-                    ) : (
-                      <span className="inline-flex px-2.5 py-1 font-bold text-[10px] uppercase tracking-widest text-red-700 bg-red-50 border border-red-200/50 rounded-md shadow-sm">Unpaid</span>
-                    )}
-                  </td>
-                  <td className="py-4 px-5 text-center align-middle">
-                    <div className="flex justify-center">
-                      <button 
-                        onClick={() => onViewDetails && onViewDetails(req)}
-                        className="p-2 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200 transition-all duration-200 shadow-sm"
-                        title="View full details"
-                      >
-                        <MdRemoveRedEye className="w-[18px] h-[18px]" />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    </td>
+                    <td className="py-4 px-5 align-middle text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        {getStatusBadge(req?.deliveryStatus || req?.status)}
+                        {(req?.deliveryStatus || req?.status) === 'pending' && (
+                          <div className="flex items-center justify-center gap-1 text-[10px] uppercase font-bold tracking-wider text-red-500 mt-1.5 whitespace-nowrap">
+                            <MdAccessTime className="w-3 h-3" /> Waiting...
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-5 align-middle text-center">
+                      {((req?.deliveryStatus || req?.status) === 'delivered' && req.deliveredAt) ? (
+                        formatDate(req.deliveredAt)
+                      ) : (
+                        <span className="text-slate-400 font-medium">—</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-5 text-center align-middle">
+                      {(req.paymentStatus || '').toLowerCase() === 'paid' ? (
+                        <span className="inline-flex px-2.5 py-1 font-bold text-[10px] uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-200/50 rounded-md shadow-sm">Paid</span>
+                      ) : (
+                        <span className="inline-flex px-2.5 py-1 font-bold text-[10px] uppercase tracking-widest text-red-700 bg-red-50 border border-red-200/50 rounded-md shadow-sm">Unpaid</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-5 text-center align-middle">
+                      <div className="flex justify-center">
+                        <button 
+                          onClick={() => onViewDetails && onViewDetails(req)}
+                          className="p-2 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200 transition-all duration-200 shadow-sm"
+                          title="View full details"
+                        >
+                          <MdRemoveRedEye className="w-[18px] h-[18px]" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* ── Mobile / Tablet Card View ── */}
+      <div className="block lg:hidden space-y-4">
+        {requests.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-slate-500 text-sm">
+            No requests found matching your filters.
+          </div>
+        ) : (
+          requests.map((req, index) => (
+            <motion.div
+              key={req.trackingId || req._id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.03 }}
+              className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4"
+            >
+              {/* Card Header */}
+              <div className="flex justify-between items-start pb-3 border-b border-slate-100">
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-900 text-sm font-mono">{req.trackingId}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">{req.parcelName || 'Unnamed Parcel'}</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">{req.parcelWeight} kg {req.deliveryFee ? `· ৳${req.deliveryFee}` : ''}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 shrink-0 ml-3">
+                  {getStatusBadge(req?.deliveryStatus || req?.status)}
+                  {(req.paymentStatus || '').toLowerCase() === 'paid' ? (
+                    <span className="inline-flex px-2 py-0.5 font-bold text-[10px] uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/50 rounded-md">Paid</span>
+                  ) : (
+                    <span className="inline-flex px-2 py-0.5 font-bold text-[10px] uppercase tracking-wider text-red-700 bg-red-50 border border-red-200/50 rounded-md">Unpaid</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Sender / Receiver */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl text-xs">
+                <div className="space-y-0.5">
+                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Sender</p>
+                  <p className="font-bold text-slate-800">{req.senderName || '—'}</p>
+                  <p className="text-slate-500">{req.senderPhone || '—'}</p>
+                  <p className="text-slate-400">{req.senderDistrict || '—'}</p>
+                </div>
+                <div className="sm:border-l sm:border-slate-200 sm:pl-3 space-y-0.5">
+                  <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Receiver</p>
+                  <p className="font-bold text-slate-800">{req.receiverName || '—'}</p>
+                  <p className="text-slate-500">{req.receiverPhone || '—'}</p>
+                  <p className="text-slate-400">{req.receiverDistrict || '—'}</p>
+                </div>
+              </div>
+
+              {/* Assigned Rider + Action */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-2">
+                  {req.riderEmail || req.assignedRider ? (
+                    <>
+                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 overflow-hidden">
+                        {req.assignedRiderPhoto ? (
+                          <img src={req.assignedRiderPhoto} alt="Rider" className="w-full h-full object-cover" />
+                        ) : (
+                          <MdPerson className="text-slate-400 w-4 h-4" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">{req.riderName || req.assignedRiderName || 'Rider'}</p>
+                        <p className="text-[10px] text-slate-400">{req.riderPhone || req.assignedRiderPhone || req.riderEmail}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Not assigned</span>
+                  )}
+                </div>
+                <button 
+                  onClick={() => onViewDetails && onViewDetails(req)}
+                  className="px-3 py-2 flex items-center gap-1.5 rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200 transition-all text-xs font-bold cursor-pointer"
+                  title="View full details"
+                >
+                  <MdRemoveRedEye className="w-4 h-4" /> View
+                </button>
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+
     </div>
   );
 };

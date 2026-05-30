@@ -255,134 +255,231 @@ const ApproveRiders = () => {
                     </div>
                 </div>
 
-                {/* ─── Data Table ─── */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="overflow-x-auto overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-slate-300">
-                        <table className="w-full text-left border-collapse table-fixed min-w-[1050px]">
-                            <thead className="bg-slate-50/90 sticky top-0 z-10 backdrop-blur-sm">
-                                <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
-                                    <th className="py-4 px-5 text-left w-[25%]">Rider Profile</th>
-                                    <th className="py-4 px-5 text-left w-[20%]">Contact Info</th>
-                                    <th className="py-4 px-5 text-left w-[15%]">Region</th>
-                                    <th className="py-4 px-5 text-center w-[15%]">Approval Status</th>
-                                    <th className="py-4 px-5 text-center w-[12%]">Work Status</th>
-                                    <th className="py-4 px-5 text-center w-[13%]">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan="6" className="p-12 text-center">
-                                            <div className="w-8 h-8 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-3"></div>
-                                            <p className="text-sm font-medium text-slate-500">Loading riders...</p>
-                                        </td>
-                                    </tr>
-                                ) : filteredRiders.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="p-12 text-center">
-                                            <MdDirectionsBike className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                            <p className="text-base font-bold text-slate-600">No riders found</p>
-                                            <p className="text-sm text-slate-400 mt-1">Adjust your filters to see more results.</p>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    <AnimatePresence>
-                                        {filteredRiders.map((rider) => (
-                                            <motion.tr 
-                                                key={rider._id}
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                exit={{ opacity: 0 }}
-                                                className="hover:bg-slate-50/80 transition-colors group"
-                                            >
-                                                <td className="py-4 px-5 align-middle">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 overflow-hidden shadow-sm">
-                                                            {rider.photo ? (
-                                                                <img src={rider.photo} alt={rider.name} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <span className="text-sm font-bold text-slate-500 uppercase">{rider.name?.charAt(0)}</span>
+                {/* ─── Data Content ─── */}
+                {loading ? (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                        <div className="w-8 h-8 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto mb-3"></div>
+                        <p className="text-sm font-medium text-slate-500">Loading riders...</p>
+                    </div>
+                ) : filteredRiders.length === 0 ? (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                        <MdDirectionsBike className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-base font-bold text-slate-600">No riders found</p>
+                        <p className="text-sm text-slate-400 mt-1">Adjust your filters to see more results.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6">
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="overflow-x-auto overflow-y-auto max-h-[60vh] scrollbar-thin scrollbar-thumb-slate-300">
+                                <table className="w-full text-left border-collapse table-fixed min-w-[1050px]">
+                                    <thead className="bg-slate-50/90 sticky top-0 z-10 backdrop-blur-sm">
+                                        <tr className="border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                                            <th className="py-4 px-5 text-left w-[25%]">Rider Profile</th>
+                                            <th className="py-4 px-5 text-left w-[20%]">Contact Info</th>
+                                            <th className="py-4 px-5 text-left w-[15%]">Region</th>
+                                            <th className="py-4 px-5 text-center w-[15%]">Approval Status</th>
+                                            <th className="py-4 px-5 text-center w-[12%]">Work Status</th>
+                                            <th className="py-4 px-5 text-center w-[13%]">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        <AnimatePresence>
+                                            {filteredRiders.map((rider) => (
+                                                <motion.tr 
+                                                    key={rider._id}
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    className="hover:bg-slate-50/80 transition-colors group"
+                                                >
+                                                    <td className="py-4 px-5 align-middle">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 overflow-hidden shadow-sm">
+                                                                {rider.photo ? (
+                                                                    <img src={rider.photo} alt={rider.name} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <span className="text-sm font-bold text-slate-500 uppercase">{rider.name?.charAt(0)}</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <div className="text-sm font-bold text-slate-900 truncate">{rider.name}</div>
+                                                                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">ID: {rider._id?.slice(-6)}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium truncate">
+                                                                <MdEmail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                                {rider.email}
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                                                                <MdPhone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                                {rider.phoneNumber || rider.phone || '—'}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle">
+                                                        <div className="flex items-start gap-1.5 text-sm text-slate-700 font-semibold truncate">
+                                                            <MdLocationOn className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                            {rider.division || rider.region || '—'}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle text-center">
+                                                        {getApprovalBadge(rider.status)}
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle text-center">
+                                                        {getWorkStatusChip(rider)}
+                                                    </td>
+                                                    <td className="py-4 px-5 align-middle">
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <button
+                                                                onClick={() => viewRiderDetails(rider._id)}
+                                                                title="View Details"
+                                                                className="p-2 bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-200"
+                                                            >
+                                                                <MdVisibility className="w-4 h-4" />
+                                                            </button>
+
+                                                            {rider.status !== 'Approved' && (
+                                                                <button
+                                                                    onClick={() => updateRiderStatus(rider._id, 'Approved', rider.name)}
+                                                                    title="Approve Rider"
+                                                                    className="p-2 bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-600 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
+                                                                >
+                                                                    <MdCheckCircle className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+
+                                                            {rider.status === 'Pending' && (
+                                                                <button
+                                                                    onClick={() => updateRiderStatus(rider._id, 'Rejected', rider.name)}
+                                                                    title="Reject Rider"
+                                                                    className="p-2 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                                                                >
+                                                                    <MdCancel className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+
+                                                            {rider.status === 'Approved' && (
+                                                                <button
+                                                                    onClick={() => updateRiderStatus(rider._id, 'Suspended', rider.name)}
+                                                                    title="Suspend Rider"
+                                                                    className="p-2 bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-600 rounded-lg transition-colors border border-transparent hover:border-amber-200"
+                                                                >
+                                                                    <MdPauseCircleFilled className="w-4 h-4" />
+                                                                </button>
                                                             )}
                                                         </div>
-                                                        <div className="min-w-0">
-                                                            <div className="text-sm font-bold text-slate-900 truncate">{rider.name}</div>
-                                                            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">ID: {rider._id?.slice(-6)}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-5 align-middle">
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium truncate">
-                                                            <MdEmail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                            {rider.email}
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
-                                                            <MdPhone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                                            {rider.phoneNumber || rider.phone || '—'}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-5 align-middle">
-                                                    <div className="flex items-start gap-1.5 text-sm text-slate-700 font-semibold truncate">
-                                                        <MdLocationOn className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                                        {rider.division || rider.region || '—'}
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-5 align-middle text-center">
-                                                    {getApprovalBadge(rider.status)}
-                                                </td>
-                                                <td className="py-4 px-5 align-middle text-center">
+                                                    </td>
+                                                </motion.tr>
+                                            ))}
+                                        </AnimatePresence>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Mobile Cards View */}
+                        <div className="block lg:hidden space-y-4">
+                            <AnimatePresence>
+                                {filteredRiders.map((rider) => (
+                                    <motion.div
+                                        key={rider._id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4"
+                                    >
+                                        <div className="flex justify-between items-start pb-3 border-b border-slate-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200 overflow-hidden shadow-sm">
+                                                    {rider.photo ? (
+                                                        <img src={rider.photo} alt={rider.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-sm font-bold text-slate-500 uppercase">{rider.name?.charAt(0)}</span>
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="font-bold text-slate-800 text-sm truncate">{rider.name}</h4>
+                                                    <p className="text-[10px] font-semibold text-slate-400 mt-0.5">ID: {rider._id?.slice(-6).toUpperCase()}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1.5">
+                                                {getApprovalBadge(rider.status)}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl text-xs space-y-2 sm:space-y-0">
+                                            <div className="space-y-1.5">
+                                                <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Contact Info</p>
+                                                <p className="flex items-center gap-1.5 text-slate-700 font-semibold truncate">
+                                                    <MdEmail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                    {rider.email}
+                                                </p>
+                                                <p className="flex items-center gap-1.5 text-slate-700 font-semibold">
+                                                    <MdPhone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                    {rider.phoneNumber || rider.phone || '—'}
+                                                </p>
+                                            </div>
+                                            <div className="sm:border-l sm:border-slate-200 sm:pl-3 space-y-1.5">
+                                                <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Region & Work Status</p>
+                                                <p className="flex items-center gap-1.5 text-slate-700 font-semibold">
+                                                    <MdLocationOn className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                                    {rider.division || rider.region || '—'}
+                                                </p>
+                                                <div className="mt-1">
                                                     {getWorkStatusChip(rider)}
-                                                </td>
-                                                <td className="py-4 px-5 align-middle">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <button
-                                                            onClick={() => viewRiderDetails(rider._id)}
-                                                            title="View Details"
-                                                            className="p-2 bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-200"
-                                                        >
-                                                            <MdVisibility className="w-4 h-4" />
-                                                        </button>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                                        {rider.status !== 'Approved' && (
-                                                            <button
-                                                                onClick={() => updateRiderStatus(rider._id, 'Approved', rider.name)}
-                                                                title="Approve Rider"
-                                                                className="p-2 bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-600 rounded-lg transition-colors border border-transparent hover:border-emerald-200"
-                                                            >
-                                                                <MdCheckCircle className="w-4 h-4" />
-                                                            </button>
-                                                        )}
+                                        <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                            <button
+                                                onClick={() => viewRiderDetails(rider._id)}
+                                                title="View Details"
+                                                className="px-3 py-2 bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 rounded-lg transition-colors border border-slate-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                            >
+                                                <MdVisibility className="w-4 h-4" /> Details
+                                            </button>
 
-                                                        {rider.status === 'Pending' && (
-                                                            <button
-                                                                onClick={() => updateRiderStatus(rider._id, 'Rejected', rider.name)}
-                                                                title="Reject Rider"
-                                                                className="p-2 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-200"
-                                                            >
-                                                                <MdCancel className="w-4 h-4" />
-                                                            </button>
-                                                        )}
+                                            {rider.status !== 'Approved' && (
+                                                <button
+                                                    onClick={() => updateRiderStatus(rider._id, 'Approved', rider.name)}
+                                                    title="Approve Rider"
+                                                    className="px-3 py-2 bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-600 rounded-lg transition-colors border border-slate-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <MdCheckCircle className="w-4 h-4" /> Approve
+                                                </button>
+                                            )}
 
-                                                        {rider.status === 'Approved' && (
-                                                            <button
-                                                                onClick={() => updateRiderStatus(rider._id, 'Suspended', rider.name)}
-                                                                title="Suspend Rider"
-                                                                className="p-2 bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-600 rounded-lg transition-colors border border-transparent hover:border-amber-200"
-                                                            >
-                                                                <MdPauseCircleFilled className="w-4 h-4" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </motion.tr>
-                                        ))}
-                                    </AnimatePresence>
-                                )}
-                            </tbody>
-                        </table>
+                                            {rider.status === 'Pending' && (
+                                                <button
+                                                    onClick={() => updateRiderStatus(rider._id, 'Rejected', rider.name)}
+                                                    title="Reject Rider"
+                                                    className="px-3 py-2 bg-slate-100 hover:bg-red-100 text-slate-600 hover:text-red-600 rounded-lg transition-colors border border-slate-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <MdCancel className="w-4 h-4" /> Reject
+                                                </button>
+                                            )}
+
+                                            {rider.status === 'Approved' && (
+                                                <button
+                                                    onClick={() => updateRiderStatus(rider._id, 'Suspended', rider.name)}
+                                                    title="Suspend Rider"
+                                                    className="px-3 py-2 bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-600 rounded-lg transition-colors border border-slate-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <MdPauseCircleFilled className="w-4 h-4" /> Suspend
+                                                </button>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Bottom spacer */}
                 <div className="h-6"></div>

@@ -126,85 +126,141 @@ const SupportTickets = () => {
                 </div>
             </div>
 
-            {/* Tickets Table */}
-            <div className="bg-white rounded-[40px] border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">User / Ticket ID</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Subject</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Priority</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Status</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {isLoading ? (
-                                Array.from({ length: 4 }).map((_, i) => (
-                                    <tr key={i} className="animate-pulse">
-                                        <td colSpan={5} className="px-8 py-6 h-20 bg-slate-50/50"></td>
-                                    </tr>
-                                ))
-                            ) : ticketsData?.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-8 py-20 text-center">
-                                        <div className="flex flex-col items-center justify-center space-y-4">
-                                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
-                                                <RiCustomerService2Line size={40} />
-                                            </div>
-                                            <div>
-                                                <p className="text-lg font-black text-slate-900">No support tickets found</p>
-                                                <p className="text-sm text-slate-400 font-medium">Try adjusting your filters or search term.</p>
-                                            </div>
-                                        </div>
-                                    </td>
+            {/* Tickets Table & Cards */}
+            <div className="space-y-4">
+                {/* Desktop Table View (Hidden on mobile/tablet) */}
+                <div className="hidden lg:block bg-white rounded-[40px] border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50/50">
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">User / Ticket ID</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Subject</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Priority</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Status</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Date</th>
                                 </tr>
-                            ) : (
-                                ticketsData?.map((ticket) => (
-                                    <tr 
-                                        key={ticket.ticketId} 
-                                        onClick={() => setSelectedTicket(ticket)}
-                                        className="group hover:bg-slate-50/50 transition-all cursor-pointer"
-                                    >
-                                        <td className="px-8 py-6">
-                                            <div className="flex flex-col">
-                                                <span className="font-black text-slate-900 text-sm group-hover:text-lime-600 transition-colors">{ticket.userEmail}</span>
-                                                <span className="text-xs font-bold text-slate-400">{ticket.ticketId}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <div className="flex flex-col max-w-sm">
-                                                <span className="font-bold text-slate-800">{ticket.subject}</span>
-                                                <span className="text-xs text-slate-400 font-medium line-clamp-1">{ticket.description}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`w-2 h-2 rounded-full bg-current ${getPriorityColor(ticket.priority)}`}></div>
-                                                <span className={`text-xs font-bold capitalize ${getPriorityColor(ticket.priority)}`}>
-                                                    {ticket.priority}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-6">
-                                            <span className={`px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusColor(ticket.status)}`}>
-                                                {ticket.status.replace('-', ' ')}
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-6 text-right">
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-xs font-black text-slate-900">{new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
-                                                <span className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">
-                                                    {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {isLoading ? (
+                                    Array.from({ length: 4 }).map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td colSpan={5} className="px-8 py-6 h-20 bg-slate-50/50"></td>
+                                        </tr>
+                                    ))
+                                ) : ticketsData?.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-8 py-20 text-center">
+                                            <div className="flex flex-col items-center justify-center space-y-4">
+                                                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-300">
+                                                    <RiCustomerService2Line size={40} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-lg font-black text-slate-900">No support tickets found</p>
+                                                    <p className="text-sm text-slate-400 font-medium">Try adjusting your filters or search term.</p>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    ticketsData?.map((ticket) => (
+                                        <tr 
+                                            key={ticket.ticketId} 
+                                            onClick={() => setSelectedTicket(ticket)}
+                                            className="group hover:bg-slate-50/50 transition-all cursor-pointer"
+                                        >
+                                            <td className="px-8 py-6">
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-slate-900 text-sm group-hover:text-lime-600 transition-colors">{ticket.userEmail}</span>
+                                                    <span className="text-xs font-bold text-slate-400">{ticket.ticketId}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className="flex flex-col max-w-sm">
+                                                    <span className="font-bold text-slate-800">{ticket.subject}</span>
+                                                    <span className="text-xs text-slate-400 font-medium line-clamp-1">{ticket.description}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full bg-current ${getPriorityColor(ticket.priority)}`}></div>
+                                                    <span className={`text-xs font-bold capitalize ${getPriorityColor(ticket.priority)}`}>
+                                                        {ticket.priority}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <span className={`px-3 py-1 border rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusColor(ticket.status)}`}>
+                                                    {ticket.status.replace('-', ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-6 text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-xs font-black text-slate-900">{new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                                                    <span className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">
+                                                        {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Mobile Stacked Cards View (Hidden on desktop) */}
+                <div className="block lg:hidden space-y-4">
+                    {isLoading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="bg-white p-6 rounded-3xl border border-slate-200 animate-pulse h-36"></div>
+                        ))
+                    ) : ticketsData?.length === 0 ? (
+                        <div className="bg-white p-12 text-center rounded-3xl border border-slate-200">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-4">
+                                <RiCustomerService2Line size={32} />
+                            </div>
+                            <p className="text-base font-black text-slate-900">No support tickets found</p>
+                        </div>
+                    ) : (
+                        ticketsData?.map((ticket) => (
+                            <div
+                                key={ticket.ticketId}
+                                onClick={() => setSelectedTicket(ticket)}
+                                className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3 cursor-pointer hover:border-lime-500 hover:shadow-md transition-all"
+                            >
+                                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                                    <span className="font-mono text-xs font-bold text-slate-400">{ticket.ticketId}</span>
+                                    <span className="text-[10px] text-slate-400 font-bold">
+                                        {new Date(ticket.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}{' '}
+                                        {new Date(ticket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-slate-800 text-sm">{ticket.subject}</h4>
+                                    <p className="text-xs text-slate-500 line-clamp-2">{ticket.description}</p>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-2 border-t border-slate-100/60">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase">Customer</span>
+                                        <span className="text-xs font-bold text-slate-700 truncate max-w-[160px]">{ticket.userEmail}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2.5 py-0.5 border rounded-full text-[9px] font-black uppercase tracking-wider ${getStatusColor(ticket.status)}`}>
+                                            {ticket.status.replace('-', ' ')}
+                                        </span>
+                                        <span className={`text-[10px] font-extrabold capitalize flex items-center gap-1 ${getPriorityColor(ticket.priority)}`}>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                            {ticket.priority}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

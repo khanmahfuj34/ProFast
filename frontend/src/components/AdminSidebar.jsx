@@ -279,12 +279,14 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       </nav>
 
       {/* Footer Info */}
-      <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 mt-auto">
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 text-center">
-          <p className="font-medium text-emerald-600 mb-1">Admin Dashboard</p>
-          <p>v1.0 • ProFast Logistics</p>
+      {!isCollapsed && (
+        <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 mt-auto">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 text-center">
+            <p className="font-medium text-emerald-600 mb-1">Admin Dashboard</p>
+            <p>v1.0 • ProFast Logistics</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

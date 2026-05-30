@@ -172,75 +172,143 @@ const AdminPaymentHistory = () => {
                                 <p className="text-slate-400 mt-1 text-sm">Payments will appear here as users complete checkout</p>
                             </div>
                         ) : (
-                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="bg-gradient-to-r from-slate-800 to-slate-700 text-white">
-                                                <th className="px-5 py-4 text-left font-semibold">#</th>
-                                                <th className="px-5 py-4 text-left font-semibold">Parcel Info</th>
-                                                <th className="px-5 py-4 text-left font-semibold">Customer</th>
-                                                <th className="px-5 py-4 text-left font-semibold">Receiver</th>
-                                                <th className="px-5 py-4 text-left font-semibold">Tracking ID</th>
-                                                <th className="px-5 py-4 text-right font-semibold">Amount</th>
-                                                <th className="px-5 py-4 text-center font-semibold">Status</th>
-                                                <th className="px-5 py-4 text-center font-semibold">Paid On</th>
-                                                <th className="px-5 py-4 text-center font-semibold">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {filteredPayments.map((payment, index) => (
-                                                <tr key={payment._id || index} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-5 py-4 text-slate-400 font-mono text-xs">{index + 1}</td>
-                                                    <td className="px-5 py-4">
-                                                        <p className="font-semibold text-slate-800">{payment.parcelName || 'N/A'}</p>
-                                                        <p className="text-xs text-slate-400 capitalize">{payment.parcelType || 'N/A'}</p>
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <p className="text-sm text-slate-700 font-medium">{payment.customerEmail || 'N/A'}</p>
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <p className="font-semibold text-slate-800">{payment.receiverName || 'N/A'}</p>
-                                                        <p className="text-xs text-slate-500">{payment.receiverPhone || ''}</p>
-                                                    </td>
-                                                    <td className="px-5 py-4">
-                                                        <span className="font-mono text-xs bg-emerald-100 text-emerald-900 px-2 py-1 rounded">
-                                                            {payment.trackingId || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-5 py-4 text-right">
-                                                        <span className="text-lg font-black text-lime-700">৳{payment.totalPrice || payment.amount || 0}</span>
-                                                    </td>
-                                                    <td className="px-5 py-4 text-center">
-                                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
-                                                            ✅ Paid
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-5 py-4 text-center text-xs text-slate-500">
-                                                        {payment.paidAt
-                                                            ? new Date(payment.paidAt).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' })
-                                                            : 'N/A'}
-                                                    </td>
-                                                    <td className="px-5 py-4 text-center">
-                                                        <button
-                                                            onClick={() => handleViewDetails(payment)}
-                                                            className="btn btn-xs bg-teal-600 hover:bg-teal-700 text-white border-none"
-                                                        >
-                                                            View
-                                                        </button>
-                                                    </td>
+                            <div className="space-y-4">
+                                {/* Desktop Table View */}
+                                <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-gradient-to-r from-slate-800 to-slate-700 text-white">
+                                                    <th className="px-5 py-4 text-left font-semibold">#</th>
+                                                    <th className="px-5 py-4 text-left font-semibold">Parcel Info</th>
+                                                    <th className="px-5 py-4 text-left font-semibold">Customer</th>
+                                                    <th className="px-5 py-4 text-left font-semibold">Receiver</th>
+                                                    <th className="px-5 py-4 text-left font-semibold">Tracking ID</th>
+                                                    <th className="px-5 py-4 text-right font-semibold">Amount</th>
+                                                    <th className="px-5 py-4 text-center font-semibold">Status</th>
+                                                    <th className="px-5 py-4 text-center font-semibold">Paid On</th>
+                                                    <th className="px-5 py-4 text-center font-semibold">Action</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {filteredPayments.map((payment, index) => (
+                                                    <tr key={payment._id || index} className="hover:bg-slate-50 transition-colors">
+                                                        <td className="px-5 py-4 text-slate-400 font-mono text-xs">{index + 1}</td>
+                                                        <td className="px-5 py-4">
+                                                            <p className="font-semibold text-slate-800">{payment.parcelName || 'N/A'}</p>
+                                                            <p className="text-xs text-slate-400 capitalize">{payment.parcelType || 'N/A'}</p>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <p className="text-sm text-slate-700 font-medium">{payment.customerEmail || 'N/A'}</p>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <p className="font-semibold text-slate-800">{payment.receiverName || 'N/A'}</p>
+                                                            <p className="text-xs text-slate-500">{payment.receiverPhone || ''}</p>
+                                                        </td>
+                                                        <td className="px-5 py-4">
+                                                            <span className="font-mono text-xs bg-emerald-100 text-emerald-900 px-2 py-1 rounded">
+                                                                {payment.trackingId || 'N/A'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-4 text-right">
+                                                            <span className="text-lg font-black text-lime-700">৳{payment.totalPrice || payment.amount || 0}</span>
+                                                        </td>
+                                                        <td className="px-5 py-4 text-center">
+                                                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                                                ✅ Paid
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-5 py-4 text-center text-xs text-slate-500">
+                                                            {payment.paidAt
+                                                                ? new Date(payment.paidAt).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' })
+                                                                : 'N/A'}
+                                                        </td>
+                                                        <td className="px-5 py-4 text-center">
+                                                            <button
+                                                                onClick={() => handleViewDetails(payment)}
+                                                                className="btn btn-xs bg-teal-600 hover:bg-teal-700 text-white border-none"
+                                                            >
+                                                                View
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {/* Table Footer */}
+                                    <div className="bg-slate-50 border-t border-slate-200 px-5 py-3 flex justify-between items-center">
+                                        <span className="text-sm text-slate-500">{filteredPayments.length} payments shown</span>
+                                        <span className="text-sm font-bold text-lime-700">
+                                            Total: ৳{filteredPayments.reduce((s, p) => s + (p.totalPrice || p.amount || 0), 0).toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                {/* Table Footer */}
-                                <div className="bg-slate-50 border-t border-slate-200 px-5 py-3 flex justify-between items-center">
-                                    <span className="text-sm text-slate-500">{filteredPayments.length} payments shown</span>
-                                    <span className="text-sm font-bold text-lime-700">
-                                        Total: ৳{filteredPayments.reduce((s, p) => s + (p.totalPrice || p.amount || 0), 0).toLocaleString()}
-                                    </span>
+                                {/* Mobile/Tablet Stacked Cards View */}
+                                <div className="block lg:hidden space-y-4">
+                                    {filteredPayments.map((payment, index) => (
+                                        <div key={payment._id || index} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                                            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                                                        {index + 1}
+                                                    </span>
+                                                    <span className="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+                                                        {payment.trackingId || 'N/A'}
+                                                    </span>
+                                                </div>
+                                                <span className="text-xs text-slate-500">
+                                                    {payment.paidAt
+                                                        ? new Date(payment.paidAt).toLocaleDateString('en-BD', { day: 'numeric', month: 'short', year: 'numeric' })
+                                                        : 'N/A'}
+                                                </span>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <h4 className="font-bold text-slate-800 text-sm">{payment.parcelName || 'N/A'}</h4>
+                                                <p className="text-xs text-slate-400 capitalize">Type: {payment.parcelType || 'N/A'}</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl text-xs space-y-2 sm:space-y-0">
+                                                <div>
+                                                    <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Customer</p>
+                                                    <p className="font-semibold text-slate-700 mt-0.5 truncate">{payment.customerEmail || 'N/A'}</p>
+                                                </div>
+                                                <div className="sm:border-l sm:border-slate-200 sm:pl-3">
+                                                    <p className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Receiver</p>
+                                                    <p className="font-semibold text-slate-700 mt-0.5 truncate">{payment.receiverName || 'N/A'}</p>
+                                                    <p className="text-slate-500 mt-0.5">{payment.receiverPhone || ''}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                                                <div>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Amount Paid</p>
+                                                    <p className="text-lg font-black text-lime-700 mt-0.5">৳{payment.totalPrice || payment.amount || 0}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                                        ✅ Paid
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleViewDetails(payment)}
+                                                        className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer border-none"
+                                                    >
+                                                        View Details
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Mobile/Tablet Total Card */}
+                                    <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex justify-between items-center text-sm font-semibold">
+                                        <span className="text-slate-500">{filteredPayments.length} payments shown</span>
+                                        <span className="text-lime-700 font-bold">
+                                            Total: ৳{filteredPayments.reduce((s, p) => s + (p.totalPrice || p.amount || 0), 0).toLocaleString()}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         )}
