@@ -16,17 +16,17 @@ const RequestTable = ({ requests, isLoading, onViewDetails }) => {
     switch (status) {
       case 'pending': case 'pending_rider': case 'pending_rider_response':
         return <span className={`text-blue-600 bg-blue-50 border-blue-200/50 ${baseClass}`}><span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Pending Pickup</span>;
-      case 'driver_accepted': case 'accepted': 
+      case 'driver_accepted': case 'accepted':
         return <span className={`text-emerald-600 bg-emerald-50 border-emerald-200/50 ${baseClass}`}>Accepted</span>;
-      case 'picked-up': case 'picked_up': 
+      case 'picked-up': case 'picked_up':
         return <span className={`text-purple-600 bg-purple-50 border-purple-200/50 ${baseClass}`}>Picked Up</span>;
-      case 'on_the_way': 
+      case 'on_the_way':
         return <span className={`text-amber-600 bg-amber-50 border-amber-200/50 ${baseClass}`}>On The Way</span>;
-      case 'delivered': 
+      case 'delivered':
         return <span className={`text-green-600 bg-green-50 border-green-200/50 ${baseClass}`}>Delivered</span>;
-      case 'cancelled': 
+      case 'cancelled':
         return <span className={`text-red-600 bg-red-50 border-red-200/50 ${baseClass}`}>Cancelled</span>;
-      default: 
+      default:
         return <span className={`text-slate-600 bg-slate-100 border-slate-200 ${baseClass}`}>{status}</span>;
     }
   };
@@ -136,7 +136,7 @@ const RequestTable = ({ requests, isLoading, onViewDetails }) => {
                     </td>
                     <td className="py-4 px-5 text-center align-middle">
                       <div className="flex justify-center">
-                        <button 
+                        <button
                           onClick={() => onViewDetails && onViewDetails(req)}
                           className="p-2 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200 transition-all duration-200 shadow-sm"
                           title="View full details"
@@ -222,7 +222,7 @@ const RequestTable = ({ requests, isLoading, onViewDetails }) => {
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Not assigned</span>
                   )}
                 </div>
-                <button 
+                <button
                   onClick={() => onViewDetails && onViewDetails(req)}
                   className="px-3 py-2 flex items-center gap-1.5 rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 border border-slate-200 hover:border-emerald-200 transition-all text-xs font-bold cursor-pointer"
                   title="View full details"
