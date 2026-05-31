@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../../hooks/useAuth';
 import { toast } from 'react-toastify';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiMapPin, FiTruck, FiBox, FiCheckCircle, FiSun, FiMoon, FiArrowRight, FiActivity, FiTrendingUp } from 'react-icons/fi';
 import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
 
 const Login = () => {
@@ -17,29 +17,23 @@ const Login = () => {
     const [resetEmail, setResetEmail] = useState('');
     const [resetLoading, setResetLoading] = useState(false);
     const [resetError, setResetError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    
+    // Theme State
+    const [isDarkMode, setIsDarkMode] = useState(true);
 
     const onSubmit = data => {
-        // AuthProvider.signIn handles reload() + emailVerified check internally.
-        // .then() is ONLY reached when the user is verified → safe to navigate.
-        // .catch() handles all error cases including 'auth/email-not-verified'.
         signIn(data.email, data.password)
-            .then(() => {
-                // ✅ Verified user — AuthProvider will finish token + profile fetch
-                // and clear loading. The early-return <Navigate> below handles redirect.
-            })
+            .then(() => {})
             .catch(error => {
-                // Handle all authentication errors — no navigation occurs here
                 console.error('❌ Auth Error Code:', error.code);
-                console.error('❌ Auth Error Message:', error.message);
-
                 if (error.code === 'auth/api-key-not-valid') {
                     toast.error('Firebase Configuration Issue. Contact admin.', { position: 'top-right', autoClose: 4000 });
                 } else if (error.code === 'auth/user-not-found') {
                     toast.error('User not found. Please register first.', { position: 'top-right', autoClose: 4000 });
-                } else if (error.code === 'auth/wrong-password') {
-                    toast.error('Incorrect password.', { position: 'top-right', autoClose: 4000 });
+                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    toast.error('Incorrect credentials.', { position: 'top-right', autoClose: 4000 });
                 } else if (error.code === 'auth/email-not-verified') {
-                    // ❌ Unverified — show error only, no redirect
                     toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
                 } else {
                     toast.error(`Error: ${error.message}`, { position: 'top-right', autoClose: 4000 });
@@ -52,406 +46,389 @@ const Login = () => {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             
-            // ✅ Reload user data to ensure fresh email verification status
             await result.user.reload();
-            
-            // ❌ Check if email is verified - BLOCK here if not verified
             if (!result.user.emailVerified) {
                 toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
-                console.log('❌ Email not verified - Google user:', result.user.email);
-                return; // STOP execution - don't navigate
+                return;
             }
             
-            // ✅ Email verified - ONLY proceed from here
             toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 2000 });
-            console.log('✅ Google Login successful - Email verified:', result.user.email);
-            // AuthProvider will finish token + profile fetch; <Navigate> below handles redirect.
-            
         } catch (error) {
             console.error('❌ Google Login Error:', error.message);
             toast.error(`Login failed: ${error.message}`, { position: 'top-right', autoClose: 4000 });
         }
     };
 
-    // 🔐 Handle Forgot Password
     const handleForgotPassword = async (e) => {
         e.preventDefault();
-        
-        // ✅ Validation
-        if (!resetEmail.trim()) {
-            setResetError('Please enter your email address');
-            return;
-        }
-        
-        if (!/^[^\s@]+@gmail\.com$/.test(resetEmail)) {
-            setResetError('Please enter a valid Gmail address');
-            return;
-        }
+        if (!resetEmail.trim()) return setResetError('Please enter your email address');
+        if (!/^[^\s@]+@gmail\.com$/.test(resetEmail)) return setResetError('Please enter a valid Gmail address');
 
         setResetLoading(true);
         setResetError('');
 
         try {
-            // 📧 Send password reset email via Firebase
             await sendPasswordResetEmail(auth, resetEmail);
-            
-            toast.success('✅ Password reset email sent!', { 
-                position: 'top-right', 
-                autoClose: 5000 
-            });
-            
-            console.log('📧 Password reset email sent to:', resetEmail);
-            
-            // Clear form & close modal
+            toast.success('✅ Password reset email sent!', { position: 'top-right', autoClose: 5000 });
             setResetEmail('');
             setShowForgotPassword(false);
-            
         } catch (error) {
-            console.error('❌ Forgot Password Error:', error.code);
-            
-            // Handle specific Firebase errors
-            if (error.code === 'auth/user-not-found') {
-                setResetError('No account found with this email address.');
-            } else if (error.code === 'auth/invalid-email') {
-                setResetError('Invalid email address format.');
-            } else if (error.code === 'auth/too-many-requests') {
-                setResetError('Too many reset requests. Please try again later.');
-            } else {
-                setResetError(`Error: ${error.message}`);
-            }
-            
-            toast.error('Failed to send reset email. Please try again.', { 
-                position: 'top-right', 
-                autoClose: 4000 
-            });
+            if (error.code === 'auth/user-not-found') setResetError('No account found with this email address.');
+            else if (error.code === 'auth/invalid-email') setResetError('Invalid email address format.');
+            else if (error.code === 'auth/too-many-requests') setResetError('Too many reset requests. Please try again later.');
+            else setResetError(`Error: ${error.message}`);
+            toast.error('Failed to send reset email. Please try again.', { position: 'top-right', autoClose: 4000 });
         } finally {
             setResetLoading(false);
         }
     };
 
-    useEffect(() => {
-        AOS.init({ duration: 800, once: true, offset: 30 });
-    }, []);
-
-    // 🔒 All hooks called above — safe to do early return now
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-yellow-100 to-yellow-50">
-                <span className="loading loading-spinner loading-lg text-lime-600"></span>
-                <p className="mt-4 text-gray-600 font-medium">Signing you in…</p>
+            <div className={`min-h-screen flex flex-col items-center justify-center transition-colors duration-500 ${isDarkMode ? 'bg-[#0a0f1c]' : 'bg-gray-50'}`}>
+                <span className="loading loading-spinner loading-lg text-[#FF6A13]"></span>
+                <p className={`mt-4 font-medium font-dm-sans ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Signing you in…</p>
             </div>
         );
     }
 
     if (user) {
-        // ✅ If user exists but userProfile hasn't loaded yet, wait for it
-        // This ensures we have role information before redirecting
         if (!userProfile) {
             return (
-                <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-yellow-100 to-yellow-50">
-                    <span className="loading loading-spinner loading-lg text-lime-600"></span>
-                    <p className="mt-4 text-gray-600 font-medium">Loading your profile…</p>
+                <div className={`min-h-screen flex flex-col items-center justify-center transition-colors duration-500 ${isDarkMode ? 'bg-[#0a0f1c]' : 'bg-gray-50'}`}>
+                    <span className="loading loading-spinner loading-lg text-[#FF6A13]"></span>
+                    <p className={`mt-4 font-medium font-dm-sans ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading your profile…</p>
                 </div>
             );
         }
 
         let destination = location.state?.from?.pathname;
-        
-        // ✅ ADMIN REDIRECT: Always redirect admins directly to /admin dashboard
-        if (userProfile.role === 'admin') {
-            destination = '/admin';
-        }
-        // ✅ RIDER REDIRECT: Redirect riders to their dashboard
-        else if (userProfile.role === 'rider') {
-            destination = '/dashboard/rider-dashboard';
-        }
-        // ✅ DEFAULT: If no role or coming from a specific page
-        else if (!destination || destination === '/' || destination === '/dashboard') {
-            destination = '/'; // Normal users go to homepage
-        }
-        // ✅ Otherwise keep the original destination (from protected route redirect)
-        
+        if (userProfile.role === 'admin') destination = '/admin';
+        else if (userProfile.role === 'rider') destination = '/dashboard/rider-dashboard';
+        else if (!destination || destination === '/' || destination === '/dashboard') destination = '/';
         return <Navigate to={destination} replace />;
     }
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-b from-yellow-100 to-yellow-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-            {/* Main Container - 2 Column Layout */}
-            <div className="w-full max-w-6xl">
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
-                    
-                    {/* LEFT COLUMN - FORM */}
-                    <div className="w-full lg:w-5/12 flex flex-col justify-center" data-aos="fade-right">
-                        {/* Logo */}
-                        <div className="mb-8 ">
-                            <ProFastLogo></ProFastLogo>
+        <div className={`min-h-screen w-full relative overflow-hidden transition-colors duration-700 font-sans ${isDarkMode ? 'bg-[#060a14]' : 'bg-[#f4f7fc]'}`}>
+            
+            {/* Theme Toggle */}
+            <div className="absolute top-6 right-6 z-50">
+                <button 
+                    onClick={() => setIsDarkMode(!isDarkMode)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 backdrop-blur-md border ${
+                        isDarkMode 
+                        ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' 
+                        : 'bg-white/80 border-gray-200 text-gray-800 hover:bg-white shadow-sm'
+                    }`}
+                >
+                    {isDarkMode ? <FiSun size={16} /> : <FiMoon size={16} />}
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                </button>
+            </div>
+
+            {/* Futuristic Background Elements */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+                {/* Global Map/Grid Pattern */}
+                <div className={`absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CgkJPHBhdGggZD0iTTAgMGg0MHY0MEgwem00MCA0MGMwLTEuMS0uOS0yLTItMmgtOGMtMS4xIDAtMi0uOS0yLTJzLjktMiAyLTJoOGMxLjEtMi0uOS0yLTIgMnYuMDlsLTIgMmgtMmMtMS4xIDAtMiAuOS0yIDJ2OGMwIDEuMS0uOSAyLTIgMnMtMi0uOS0yLTJ2LThjMC0xLjEtLjktMi0yLTJoLThjLTEuMSAwLTIgLjktMiAyczIuOS0yLTIgMmg4Yy0xLjEtMi0uOS0yLTIgMnoiIGZpbGw9IiMzMzMiIGZpbGwtb3BhY2l0eT0iMC4wNSIgZmlsbC1ydWxlPSJldmVub2RkIi8+Cjwvc3ZnPg==')] opacity-30`}></div>
+                
+                {/* Glowing Nodes / Lines (Dark Mode emphasis) */}
+                <motion.div 
+                    animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.05, 1] }} 
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    className={`absolute top-[-10%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[120px] ${isDarkMode ? 'bg-[#FF6A13]/20' : 'bg-[#FF6A13]/10'}`} 
+                />
+                <motion.div 
+                    animate={{ opacity: [0.2, 0.5, 0.2], scale: [1, 1.1, 1] }} 
+                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                    className={`absolute bottom-[-10%] -right-[10%] w-[60%] h-[60%] rounded-full blur-[140px] ${isDarkMode ? 'bg-[#1E40AF]/20' : 'bg-[#3B82F6]/10'}`} 
+                />
+
+                {/* Animated Route Lines */}
+                <svg className="absolute inset-0 w-full h-full opacity-40">
+                    <motion.path 
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: [0.2, 0.8, 0.2] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                        d="M -100 200 C 300 400 600 100 1000 600 S 1400 200 1800 400" 
+                        fill="transparent" 
+                        stroke={isDarkMode ? "#FF6A13" : "#F97316"} 
+                        strokeWidth="2" 
+                        strokeDasharray="4 8"
+                    />
+                    <motion.path 
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: [0.1, 0.5, 0.1] }}
+                        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                        d="M 1800 100 C 1400 300 1000 100 600 500 S 200 800 -100 400" 
+                        fill="transparent" 
+                        stroke={isDarkMode ? "#3B82F6" : "#60A5FA"} 
+                        strokeWidth="1.5"
+                        strokeDasharray="6 6"
+                    />
+                </svg>
+            </div>
+
+            {/* Main Content Layout */}
+            <div className="relative z-10 w-full h-screen flex items-center justify-center p-4">
+                
+                {/* Left Side: Floating Widgets */}
+                <div className="hidden xl:flex flex-col justify-between h-full max-h-[800px] w-1/4 max-w-[320px] absolute left-12 py-12">
+                    {/* Live Tracking Widget */}
+                    <motion.div 
+                        initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
+                        className={`p-5 rounded-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white/70 border-white shadow-xl text-gray-800'}`}
+                    >
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-full bg-[#FF6A13]/20 flex items-center justify-center text-[#FF6A13]">
+                                <FiMapPin size={20} />
+                            </div>
+                            <div>
+                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Live Tracking</p>
+                                <p className="font-semibold">In Transit</p>
+                            </div>
                         </div>
-
-                        {/* Heading */}
-                        <div className="mb-8">
-                            <h1 className="text-5xl font-bold text-gray-900 mb-3 font-syne">Welcome Back</h1>
-                            <p className="text-gray-600 text-sm font-dm-sans">Login with your credentials</p>
+                        <div className="flex items-center justify-between text-sm">
+                            <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>Kolkata, WB</span>
+                            <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF6A13] opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF6A13]"></span>
+                            </span>
                         </div>
+                    </motion.div>
 
-                        {/* Form */}
-                        <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
-                    
-                            {/* Email Field */}
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-medium text-gray-900 font-dm-sans">Email</label>
-                                <input
-                                    type="email"
-                                    placeholder="your.email@gmail.com"
-                                    {...register('email', {
-                                        required: "Email is required",
-                                        pattern: { value: /^[^\s@]+@gmail\.com$/, message: "Email must be a valid Gmail address (@gmail.com)" }
-                                    })}
-                                    aria-invalid={errors.email ? "true" : "false"}
-                                    className={`w-full px-4 py-2.5 rounded-lg bg-white border-2 transition-all duration-300 focus:outline-none font-dm-sans text-gray-900 placeholder-gray-400 ${
-                                        errors.email
-                                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                            : 'border-gray-200 focus:border-lime-400 focus:ring-2 focus:ring-lime-100'
-                                    }`}
-                                />
-                                {errors.email && (
-                                    <p role="alert" className='text-red-500 text-xs font-medium flex items-center gap-1 font-dm-sans'>
-                                        <span>⚠</span> {errors.email.message}
-                                    </p>
-                                )}
+                    {/* Stats Widget */}
+                    <motion.div 
+                        initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
+                        className={`p-5 rounded-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-[#0B152A]/60 border-blue-500/20 text-white' : 'bg-white/80 border-blue-100 shadow-xl text-gray-800'}`}
+                    >
+                        <div className="flex gap-4 items-center">
+                            <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
+                                <FiActivity size={24} />
                             </div>
-
-                            {/* Password Field */}
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-medium text-gray-900 font-dm-sans">Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    {...register('password', { required: "Password is required", minLength: 6, maxLength: 32 })}
-                                    aria-invalid={errors.password ? "true" : "false"}
-                                    className={`w-full px-4 py-2.5 rounded-lg bg-white border-2 transition-all duration-300 focus:outline-none font-dm-sans text-gray-900 placeholder-gray-400 ${
-                                        errors.password
-                                            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                            : 'border-gray-200 focus:border-lime-400 focus:ring-2 focus:ring-lime-100'
-                                    }`}
-                                />
-                                {errors.password?.type === "required" && (
-                                    <p role="alert" className='text-red-500 text-xs font-medium flex items-center gap-1 font-dm-sans'>
-                                        <span>⚠</span> Password is required
-                                    </p>
-                                )}
-                                {errors.password?.type === "minLength" && (
-                                    <p role="alert" className='text-red-500 text-xs font-medium flex items-center gap-1 font-dm-sans'>
-                                        <span>⚠</span> Minimum 6 characters required
-                                    </p>
-                                )}
-                                {errors.password?.type === "maxLength" && (
-                                    <p role="alert" className='text-red-500 text-xs font-medium flex items-center gap-1 font-dm-sans'>
-                                        <span>⚠</span> Maximum 32 characters allowed
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Remember & Forgot */}
-                            <div className="flex items-center justify-between pt-1">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 rounded bg-white border-2 border-gray-300 text-lime-500 focus:ring-2 focus:ring-lime-200 cursor-pointer"
-                                    />
-                                    <span className="text-xs text-gray-700 font-dm-sans">Remember me</span>
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowForgotPassword(true)}
-                                    className="text-md text-lime-600 hover:text-lime-700 transition-colors font-dm-sans font-semibold"
-                                >
-                                    Forgot password?
-                                </button>
-                            </div>
-
-                            {/* Login Button */}
-                            <button
-                                type="submit"
-                                className="w-full mt-6 px-6 py-3 bg-lime-400 hover:bg-lime-500 active:bg-lime-600 text-gray-900 font-bold rounded-lg transition-all duration-200 hover:shadow-lg active:scale-95 font-syne uppercase tracking-wider text-sm"
-                            >
-                                Login
-                            </button>
-
-                            {/* Divider */}
-                            <div className="relative py-4">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-200"></div>
-                                </div>
-                                <div className="relative flex justify-center text-xs">
-                                    <span className="px-2 bg-yellow-50 text-gray-500">or</span>
-                                </div>
-                            </div>
-
-                            {/* Google Login Button */}
-                            <button
-                                type="button"
-                                onClick={handleGoogleLogin}
-                                className="w-full px-6 py-2.5 bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-medium rounded-lg transition-all duration-200 font-dm-sans text-sm flex items-center justify-center gap-2 active:scale-95"
-                            >
-                                {/* Official Google Logo */}
-                                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                </svg>
-                                Login with Google
-                            </button>
-
-                            {/* Sign Up Link */}
-                            <div className="text-center pt-2">
-                                <p className="text-gray-600 text-xs font-dm-sans">
-                                    Don't have an account?{' '}
-                                    <a href="/auth/register" className="text-lime-600 hover:text-lime-700 transition-colors font-bold cursor-pointer">
-                                        Register
-                                    </a>
+                            <div>
+                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Shipments</p>
+                                <p className="text-2xl font-bold font-syne tracking-tight">24,540</p>
+                                <p className="text-xs text-emerald-500 font-medium flex items-center gap-1 mt-1">
+                                    <FiTrendingUp size={12} /> +18.6% this month
                                 </p>
                             </div>
-                        </form>
+                        </div>
+                    </motion.div>
+                </div>
 
-                        {/* 🔐 Forgot Password Modal */}
-                        {showForgotPassword && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                                <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-8 transform transition-all animate-in ease-out">
-                                    {/* Modal Header */}
-                                    <div className="mb-6">
-                                        <h2 className="text-2xl font-bold text-gray-900 font-syne mb-2">Reset Password</h2>
-                                        <p className="text-sm text-gray-600 font-dm-sans">
-                                            Enter your email address and we'll send you a link to reset your password.
-                                        </p>
+                {/* Center: Login Card */}
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, type: "spring" }}
+                    className={`w-full max-w-[440px] p-8 sm:p-10 rounded-3xl border backdrop-blur-2xl relative ${
+                        isDarkMode 
+                        ? 'bg-[#111827]/60 border-[#1F2937]/80 shadow-[0_0_50px_rgba(255,106,19,0.05)]' 
+                        : 'bg-white border-white/40 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)]'
+                    }`}
+                >
+                    {/* Glowing effect around the card in dark mode */}
+                    {isDarkMode && (
+                        <div className="absolute -inset-[1px] rounded-[24px] bg-gradient-to-br from-[#FF6A13]/30 via-transparent to-blue-500/30 opacity-50 -z-10 blur-[2px]"></div>
+                    )}
+
+                    {/* Logo */}
+                    <div className="flex justify-center mb-8">
+                        <ProFastLogo />
+                    </div>
+
+                    <div className="text-center mb-8">
+                        <h1 className={`text-3xl font-bold font-syne mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            Welcome <span className="text-[#FF6A13]">back</span>
+                        </h1>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Log in to your Profast account</p>
+                    </div>
+
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                        
+                        {/* Email */}
+                        <div className="space-y-1.5">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <FiMail size={18} className={isDarkMode ? 'text-gray-500' : 'text-gray-400'} />
+                                </div>
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    {...register('email', { required: "Email is required", pattern: { value: /^[^\s@]+@gmail\.com$/, message: "Must be a valid Gmail address" } })}
+                                    className={`w-full pl-11 pr-4 py-3.5 rounded-xl border text-sm transition-all outline-none ${
+                                        isDarkMode 
+                                        ? 'bg-[#1F2937]/50 border-gray-700 text-white placeholder-gray-500 focus:bg-[#1F2937] focus:border-[#FF6A13]/50 focus:ring-1 focus:ring-[#FF6A13]/50' 
+                                        : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#FF6A13] focus:ring-2 focus:ring-[#FF6A13]/20'
+                                    }`}
+                                />
+                            </div>
+                            {errors.email && <p className="text-red-500 text-xs pl-2">{errors.email.message}</p>}
+                        </div>
+
+                        {/* Password */}
+                        <div className="space-y-1.5">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <FiLock size={18} className={isDarkMode ? 'text-gray-500' : 'text-gray-400'} />
+                                </div>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Enter your password"
+                                    {...register('password', { required: "Password is required" })}
+                                    className={`w-full pl-11 pr-12 py-3.5 rounded-xl border text-sm transition-all outline-none ${
+                                        isDarkMode 
+                                        ? 'bg-[#1F2937]/50 border-gray-700 text-white placeholder-gray-500 focus:bg-[#1F2937] focus:border-[#FF6A13]/50 focus:ring-1 focus:ring-[#FF6A13]/50' 
+                                        : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#FF6A13] focus:ring-2 focus:ring-[#FF6A13]/20'
+                                    }`}
+                                />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute inset-y-0 right-0 pr-4 flex items-center ${isDarkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
+                                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                                </button>
+                            </div>
+                            {errors.password && <p className="text-red-500 text-xs pl-2">{errors.password.message}</p>}
+                        </div>
+
+                        {/* Options */}
+                        <div className="flex items-center justify-between text-sm py-1">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className="relative flex items-center justify-center">
+                                    <input type="checkbox" className={`peer w-4 h-4 rounded border appearance-none checked:bg-[#FF6A13] checked:border-transparent transition-all cursor-pointer ${isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'}`} />
+                                    <FiCheckCircle size={10} className="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
+                                </div>
+                                <span className={`transition-colors ${isDarkMode ? 'text-gray-400 group-hover:text-gray-300' : 'text-gray-600 group-hover:text-gray-900'}`}>Remember me</span>
+                            </label>
+                            <button type="button" onClick={() => setShowForgotPassword(true)} className="text-[#FF6A13] hover:text-[#e05a0b] transition-colors font-medium">
+                                Forgot password?
+                            </button>
+                        </div>
+
+                        {/* Submit */}
+                        <button type="submit" className="relative group w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#FF6A13] to-[#FF8C42] text-white py-3.5 px-4 rounded-xl font-semibold transition-all hover:shadow-[0_0_20px_rgba(255,106,19,0.4)] active:scale-[0.98] overflow-hidden">
+                            <span className="relative z-10">Log in to Profast</span>
+                            <FiArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                            {/* Hover effect layer */}
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0"></div>
+                        </button>
+
+                        <div className="relative py-4 flex items-center justify-center">
+                            <div className={`absolute w-full h-[1px] ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}`}></div>
+                            <span className={`relative px-4 text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'bg-[#111827] text-gray-500' : 'bg-white text-gray-400'}`}>OR</span>
+                        </div>
+
+                        {/* Google Auth */}
+                        <button type="button" onClick={handleGoogleLogin} className={`w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl border font-medium transition-all active:scale-[0.98] ${
+                            isDarkMode 
+                            ? 'bg-transparent border-gray-700 text-gray-200 hover:bg-gray-800 hover:border-gray-600' 
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-sm'
+                        }`}>
+                            <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Continue with Google
+                        </button>
+
+                        <div className="text-center pt-2">
+                            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                Don't have an account?{' '}
+                                <Link to="/auth/register" className="text-[#FF6A13] font-semibold hover:underline">
+                                    Sign up
+                                </Link>
+                            </p>
+                        </div>
+                    </form>
+                </motion.div>
+
+                {/* Right Side: Floating Widgets */}
+                <div className="hidden xl:flex flex-col h-full max-h-[800px] w-1/4 max-w-[320px] absolute right-12 py-12 pt-[180px]">
+                    {/* Delivery Status Widget */}
+                    <motion.div 
+                        initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
+                        className={`p-5 rounded-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white/70 border-white shadow-xl text-gray-800'}`}
+                    >
+                        <div className="flex gap-4">
+                            <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-500 self-start">
+                                <FiBox size={24} />
+                            </div>
+                            <div className="w-full">
+                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Delivery Status</p>
+                                <p className="font-semibold text-[#FF6A13] mb-3">Out for Delivery</p>
+                                
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span>85% Completed</span>
+                                </div>
+                                <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}`}>
+                                    <div className="h-full bg-blue-500 w-[85%] rounded-full relative">
+                                        <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
                                     </div>
-
-                                    {/* Reset Form */}
-                                    <form onSubmit={handleForgotPassword} className="space-y-4">
-                                        {/* Email Input */}
-                                        <div className="space-y-2">
-                                            <label className="block text-sm font-medium text-gray-900 font-dm-sans">
-                                                Email Address
-                                            </label>
-                                            <input
-                                                type="email"
-                                                value={resetEmail}
-                                                onChange={(e) => {
-                                                    setResetEmail(e.target.value);
-                                                    setResetError('');
-                                                }}
-                                                placeholder="your.email@gmail.com"
-                                                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-dm-sans text-gray-900 bg-gray-50"
-                                            />
-                                        </div>
-
-                                        {/* Error Message */}
-                                        {resetError && (
-                                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                                <p className="text-red-700 text-sm font-medium font-dm-sans">
-                                                    ⚠️ {resetError}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* Success Message */}
-                                        {resetEmail && !resetError && (
-                                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                                                <p className="text-green-700 text-sm font-dm-sans">
-                                                    ✓ We'll send a reset link to this email
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* Buttons */}
-                                        <div className="flex gap-3 pt-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setShowForgotPassword(false);
-                                                    setResetEmail('');
-                                                    setResetError('');
-                                                }}
-                                                className="flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-100 transition-colors font-dm-sans"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                disabled={resetLoading}
-                                                className={`flex-1 px-4 py-2.5 bg-blue-500 text-white font-semibold rounded-lg transition-all font-dm-sans ${
-                                                    resetLoading
-                                                        ? 'opacity-50 cursor-not-allowed'
-                                                        : 'hover:bg-blue-600 active:scale-95'
-                                                }`}
-                                            >
-                                                {resetLoading ? '⏳ Sending...' : '📧 Send Reset Link'}
-                                            </button>
-                                        </div>
-
-                                        {/* Info Text */}
-                                        <p className="text-center text-xs text-gray-500 font-dm-sans pt-2">
-                                            Check your email (including spam folder) for the reset link. Valid for 1 hour.
-                                        </p>
-                                    </form>
                                 </div>
                             </div>
-                        )}
-                    </div>
-
-                    {/* RIGHT COLUMN - ILLUSTRATION */}
-                    <div className="hidden lg:flex w-full lg:w-5/12 items-center justify-center" data-aos="fade-left">
-                        <div className="w-full flex items-center justify-center">
-                            {/* Illustration SVG */}
-                            <svg className="w-full max-w-sm h-auto" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                {/* Background Circle */}
-                                <circle cx="200" cy="200" r="180" fill="#F3E8FF" opacity="0.3"/>
-                                <circle cx="200" cy="200" r="150" fill="#E9D5FF" opacity="0.2"/>
-                                
-                                {/* Package Box */}
-                                <rect x="120" y="180" width="80" height="80" fill="#FBBF24" rx="4"/>
-                                <rect x="120" y="180" width="80" height="20" fill="#F59E0B" rx="4"/>
-                                <line x1="160" y1="180" x2="160" y2="260" stroke="#F59E0B" strokeWidth="2"/>
-                                
-                                {/* Delivery Person - Left */}
-                                <circle cx="100" cy="120" r="18" fill="#D2691E"/>
-                                <rect x="88" y="145" width="24" height="45" fill="#3B82F6" rx="3"/>
-                                <ellipse cx="75" cy="160" rx="12" ry="8" fill="#D2691E"/>
-                                <ellipse cx="125" cy="160" rx="12" ry="8" fill="#D2691E"/>
-                                <rect x="92" y="190" width="6" height="35" fill="#1F2937"/>
-                                <rect x="104" y="190" width="6" height="35" fill="#1F2937"/>
-                                <ellipse cx="95" cy="228" rx="6" ry="4" fill="#000"/>
-                                <ellipse cx="107" cy="228" rx="6" ry="4" fill="#000"/>
-                                
-                                {/* Customer - Right */}
-                                <circle cx="300" cy="125" r="18" fill="#D2691E"/>
-                                <rect x="288" y="150" width="24" height="45" fill="#8B5CF6" rx="3"/>
-                                <ellipse cx="275" cy="165" rx="12" ry="8" fill="#D2691E"/>
-                                <ellipse cx="325" cy="165" rx="12" ry="8" fill="#D2691E"/>
-                                <rect x="292" y="195" width="6" height="35" fill="#1F2937"/>
-                                <rect x="304" y="195" width="6" height="35" fill="#1F2937"/>
-                                <ellipse cx="295" cy="233" rx="6" ry="4" fill="#000"/>
-                                <ellipse cx="307" cy="233" rx="6" ry="4" fill="#000"/>
-                                
-                                {/* Handshake Connection */}
-                                <line x1="125" y1="160" x2="275" y2="165" stroke="#34A853" strokeWidth="3" strokeLinecap="round"/>
-                                
-                                {/* Checkmark Above */}
-                                <circle cx="200" cy="100" r="20" fill="#34A853"/>
-                                <path d="M 192 100 L 198 106 L 212 94" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                
-                                {/* Delivery Status Text */}
-                                <text x="200" y="300" textAnchor="middle" fontSize="18" fontFamily="Arial" fontWeight="bold" fill="#1F2937">
-                                    Fast & Reliable
-                                </text>
-                                <text x="200" y="330" textAnchor="middle" fontSize="14" fontFamily="Arial" fill="#6B7280">
-                                    Seamless Experience
-                                </text>
-                            </svg>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </div>
+
+            {/* Forgot Password Modal */}
+            <AnimatePresence>
+                {showForgotPassword && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className={`w-full max-w-md p-8 rounded-3xl border shadow-2xl ${isDarkMode ? 'bg-[#1F2937] border-gray-700' : 'bg-white border-gray-100'}`}
+                        >
+                            <h2 className={`text-2xl font-bold font-syne mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Reset Password</h2>
+                            <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter your email address and we'll send you a link to reset your password.</p>
+                            
+                            <form onSubmit={handleForgotPassword} className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={resetEmail}
+                                        onChange={(e) => { setResetEmail(e.target.value); setResetError(''); }}
+                                        placeholder="your.email@gmail.com"
+                                        className={`w-full px-4 py-3 rounded-xl border text-sm transition-all outline-none ${isDarkMode ? 'bg-[#374151]/50 border-gray-600 text-white focus:border-[#FF6A13]' : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-[#FF6A13] focus:ring-2 focus:ring-[#FF6A13]/20'}`}
+                                    />
+                                </div>
+
+                                {resetError && (
+                                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                                        <p className="text-red-500 text-sm font-medium">⚠️ {resetError}</p>
+                                    </div>
+                                )}
+
+                                {resetEmail && !resetError && (
+                                    <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                                        <p className="text-green-500 text-sm">✓ We'll send a reset link to this email</p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowForgotPassword(false); setResetEmail(''); setResetError(''); }}
+                                        className={`flex-1 py-3 rounded-xl font-medium transition-colors ${isDarkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={resetLoading}
+                                        className={`flex-1 py-3 bg-blue-500 text-white font-medium rounded-xl transition-all ${resetLoading ? 'opacity-50' : 'hover:bg-blue-600 active:scale-95'}`}
+                                    >
+                                        {resetLoading ? 'Sending...' : 'Send Link'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
