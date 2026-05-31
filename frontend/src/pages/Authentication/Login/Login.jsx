@@ -114,17 +114,17 @@ const Login = () => {
         <div className={`min-h-screen w-full relative overflow-hidden transition-colors duration-700 font-sans ${isDarkMode ? 'bg-[#060a14]' : 'bg-[#f4f7fc]'}`}>
             
             {/* Theme Toggle */}
-            <div className="absolute top-6 right-6 z-50">
+            <div className="absolute top-6 right-4 sm:right-6 z-50">
                 <button 
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 backdrop-blur-md border ${
+                    className={`flex items-center justify-center gap-2 p-2.5 sm:px-4 sm:py-2 rounded-full font-medium text-sm transition-all duration-300 backdrop-blur-md border ${
                         isDarkMode 
                         ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' 
                         : 'bg-white/80 border-gray-200 text-gray-800 hover:bg-white shadow-sm'
                     }`}
                 >
-                    {isDarkMode ? <FiSun size={16} /> : <FiMoon size={16} />}
-                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                    {isDarkMode ? <FiSun size={16} className="shrink-0" /> : <FiMoon size={16} className="shrink-0" />}
+                    <span className="hidden sm:inline">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
                 </button>
             </div>
 
