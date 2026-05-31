@@ -1,10 +1,11 @@
-import React, {useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../../hooks/useAuth';
 import { toast } from 'react-toastify';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMail, FiLock, FiEye, FiEyeOff, FiMapPin, FiTruck, FiBox, FiCheckCircle, FiSun, FiMoon, FiArrowRight, FiActivity, FiTrendingUp } from 'react-icons/fi';
 import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';

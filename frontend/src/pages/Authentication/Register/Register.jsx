@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { GoogleAuthProvider, signInWithPopup, updateProfile } from 'firebase/auth';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
@@ -7,6 +7,7 @@ import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
 import useImageUpload from '../../../hooks/useImageUpload';
 import { toast } from 'react-toastify';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiMapPin, FiTruck, FiBox, FiCheckCircle, FiSun, FiMoon, FiArrowRight, FiActivity, FiImage, FiTrendingUp, FiShield, FiGlobe } from 'react-icons/fi';
 import ProFastLogo from '../../Home/shared/ProFastLogo/ProFastLogo';
