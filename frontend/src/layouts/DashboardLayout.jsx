@@ -44,7 +44,7 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#060a14] flex overflow-x-hidden font-sans">
+    <div className="h-screen bg-slate-50 dark:bg-[#060a14] flex overflow-hidden font-sans">
       {/* Mobile Drawer Overlay */}
       {sidebarOpen && (
         <div
@@ -55,7 +55,7 @@ const DashboardLayout = () => {
 
       {/* Responsive Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#0b1120] border-r border-slate-100 dark:border-slate-800/80 flex flex-col shadow-xl transition-all duration-300 lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#0b1120] border-r border-slate-100 dark:border-slate-800/80 flex flex-col h-full shadow-xl transition-all duration-300 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${sidebarCollapsed ? 'w-20' : 'w-64'}`}
       >
@@ -573,7 +573,7 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main Content Pane */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Navbar */}
         <nav className="navbar bg-white dark:bg-[#0b1120] shadow-md sticky top-0 z-40 h-[72px] px-6 justify-between border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">

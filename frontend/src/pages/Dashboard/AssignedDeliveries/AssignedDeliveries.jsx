@@ -82,6 +82,14 @@ const statusConfig = {
     text: "text-amber-700",
     actionLabel: "Start Pickup",
   },
+  accepted: {
+    label: "Pending Pickup",
+    color: "#D97706", // amber-600
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    text: "text-amber-700",
+    actionLabel: "Start Pickup",
+  },
   picked_up: {
     label: "Picked Up",
     color: "#7C3AED", // violet-600
@@ -205,7 +213,7 @@ export default function AssignedDeliveries() {
   });
 
   const getTimeline = (d) => {
-    const s = d.deliveryStatus;
+    const s = d.deliveryStatus === "accepted" ? "driver_accepted" : d.deliveryStatus;
     const isCreated = true;
     const isAssigned = ["driver_assigned", "driver_accepted", "picked_up", "on_the_way", "delivered"].includes(s);
     const isPending = ["driver_accepted", "picked_up", "on_the_way", "delivered"].includes(s);
@@ -262,6 +270,7 @@ export default function AssignedDeliveries() {
     const p2 = resolveCoords(d.receiverDistrict, d.receiverAddress, true);
     const distVal = getDistanceVal(p1, p2);
     const etaVal = d.deliveryStatus === "delivered" ? "Delivered" : `${Math.round(distVal * 4 + 10)} MIN`;
+    const status = d.deliveryStatus === "accepted" ? "driver_accepted" : d.deliveryStatus;
 
     return {
       _id: d._id,
@@ -270,7 +279,7 @@ export default function AssignedDeliveries() {
       trackingId: d.trackingId || `TRK-${d._id?.slice(-6)?.toUpperCase()}`,
       type: d.parcelType ? d.parcelType.toUpperCase() : "STANDARD",
       weight: d.parcelWeight ? `${d.parcelWeight} kg` : "1.0 kg",
-      status: d.deliveryStatus,
+      status: status,
       pickupDistrict: d.senderDistrict || d.pickupDistrict || "N/A",
       pickupAddress: d.senderAddress || d.pickupAddress || "N/A",
       deliveryDistrict: d.receiverDistrict || d.deliveryDistrict || "N/A",
@@ -323,6 +332,7 @@ export default function AssignedDeliveries() {
   const getNextStatus = (status) => {
     const map = {
       driver_accepted: "picked_up",
+      accepted: "picked_up",
       picked_up: "on_the_way",
       on_the_way: "delivered",
     };
@@ -332,6 +342,7 @@ export default function AssignedDeliveries() {
   const filtered = useMemo(() => {
     const statusPriority = {
       driver_accepted: 1,
+      accepted: 1,
       picked_up: 2,
       on_the_way: 3,
       delivered: 4,
@@ -339,7 +350,10 @@ export default function AssignedDeliveries() {
 
     const baseList = activeFilter === "all"
       ? parcels
-      : parcels.filter((d) => d.deliveryStatus === activeFilter);
+      : parcels.filter((d) => {
+          const s = d.deliveryStatus === "accepted" ? "driver_accepted" : d.deliveryStatus;
+          return s === activeFilter;
+        });
 
     return [...baseList].sort((a, b) => {
       const priorityA = statusPriority[a.deliveryStatus] || 99;
@@ -349,12 +363,13 @@ export default function AssignedDeliveries() {
   }, [parcels, activeFilter]);
 
   const counts = useMemo(() => {
+    const getMappedStatus = (d) => d.deliveryStatus === "accepted" ? "driver_accepted" : d.deliveryStatus;
     return {
       all: parcels.length,
-      driver_accepted: parcels.filter((d) => d.deliveryStatus === "driver_accepted").length,
-      picked_up: parcels.filter((d) => d.deliveryStatus === "picked_up").length,
-      on_the_way: parcels.filter((d) => d.deliveryStatus === "on_the_way").length,
-      delivered: parcels.filter((d) => d.deliveryStatus === "delivered").length,
+      driver_accepted: parcels.filter((d) => getMappedStatus(d) === "driver_accepted").length,
+      picked_up: parcels.filter((d) => getMappedStatus(d) === "picked_up").length,
+      on_the_way: parcels.filter((d) => getMappedStatus(d) === "on_the_way").length,
+      delivered: parcels.filter((d) => getMappedStatus(d) === "delivered").length,
     };
   }, [parcels]);
 
@@ -363,9 +378,10 @@ export default function AssignedDeliveries() {
   }, [parcels]);
 
   const activeOrders = useMemo(() => {
-    return parcels.filter(
-      (d) => d.deliveryStatus !== "delivered" && d.deliveryStatus !== "delivery_failed"
-    ).length;
+    return parcels.filter((d) => {
+      const s = d.deliveryStatus === "accepted" ? "driver_accepted" : d.deliveryStatus;
+      return s !== "delivered" && s !== "delivery_failed";
+    }).length;
   }, [parcels]);
 
   const progress = useMemo(() => {

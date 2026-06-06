@@ -57,6 +57,14 @@ const statusConfig = {
     text: "text-amber-700",
     actionLabel: "Start Pickup",
   },
+  accepted: {
+    label: "Pending Pickup",
+    color: "#D97706",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    text: "text-amber-700",
+    actionLabel: "Start Pickup",
+  },
   picked_up: {
     label: "Picked Up",
     color: "#7C3AED",
@@ -91,7 +99,10 @@ const standardizeParcel = (d) => {
   const trackingId = d.trackingId || "";
   const type = (d.parcelType || d.type || d.category || "STANDARD").toUpperCase();
   const weight = d.parcelWeight ? `${d.parcelWeight} kg` : (d.weight || "1.0 kg");
-  const status = d.deliveryStatus || d.statusRaw || (d.status ? d.status.toLowerCase().replace(/ /g, "_") : "driver_accepted");
+  let status = d.deliveryStatus || d.statusRaw || (d.status ? d.status.toLowerCase().replace(/ /g, "_") : "driver_accepted");
+  if (status === "accepted") {
+    status = "driver_accepted";
+  }
   
   const pickupDistrict = d.senderDistrict || d.pickupDistrict || d.pickup || "N/A";
   const pickupAddress = d.senderAddress || d.pickupAddress || "N/A";

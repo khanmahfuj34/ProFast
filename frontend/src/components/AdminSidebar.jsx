@@ -184,12 +184,12 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
 
   return (
     <div
-      className={`fixed md:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 shadow-md transform transition-all duration-300 md:translate-x-0 ${
+      className={`fixed md:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 shadow-md transform transition-all duration-300 md:translate-x-0 flex flex-col h-full overflow-hidden ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } ${isCollapsed ? 'w-20 md:w-20' : 'w-64 md:w-64'} overflow-y-auto`}
+      } ${isCollapsed ? 'w-20 md:w-20' : 'w-64 md:w-64'}`}
     >
       {/* Header */}
-      <div className="sticky top-0 bg-white p-6 border-b border-gray-200">
+      <div className="bg-white p-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
@@ -263,7 +263,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       </div>
 
       {/* Navigation Menu */}
-      <nav className="p-4 space-y-1">
+      <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
         {navSections.map((section) => (
           <div key={section.id}>
             <SectionTitle title={section.title} />
@@ -280,7 +280,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
 
       {/* Footer Info */}
       {!isCollapsed && (
-        <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 mt-auto">
+        <div className="bg-white p-4 border-t border-gray-200 mt-auto flex-shrink-0">
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 text-center">
             <p className="font-medium text-emerald-600 mb-1">Admin Dashboard</p>
             <p>v1.0 • ProFast Logistics</p>
