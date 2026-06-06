@@ -4,6 +4,310 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* Tailwind CSS v4 class-based dark mode variant selector */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Target transition classes to enable smooth fade-in/fade-out on theme toggle */
+html,
+body,
+header,
+footer,
+nav,
+aside,
+main,
+.card,
+.bg-white,
+.bg-slate-50,
+.bg-gray-50,
+.text-slate-900,
+.text-slate-800,
+.text-slate-700,
+.text-slate-600,
+.text-slate-500,
+.border-slate-200,
+.border-gray-200,
+input,
+select,
+textarea,
+button {
+    transition: background-color 250ms ease, color 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+
+/* Global Dark Mode Overrides */
+.dark body {
+    background-color: #060a14 !important;
+    color: #f8fafc !important;
+}
+
+/* Background Color Overrides */
+.dark .bg-white {
+    background-color: #0b1120 !important;
+}
+.dark .bg-slate-50,
+.dark .bg-gray-50 {
+    background-color: #060a14 !important;
+}
+.dark .bg-slate-100,
+.dark .bg-gray-100 {
+    background-color: #0f172a !important;
+}
+.dark .bg-slate-200,
+.dark .bg-gray-200 {
+    background-color: #1e293b !important;
+}
+
+/* Border Color Overrides */
+.dark .border-slate-200,
+.dark .border-gray-200 {
+    border-color: #1e293b !important;
+}
+.dark .border-slate-100,
+.dark .border-gray-100 {
+    border-color: #0f172a !important;
+}
+.dark .border-slate-300,
+.dark .border-gray-300 {
+    border-color: #334155 !important;
+}
+
+/* Element Dividers */
+.dark .divide-slate-100 > * + * {
+    border-color: #1e293b !important;
+}
+.dark .divide-slate-200 > * + * {
+    border-color: #1e293b !important;
+}
+
+/* Hover Background Color Overrides */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-slate-100:hover {
+    background-color: #1e293b !important;
+}
+
+/* Text Color Overrides */
+.dark .text-slate-900,
+.dark .text-gray-900 {
+    color: #f8fafc !important;
+}
+.dark .text-slate-800,
+.dark .text-gray-800 {
+    color: #e2e8f0 !important;
+}
+.dark .text-slate-700,
+.dark .text-gray-700 {
+    color: #cbd5e1 !important;
+}
+.dark .text-slate-600,
+.dark .text-gray-600 {
+    color: #94a3b8 !important;
+}
+.dark .text-slate-500,
+.dark .text-gray-500,
+.dark .text-slate-400,
+.dark .text-gray-400 {
+    color: #64748b !important;
+}
+
+/* Inputs, Selects, Textareas */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark select,
+.dark textarea {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #475569 !important;
+}
+
+/* Global Recharts SVG Theme Adjustments */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+    stroke: #1e293b !important;
+}
+.dark .recharts-xAxis line,
+.dark .recharts-yAxis line {
+    stroke: #1e293b !important;
+}
+.dark .recharts-text {
+    fill: #94a3b8 !important;
+}
+.dark .recharts-legend-item-text {
+    color: #cbd5e1 !important;
+}
+.dark .recharts-default-tooltip {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+}
+
+/* Tables */
+.dark thead tr {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+}
+.dark th {
+    color: #cbd5e1 !important;
+}
+.dark tbody tr {
+    background-color: #0b1120 !important;
+}
+.dark tbody tr:hover {
+    background-color: #1e293b !important;
+}
+.dark td {
+    color: #cbd5e1 !important;
+    border-color: #1e293b !important;
+}
+
+/* Glow Shadows & Glassmorphism */
+.dark .glow-indigo {
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.15), 0 0 60px rgba(99, 102, 241, 0.08) !important;
+}
+.dark .glow-emerald {
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.15), 0 0 60px rgba(16, 185, 129, 0.08) !important;
+}
+.dark .glass-blur {
+    backdrop-filter: blur(16px);
+    background-color: rgba(6, 10, 20, 0.7) !important;
+}
+
+/* Modal and Drawer Components */
+.dark .drawer-side {
+    background-color: #060a14 !important;
+}
+.dark .modal-box {
+    background-color: #0b1120 !important;
+    border: 1px solid #1e293b !important;
+    color: #f8fafc !important;
+}
+
+/* ── Admin Page Dark Mode: Gradient Backgrounds ── */
+/* Only suppress gradients on FULL PAGE/SECTION wrappers (min-h-screen containers) */
+.dark .min-h-screen.bg-gradient-to-br,
+.dark .min-h-screen.bg-gradient-to-b,
+.dark .min-h-screen.bg-gradient-to-r {
+    background: #060a14 !important;
+}
+/* Preserve gradient text clips */
+.dark .bg-clip-text {
+    background: linear-gradient(to right, #34d399, #2dd4bf) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+/* ── Preserve colored gradient stat/metric cards in dark mode ── */
+/* These cards should KEEP their vibrant gradients in dark mode */
+.dark [class*="from-emerald"],
+.dark [class*="from-amber"],
+.dark [class*="from-green"],
+.dark [class*="from-blue"],
+.dark [class*="from-purple"],
+.dark [class*="from-indigo"],
+.dark [class*="from-teal"],
+.dark [class*="from-cyan"],
+.dark [class*="from-rose"],
+.dark [class*="from-orange"],
+.dark [class*="from-pink"] {
+    background-color: unset !important;
+}
+
+/* ── Rounded/Shadowed Card Containers in Admin Pages ── */
+/* Only target cards with shadow-sm (data/content cards, not colored stat cards) */
+.dark .rounded-xl.shadow-sm,
+.dark .rounded-xl.shadow-xl,
+.dark .rounded-xl.shadow-2xl,
+.dark .rounded-2xl.shadow-sm {
+    background-color: #0b1120 !important;
+    border-color: #1e293b !important;
+}
+.dark .rounded-\[32px\] {
+    background-color: #0b1120 !important;
+    border-color: #1e293b !important;
+}
+
+/* ── Table Thead Gradient overrides ── */
+.dark thead tr[class*="bg-gradient"] {
+    background: #1e293b !important;
+}
+
+/* ── FiltersBar Dark Mode ── */
+.dark [class*="bg-slate-50\/50"] {
+    background-color: #060a14 !important;
+}
+.dark .scrollbar-hide {
+    background-color: transparent !important;
+}
+
+/* ── Inline bg colors missed by global overrides ── */
+.dark .bg-emerald-50 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+}
+.dark .bg-amber-50 {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+}
+.dark .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.12) !important;
+}
+.dark .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.12) !important;
+}
+.dark .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.12) !important;
+}
+.dark .bg-lime-50 {
+    background-color: rgba(132, 204, 22, 0.12) !important;
+}
+.dark .bg-teal-50 {
+    background-color: rgba(20, 184, 166, 0.12) !important;
+}
+.dark .bg-green-50 {
+    background-color: rgba(34, 197, 94, 0.12) !important;
+}
+.dark .bg-yellow-50 {
+    background-color: rgba(234, 179, 8, 0.12) !important;
+}
+.dark .bg-indigo-50 {
+    background-color: rgba(99, 102, 241, 0.12) !important;
+}
+
+/* ── Dark Mode Text fixes for specific colors ── */
+.dark .text-slate-800.font-semibold,
+.dark .text-slate-800.font-bold,
+.dark .text-slate-800.font-black {
+    color: #e2e8f0 !important;
+}
+
+/* ── Fixed Modals/Overlays ── */
+.dark .fixed.inset-0 > div[class*="bg-white"],
+.dark .fixed.inset-0 > div.rounded-\[32px\] {
+    background-color: #0b1120 !important;
+}
+
+/* ── Sticky table headers dark fix ── */
+.dark thead.sticky,
+.dark thead [class*="sticky"] {
+    background-color: #0f172a !important;
+}
+.dark [class*="bg-slate-50\/80"] {
+    background-color: #0f172a !important;
+}
+
+/* ── Misc border and divider overrides ── */
+.dark [class*="border-slate-100"] {
+    border-color: #1e293b !important;
+}
+.dark .border-b {
+    border-color: #1e293b !important;
+}
+
+
 /* Global Styling */
 
 html,
@@ -221,3 +525,25 @@ body {
 .stat-badge.emerald {
     border-color: rgba(16, 185, 129, 0.2);
 }
+
+/* Sidebar menu styling inside DashboardLayout */
+aside .menu a {
+  color: #475569 !important;
+}
+aside .menu a:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+.dark aside .menu a {
+  color: #cbd5e1 !important;
+}
+.dark aside .menu a:hover {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Active links should override these */
+aside .menu a.bg-lime-500,
+aside .menu a.bg-emerald-600 {
+  color: #ffffff !important;
+}

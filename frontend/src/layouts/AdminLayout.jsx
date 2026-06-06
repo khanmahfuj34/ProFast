@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useLogout from '../hooks/useLogout';
 import AdminSidebar from '../components/AdminSidebar';
+import ThemeToggle from '../components/ThemeToggle';
 
 const AdminLayout = () => {
   const { isAdmin, user, loading } = useAuth();
@@ -109,6 +110,7 @@ const AdminLayout = () => {
 
             {/* Right Section */}
             <div className="flex items-center gap-6">
+              <ThemeToggle />
               {/* Search */}
               <div className="hidden md:flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 hover:border-gray-300 focus-within:border-emerald-500/50 transition-colors">
                 <svg

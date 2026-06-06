@@ -9,6 +9,7 @@ import { router } from './router/router.jsx';
 import AuthProvider from './contexts/AuthContext/AuthProvider.jsx';
 import { ParcelProvider } from './contexts/ParcelContext.jsx';
 import { NotificationProvider } from './contexts/NotificationContext.jsx';
+import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 const queryClient = new QueryClient();
 // Error boundary for debugging
@@ -74,11 +75,13 @@ root.render(
         }}
       />
       <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <AuthProvider>
         <ParcelProvider>
           <RouterProvider router={router} />
         </ParcelProvider>
       </AuthProvider>
+      </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,

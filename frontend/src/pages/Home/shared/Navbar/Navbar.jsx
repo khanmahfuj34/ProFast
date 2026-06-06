@@ -8,6 +8,7 @@ import { useNotifications } from '../../../../contexts/NotificationContext';
 import LogoutConfirmModal from '../../../../components/LogoutConfirmModal';
 import ProfileDropdown from '../../../../components/ProfileDropdown';
 import ProfileModal from '../../../../components/ProfileModal';
+import ThemeToggle from '../../../../components/ThemeToggle';
 
 const Navbar = () => {
     const { user, userProfile, loading, tokenReady } = useAuth();
@@ -172,6 +173,7 @@ const Navbar = () => {
 
                     {/* Right Side: Profile/Auth */}
                     <div className="flex items-center gap-3">
+                        <ThemeToggle />
                         {loading ? (
                             <span className="loading loading-spinner loading-sm"></span>
                         ) : user ? (

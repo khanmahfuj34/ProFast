@@ -4,6 +4,8 @@ import { Navigate, useLocation, Link } from 'react-router-dom';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../../hooks/useAuth';
+import { useTheme } from '../../../contexts/ThemeContext';
+import ThemeToggle from '../../../components/ThemeToggle';
 import { toast } from 'react-toastify';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +23,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     
     // Theme State
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    const { isDark: isDarkMode } = useTheme();
 
     const onSubmit = data => {
         signIn(data.email, data.password)
@@ -115,17 +117,7 @@ const Login = () => {
             
             {/* Theme Toggle */}
             <div className="absolute top-6 right-4 sm:right-6 z-50">
-                <button 
-                    onClick={() => setIsDarkMode(!isDarkMode)}
-                    className={`flex items-center justify-center gap-2 p-2.5 sm:px-4 sm:py-2 rounded-full font-medium text-sm transition-all duration-300 backdrop-blur-md border ${
-                        isDarkMode 
-                        ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' 
-                        : 'bg-white/80 border-gray-200 text-gray-800 hover:bg-white shadow-sm'
-                    }`}
-                >
-                    {isDarkMode ? <FiSun size={16} className="shrink-0" /> : <FiMoon size={16} className="shrink-0" />}
-                    <span className="hidden sm:inline">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-                </button>
+                <ThemeToggle />
             </div>
 
             {/* Futuristic Background Elements */}

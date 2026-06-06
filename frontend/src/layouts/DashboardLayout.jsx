@@ -5,6 +5,7 @@ import useLogout from '../hooks/useLogout';
 import { useNotifications } from '../contexts/NotificationContext';
 import logo from '../assets/logo.png';
 import useRiderStatus from '../hooks/useRiderStatus';
+import ThemeToggle from '../components/ThemeToggle';
 
 import { RiTaskLine, RiCustomerService2Line } from 'react-icons/ri';
 
@@ -43,7 +44,7 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#060a14] flex overflow-x-hidden font-sans">
       {/* Mobile Drawer Overlay */}
       {sidebarOpen && (
         <div
@@ -54,12 +55,12 @@ const DashboardLayout = () => {
 
       {/* Responsive Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 bg-slate-900 flex flex-col shadow-xl transition-all duration-300 lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#0b1120] border-r border-slate-100 dark:border-slate-800/80 flex flex-col shadow-xl transition-all duration-300 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${sidebarCollapsed ? 'w-20' : 'w-64'}`}
       >
         {/* Sidebar Header */}
-        <div className="bg-slate-955 border-b border-slate-800 p-4 flex items-center justify-between h-[72px]">
+        <div className="bg-white dark:bg-[#0b1120] border-b border-slate-100 dark:border-slate-800/80 p-4 flex items-center justify-between h-[72px]">
           {sidebarCollapsed ? (
             <div className="mx-auto">
               <svg
@@ -77,8 +78,8 @@ const DashboardLayout = () => {
                 <>
                   <img src={logo} alt="ProFast Logo" className="w-10 h-10 rounded-xl object-cover" />
                   <div>
-                    <p className="text-lg font-bold text-white leading-tight">ProFast</p>
-                    <p className="text-xs text-slate-400">Rider Panel</p>
+                    <p className="text-lg font-bold text-slate-800 dark:text-white leading-tight">ProFast</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Rider Panel</p>
                   </div>
                 </>
               ) : (
@@ -91,7 +92,7 @@ const DashboardLayout = () => {
                   >
                     <path d="M6 2a1 1 0 00-1 1v2H3a1 1 0 000 2h1v2H3a1 1 0 000 2h1v2H3a1 1 0 000 2h1v3a1 1 0 001 1h2v1a1 1 0 002 0v-1h2v1a1 1 0 002 0v-1h2v1a1 1 0 002 0v-1h3a1 1 0 001-1v-3h1a1 1 0 000-2h-1v-2h1a1 1 0 000-2h-1V7h1a1 1 0 000-2h-1V3a1 1 0 000-2h-2a1 1 0 00-1 1v1H9V3a1 1 0 00-1-1H6z"></path>
                   </svg>
-                  <span className="text-lg font-bold text-white uppercase tracking-wider">Menu</span>
+                  <span className="text-lg font-bold text-slate-800 dark:text-white uppercase tracking-wider">Menu</span>
                 </>
               )}
             </div>
@@ -508,7 +509,7 @@ const DashboardLayout = () => {
         </ul>
 
         {/* Sidebar Footer */}
-        <div className="mt-auto border-t border-slate-800 p-4 w-full flex flex-col items-center">
+        <div className="mt-auto border-t border-slate-100 dark:border-slate-800 p-4 w-full flex flex-col items-center">
           {sidebarCollapsed ? (
             <div className="flex flex-col items-center gap-3">
               <div
@@ -522,7 +523,7 @@ const DashboardLayout = () => {
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="p-2 bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white border-none rounded-lg transition-all duration-200 flex items-center justify-center cursor-pointer disabled:opacity-50"
+                className="p-2 bg-slate-100 hover:bg-red-600 dark:bg-slate-800 dark:hover:bg-red-600 text-slate-600 dark:text-slate-300 hover:text-white dark:hover:text-white border-none rounded-lg transition-all duration-200 flex items-center justify-center cursor-pointer disabled:opacity-50"
                 title="Logout"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -539,16 +540,16 @@ const DashboardLayout = () => {
                   {userProfile?.displayName?.charAt(0)?.toUpperCase() || user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">
                     {userProfile?.displayName || user?.displayName || 'Mahfuj'}
                   </p>
-                  <p className="text-xs text-slate-400 truncate">{isRider ? 'Rider Member' : 'User Member'}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{isRider ? 'Rider Member' : 'User Member'}</p>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="w-full btn btn-sm bg-slate-800 hover:bg-red-600 text-slate-300 hover:text-white border-none rounded-lg transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full btn btn-sm bg-slate-100 hover:bg-red-600 dark:bg-slate-800 dark:hover:bg-red-600 text-slate-600 dark:text-slate-300 hover:text-white dark:hover:text-white border-none rounded-lg transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoggingOut ? (
                   <>
@@ -574,12 +575,12 @@ const DashboardLayout = () => {
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Navbar */}
-        <nav className="navbar bg-slate-900 shadow-md sticky top-0 z-40 h-[72px] px-6 justify-between border-b border-slate-800">
+        <nav className="navbar bg-white dark:bg-[#0b1120] shadow-md sticky top-0 z-40 h-[72px] px-6 justify-between border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             {/* Mobile Sidebar Hamburger Toggle */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden btn btn-square btn-ghost text-white"
+              className="lg:hidden btn btn-square btn-ghost text-slate-700 dark:text-white"
               title="Toggle sidebar"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-6 h-6">
@@ -590,7 +591,7 @@ const DashboardLayout = () => {
             {/* Desktop Sidebar Collapse Toggle */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex p-2 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+              className="hidden lg:flex p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg transition-colors cursor-pointer"
               title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               <svg
@@ -605,25 +606,26 @@ const DashboardLayout = () => {
               </svg>
             </button>
 
-            <div className="px-2 text-xl font-bold text-white flex items-center gap-2">
+            <div className="px-2 text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
               <span>{isRider ? 'Rider Dashboard' : 'Dashboard'}</span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             {!isRider && (
               <div className="form-control hidden sm:block">
                 <input
                   type="text"
                   placeholder="Search..."
-                  className="input input-sm input-bordered bg-slate-800 text-white placeholder-gray-400 border-slate-700 focus:outline-none focus:border-lime-500 rounded-lg"
+                  className="input input-sm input-bordered bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white placeholder-gray-400 border-slate-200 dark:border-slate-700 focus:outline-none focus:border-lime-500 rounded-lg"
                 />
               </div>
             )}
 
             {/* Rider Status Toggle */}
             {isRider && (
-              <div className="flex items-center gap-3 bg-slate-800 px-4 py-1.5 rounded-full border border-slate-700">
+              <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-2">
                   <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_8px] ${
                     isOnline ? 'bg-lime-500 shadow-lime-500/50' : 'bg-red-500 shadow-red-500/50'
@@ -635,7 +637,7 @@ const DashboardLayout = () => {
                   </span>
                 </div>
                 
-                <div className="h-4 w-px bg-slate-700"></div>
+                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
 
                 <label className="relative inline-flex items-center cursor-pointer group">
                   <input 
@@ -645,7 +647,7 @@ const DashboardLayout = () => {
                     onChange={toggleStatus}
                     disabled={statusLoading}
                   />
-                  <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-500 group-hover:scale-105 transition-all"></div>
+                  <div className="w-11 h-6 bg-slate-300 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-lime-500 group-hover:scale-105 transition-all"></div>
                 </label>
               </div>
             )}
