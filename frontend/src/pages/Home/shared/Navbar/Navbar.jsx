@@ -23,7 +23,6 @@ const Navbar = () => {
     const fetchedRiderStatusRef = useRef(false);
 
     const checkRiderApplicationStatus = useCallback(async () => {
-        // Don't check if backend is down or if we already checked for this session
         if (!user?.email || fetchedRiderStatusRef.current) return;
 
         try {
@@ -45,47 +44,30 @@ const Navbar = () => {
     }, [user?.email, axiosSecure]);
 
     useEffect(() => {
-        // Reset fetch ref when user changes
         fetchedRiderStatusRef.current = false;
     }, [user?.email]);
 
     useEffect(() => {
-        // Wait for both token AND userProfile to be ready
-        // This prevents the race condition where tokenReady is true but userProfile is still loading
         if (user?.email && tokenReady && userProfile && !checkingRiderStatus && !fetchedRiderStatusRef.current) {
             if (userProfile.role !== 'admin') {
                 checkRiderApplicationStatus();
             } else {
-                // If admin, they don't apply for riders, so mark as "checked" to stop further attempts
                 fetchedRiderStatusRef.current = true;
             }
         }
     }, [user?.email, tokenReady, userProfile, checkingRiderStatus, checkRiderApplicationStatus]);
 
-    const handleLogoutClick = () => {
-        setShowLogoutModal(true);
-    };
+    const handleLogoutClick = () => setShowLogoutModal(true);
+    const handleConfirmLogout = async () => { await handleLogout(); setShowLogoutModal(false); };
+    const handleCancelLogout = () => setShowLogoutModal(false);
+    const handleMyProfileClick = () => setShowProfileModal(true);
 
-    const handleConfirmLogout = async () => {
-        await handleLogout();
-        setShowLogoutModal(false);
-    };
-
-    const handleCancelLogout = () => {
-        setShowLogoutModal(false);
-    };
-
-    const handleMyProfileClick = () => {
-        setShowProfileModal(true);
-    };
-
-    // ✅ Modern Active Nav Style
+    // ✅ Active Nav Style — dark mode aware
     const navLinkClass = ({ isActive }) =>
-        `relative px-4 py-2 text-[15px] font-medium rounded-xl transition-all duration-300 whitespace-nowrap
-        ${
-            isActive
-                ? 'text-lime-600 bg-lime-50 shadow-sm'
-                : 'text-gray-700 hover:text-lime-600 hover:bg-lime-50'
+        `relative px-3 py-2 text-[14px] font-medium rounded-xl transition-all duration-300 whitespace-nowrap
+        ${isActive
+            ? 'text-lime-600 dark:text-lime-400 bg-lime-50 dark:bg-lime-500/10 shadow-sm'
+            : 'text-gray-700 dark:text-slate-300 hover:text-lime-600 dark:hover:text-lime-400 hover:bg-lime-50 dark:hover:bg-lime-500/10'
         }`;
 
     // ✅ Public Navigation
@@ -104,18 +86,20 @@ const Navbar = () => {
         <>
             {publicNavItems}
             <li><NavLink to="/send-parcel" className={navLinkClass}>Send Parcel</NavLink></li>
-           
             <li>
                 <NavLink to="/dashboard" className={navLinkClass}>
                     {userProfile?.role === 'rider' ? 'Rider Dashboard' : 'My Parcels'}
                 </NavLink>
             </li>
-             <li>
+            <li>
                 <NavLink
                     to={hasRiderApplication ? "/be-rider-status" : "/be-rider"}
                     className={({ isActive }) =>
-                        `px-4 py-2 rounded-xl text-[15px] font-semibold transition-all duration-300 whitespace-nowrap
-                        ${isActive ? 'bg-lime-100 text-lime-700 shadow-sm' : 'bg-lime-50 text-lime-600 hover:bg-lime-100'}`
+                        `px-3 py-2 rounded-xl text-[14px] font-semibold transition-all duration-300 whitespace-nowrap
+                        ${isActive
+                            ? 'bg-lime-100 dark:bg-lime-500/20 text-lime-700 dark:text-lime-400 shadow-sm'
+                            : 'bg-lime-50 dark:bg-lime-500/10 text-lime-600 dark:text-lime-400 hover:bg-lime-100 dark:hover:bg-lime-500/20'
+                        }`
                     }
                 >
                     {hasRiderApplication ? 'Rider Status' : 'Be a Rider'}
@@ -146,41 +130,42 @@ const Navbar = () => {
 
     return (
         <>
-            <nav className="w-full sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 lg:px-8 h-[76px] flex items-center justify-between relative">
+            <nav className="w-full sticky top-0 z-50 bg-white/95 dark:bg-[#0b1120]/95 backdrop-blur-md border-b border-gray-100 dark:border-slate-800/80 shadow-sm transition-colors duration-300">
+                <div className="max-w-7xl mx-auto px-4 lg:px-8 h-[72px] flex items-center justify-between gap-4">
 
-                    {/* Left Logo & Mobile Menu */}
-                    <div className="flex items-center gap-2">
+                    {/* Left: Logo + Mobile Menu */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Mobile hamburger dropdown */}
                         <div className="dropdown lg:hidden">
-                            <div tabIndex={0} role="button" className="btn btn-ghost p-0 mr-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div tabIndex={0} role="button" className="btn btn-ghost p-0 mr-2 text-gray-700 dark:text-slate-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
                                 </svg>
                             </div>
-                            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-4 z-[100] p-3 shadow-xl bg-white rounded-2xl w-64 border border-gray-100 space-y-2">
+                            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-4 z-[100] p-3 shadow-xl bg-white dark:bg-[#0b1120] rounded-2xl w-64 border border-gray-100 dark:border-slate-700/60 space-y-2">
                                 {navItems}
                             </ul>
                         </div>
                         <ProFastLogo />
                     </div>
 
-                    {/* Desktop Nav */}
-                    <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
-                        <ul className="flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+                    {/* Center: Desktop Nav — flex, not absolute */}
+                    <div className="hidden lg:flex flex-1 justify-center px-4">
+                        <ul className="flex items-center gap-1 bg-white/80 dark:bg-slate-800/60 backdrop-blur-md px-3 py-2 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm">
                             {navItems}
                         </ul>
                     </div>
 
-                    {/* Right Side: Profile/Auth */}
-                    <div className="flex items-center gap-3">
+                    {/* Right: Theme Toggle + Auth/Profile */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
                         <ThemeToggle />
                         {loading ? (
-                            <span className="loading loading-spinner loading-sm"></span>
+                            <span className="loading loading-spinner loading-sm text-lime-500"></span>
                         ) : user ? (
-                            <div className="flex items-center gap-3">
-                                {/* User Info */}
-                                <div className="hidden sm:flex flex-col items-end bg-gray-50 px-4 py-2 rounded-2xl border border-gray-100">
-                                    <p className="text-sm font-semibold text-gray-800 leading-tight">
+                            <div className="flex items-center gap-2">
+                                {/* User Info Pill — hidden on small screens */}
+                                <div className="hidden xl:flex flex-col items-end bg-gray-50 dark:bg-slate-800 px-3 py-1.5 rounded-2xl border border-gray-100 dark:border-slate-700/60">
+                                    <p className="text-sm font-semibold text-gray-800 dark:text-slate-200 leading-tight">
                                         {user.displayName || user.email?.split('@')[0]}
                                     </p>
                                     <p className="text-[10px] uppercase font-bold tracking-wider leading-tight">
@@ -189,7 +174,7 @@ const Navbar = () => {
                                         ) : userProfile?.role === 'rider' ? (
                                             <span className="text-blue-500">Rider</span>
                                         ) : (
-                                            <span className="text-gray-500">User</span>
+                                            <span className="text-gray-500 dark:text-slate-400">User</span>
                                         )}
                                     </p>
                                 </div>
@@ -203,7 +188,7 @@ const Navbar = () => {
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <a href="/auth/register" className="btn btn-sm btn-outline border-gray-300 hover:border-lime-500 hover:bg-lime-50 hover:text-lime-600 rounded-2xl transition-all duration-300">
+                                <a href="/auth/register" className="btn btn-sm btn-outline border-gray-300 dark:border-slate-600 dark:text-slate-300 hover:border-lime-500 hover:bg-lime-50 dark:hover:bg-lime-500/10 hover:text-lime-600 dark:hover:text-lime-400 rounded-2xl transition-all duration-300">
                                     Sign Up
                                 </a>
                                 <a href="/auth/login" className="btn btn-sm bg-lime-500 hover:bg-lime-600 text-white border-none rounded-2xl transition-all duration-300 hover:scale-105 shadow-md">

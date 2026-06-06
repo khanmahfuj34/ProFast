@@ -9,7 +9,7 @@ const RiderOverviewCards = ({ stats = {}, isLoading }) => {
       value: stats.assignedCount || 0,
       subtext: 'Active assignments',
       icon: '📦',
-      color: 'blue',
+      gradient: 'from-blue-500 to-cyan-600',
       trend: '+2 from last week'
     },
     {
@@ -18,7 +18,7 @@ const RiderOverviewCards = ({ stats = {}, isLoading }) => {
       value: stats.pendingPickups || 0,
       subtext: 'Awaiting pickup',
       icon: '🔔',
-      color: 'amber',
+      gradient: 'from-amber-500 to-orange-500',
       trend: 'Ready to pick'
     },
     {
@@ -27,7 +27,7 @@ const RiderOverviewCards = ({ stats = {}, isLoading }) => {
       value: stats.completedToday || 0,
       subtext: 'Deliveries done',
       icon: '✅',
-      color: 'green',
+      gradient: 'from-emerald-500 to-green-600',
       trend: 'Great progress!'
     },
     {
@@ -36,7 +36,7 @@ const RiderOverviewCards = ({ stats = {}, isLoading }) => {
       value: `৳${(stats.todayEarnings || 0).toLocaleString()}`,
       subtext: 'Commission earned',
       icon: '💰',
-      color: 'purple',
+      gradient: 'from-purple-500 to-pink-600',
       trend: 'Keep it up!'
     }
   ];
@@ -46,24 +46,24 @@ const RiderOverviewCards = ({ stats = {}, isLoading }) => {
       {cards.map((card) => (
         <div
           key={card.id}
-          className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow"
+          className={`bg-gradient-to-br ${card.gradient} rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]`}
         >
           <div className="flex items-start justify-between mb-4">
             <div>
-              <p className="text-sm text-gray-600 font-medium">{card.label}</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-xs font-semibold opacity-90 uppercase tracking-wider">{card.label}</p>
+              <p className="text-3xl font-bold mt-2">
                 {isLoading ? (
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="loading loading-spinner loading-sm opacity-75"></span>
                 ) : (
                   card.value
                 )}
               </p>
             </div>
-            <div className="text-3xl">{card.icon}</div>
+            <div className="text-3xl opacity-90">{card.icon}</div>
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-600">{card.subtext}</span>
-            <span className="text-green-600 font-medium flex items-center gap-1">
+          <div className="flex items-center justify-between text-xs opacity-80">
+            <span>{card.subtext}</span>
+            <span className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full font-semibold">
               <MdTrendingUp className="text-sm" />
               {card.trend}
             </span>

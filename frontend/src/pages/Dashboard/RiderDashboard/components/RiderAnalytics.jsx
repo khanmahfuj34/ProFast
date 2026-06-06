@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useTheme } from '../../../../contexts/ThemeContext';
 
 const RiderAnalytics = ({ analyticsData = {}, isLoading }) => {
   const [timeFilter, setTimeFilter] = useState('7D');
+  const { theme } = useTheme();
 
-  // Mock data for charts
+  // Detect effective dark mode
+  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  const chartColors = {
+    grid: isDark ? '#1e293b' : '#e5e7eb',
+    axis: isDark ? '#94a3b8' : '#6b7280',
+    tooltip: isDark ? { bg: '#0f172a', border: '#334155', color: '#f1f5f9' } : { bg: '#ffffff', border: '#e5e7eb', color: '#111827' },
+  };
+
+  // Mock chart data
   const deliveryTrendData = [
     { day: 'Mon', deliveries: 12, earnings: 2400 },
     { day: 'Tue', deliveries: 15, earnings: 2800 },
@@ -22,6 +33,13 @@ const RiderAnalytics = ({ analyticsData = {}, isLoading }) => {
     { name: 'Cancelled', value: 5, fill: '#EF4444' }
   ];
 
+  const tooltipStyle = {
+    backgroundColor: chartColors.tooltip.bg,
+    border: `1px solid ${chartColors.tooltip.border}`,
+    borderRadius: '10px',
+    color: chartColors.tooltip.color,
+  };
+
   return (
     <div className="space-y-6">
       {/* Time Filter */}
@@ -30,10 +48,10 @@ const RiderAnalytics = ({ analyticsData = {}, isLoading }) => {
           <button
             key={filter}
             onClick={() => setTimeFilter(filter)}
-            className={`px-4 py-2 rounded-lg font-medium text-sm transition ${
+            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
               timeFilter === filter
-                ? 'bg-emerald-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-emerald-500 text-white shadow-md'
+                : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'
             }`}
           >
             {filter}
@@ -42,52 +60,40 @@ const RiderAnalytics = ({ analyticsData = {}, isLoading }) => {
       </div>
 
       {/* Delivery Trend Chart */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Delivery Trend</h3>
+      <div className="bg-white dark:bg-[#0b1120] rounded-xl border border-gray-200 dark:border-slate-700/60 p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">Delivery Trend</h3>
         {isLoading ? (
-          <div className="flex justify-center h-64">
+          <div className="flex justify-center h-64 items-center">
             <span className="loading loading-spinner loading-lg text-emerald-500"></span>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <LineChart data={deliveryTrendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="day" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px'
-                }}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+              <XAxis dataKey="day" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+              <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+              <Tooltip contentStyle={tooltipStyle} />
               <Legend />
-              <Line type="monotone" dataKey="deliveries" stroke="#10B981" strokeWidth={2} name="Deliveries" />
+              <Line type="monotone" dataKey="deliveries" stroke="#10B981" strokeWidth={2.5} dot={{ fill: '#10B981', r: 4 }} name="Deliveries" />
             </LineChart>
           </ResponsiveContainer>
         )}
       </div>
 
       {/* Earnings Overview */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Earnings Overview</h3>
+      <div className="bg-white dark:bg-[#0b1120] rounded-xl border border-gray-200 dark:border-slate-700/60 p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">Earnings Overview</h3>
         {isLoading ? (
-          <div className="flex justify-center h-64">
+          <div className="flex justify-center h-64 items-center">
             <span className="loading loading-spinner loading-lg text-emerald-500"></span>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <BarChart data={deliveryTrendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="day" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px'
-                }}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+              <XAxis dataKey="day" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+              <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+              <Tooltip contentStyle={tooltipStyle} />
               <Legend />
               <Bar dataKey="earnings" fill="#3B82F6" name="Earnings (৳)" radius={[8, 8, 0, 0]} />
             </BarChart>
@@ -96,14 +102,14 @@ const RiderAnalytics = ({ analyticsData = {}, isLoading }) => {
       </div>
 
       {/* Parcel Status Distribution */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Parcel Status Distribution</h3>
+      <div className="bg-white dark:bg-[#0b1120] rounded-xl border border-gray-200 dark:border-slate-700/60 p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">Parcel Status Distribution</h3>
         {isLoading ? (
-          <div className="flex justify-center h-64">
+          <div className="flex justify-center h-64 items-center">
             <span className="loading loading-spinner loading-lg text-emerald-500"></span>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
                 data={parcelStatusData}
@@ -112,14 +118,13 @@ const RiderAnalytics = ({ analyticsData = {}, isLoading }) => {
                 labelLine={false}
                 label={({ name, value }) => `${name}: ${value}`}
                 outerRadius={100}
-                fill="#8884d8"
                 dataKey="value"
               >
                 {parcelStatusData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip contentStyle={tooltipStyle} />
             </PieChart>
           </ResponsiveContainer>
         )}
