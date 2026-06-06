@@ -58,7 +58,7 @@ const NotificationSettings = () => {
         return (
             <div className="p-10 flex flex-col items-center justify-center space-y-4">
                 <span className="loading loading-spinner loading-lg text-lime-500"></span>
-                <p className="text-slate-500 font-medium animate-pulse">Loading preferences...</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">Loading preferences...</p>
             </div>
         );
     }
@@ -127,14 +127,14 @@ const NotificationSettings = () => {
     ];
 
     return (
-        <div className="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
-            <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
-                <div className="w-12 h-12 bg-lime-100 rounded-2xl flex items-center justify-center text-lime-600 shadow-sm border border-lime-100">
+        <div className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden animate-in fade-in duration-500 transition-colors duration-300">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-4">
+                <div className="w-12 h-12 bg-lime-100 dark:bg-lime-950/20 rounded-2xl flex items-center justify-center text-lime-600 dark:text-lime-400 shadow-sm border border-lime-100 dark:border-lime-900/30">
                     <RiNotification3Line size={24} />
                 </div>
                 <div>
-                    <h2 className="text-xl font-black text-slate-900">Notification Settings</h2>
-                    <p className="text-slate-500 text-sm mt-1">Choose how and when you want to be notified.</p>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white">Notification Settings</h2>
+                    <p className="text-slate-500 dark:text-slate-350 text-sm mt-1">Choose how and when you want to be notified.</p>
                 </div>
             </div>
 
@@ -142,30 +142,31 @@ const NotificationSettings = () => {
                 {settingsGroups.map((group, gIdx) => (
                     <section key={gIdx} className="space-y-6">
                         <div className="px-1">
-                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">{group.title}</h3>
-                            <p className="text-slate-500 text-xs mt-1 leading-relaxed">{group.description}</p>
+                            <h3 className="text-sm font-black text-slate-400 dark:text-slate-300 uppercase tracking-widest">{group.title}</h3>
+                            <p className="text-slate-500 dark:text-slate-455 text-xs mt-1 leading-relaxed">{group.description}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {group.items.map((item) => (
                                 <div 
                                     key={item.id} 
-                                    className="flex items-center justify-between p-6 bg-white rounded-[24px] border border-slate-100 hover:border-lime-200 hover:bg-lime-50/20 transition-all duration-300 group shadow-sm"
+                                    className="flex items-center justify-between p-6 bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-700/60 hover:border-lime-200 dark:hover:border-lime-500/30 hover:bg-lime-50/20 dark:hover:bg-lime-950/10 transition-all duration-300 group shadow-sm"
+                                
                                 >
                                     <div className="flex items-start gap-4">
-                                        <div className="mt-1 p-2.5 bg-slate-50 rounded-xl border border-slate-100 group-hover:bg-white group-hover:scale-110 transition-all duration-300">
+                                        <div className="mt-1 p-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 group-hover:bg-white dark:group-hover:bg-slate-700 group-hover:scale-110 transition-all duration-300">
                                             {item.icon}
                                         </div>
                                         <div>
-                                            <p className="font-bold text-slate-900 text-sm">{item.label}</p>
-                                            <p className="text-[11px] text-slate-500 max-w-[200px] mt-1 leading-relaxed">{item.sublabel}</p>
+                                            <p className="font-bold text-slate-900 dark:text-white text-sm">{item.label}</p>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-[200px] mt-1 leading-relaxed">{item.sublabel}</p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center">
                                         <input 
                                             type="checkbox" 
-                                            className="toggle toggle-md border-slate-300 bg-slate-300 checked:bg-lime-500 checked:border-lime-500 [--tglbg:white]" 
+                                            className="toggle toggle-md border-slate-300 dark:border-slate-600 bg-slate-300 dark:bg-slate-600 checked:bg-lime-500 checked:border-lime-500 [--tglbg:white] dark:[--tglbg:slate-800]" 
                                             checked={!!item.value} 
                                             onChange={(e) => handleToggle(item.id, e.target.checked)}
                                             disabled={mutation.isPending}
@@ -178,12 +179,12 @@ const NotificationSettings = () => {
                 ))}
             </div>
 
-            <div className="m-8 mt-0 p-6 bg-slate-50 rounded-[24px] border border-slate-100 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-amber-500 shrink-0">
+            <div className="m-8 mt-0 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[24px] border border-slate-100 dark:border-slate-700 flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-amber-500 shrink-0">
                     <RiInformationLine size={20} />
                 </div>
-                <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                    <strong className="text-slate-900">Important:</strong> Critical security alerts and account-related updates will always be sent regardless of your notification preferences to ensure the safety of your account.
+                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed font-medium">
+                    <strong className="text-slate-900 dark:text-white">Important:</strong> Critical security alerts and account-related updates will always be sent regardless of your notification preferences to ensure the safety of your account.
                 </p>
             </div>
         </div>

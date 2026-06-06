@@ -131,25 +131,25 @@ const SecuritySettings = () => {
             {/* Left Column: Security Controls */}
             <div className="xl:col-span-2 space-y-8">
                 {/* Password Change Card */}
-                <div className="bg-white rounded-[40px] border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-                    <div className="p-8 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-colors duration-300">
+                    <div className="p-8 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
                         <div>
-                            <h2 className="text-xl font-black text-slate-900">Security Credentials</h2>
-                            <p className="text-slate-400 text-sm font-medium mt-0.5">Update your password to keep your account secure</p>
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white">Security Credentials</h2>
+                            <p className="text-slate-400 dark:text-slate-300 text-sm font-medium mt-0.5">Update your password to keep your account secure</p>
                         </div>
-                        <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center text-lime-600">
+                        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-700 shadow-sm border border-slate-200 dark:border-slate-650 flex items-center justify-center text-lime-600 dark:text-lime-400">
                             <RiLockPasswordLine size={24} />
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit(onSubmitPassword)} className={`p-8 space-y-8 relative ${!isPasswordUser ? 'opacity-50 pointer-events-none' : ''}`}>
                         {!isPasswordUser && (
-                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[2px] rounded-b-[40px] px-8">
-                                <div className="bg-amber-50 border border-amber-200 p-6 rounded-3xl shadow-xl max-w-md text-center">
-                                    <RiErrorWarningLine size={40} className="text-amber-500 mx-auto mb-4" />
-                                    <h3 className="text-lg font-black text-slate-900 mb-2">Social Account Detected</h3>
-                                    <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                                        You are logged in via <span className="font-bold text-slate-900 capitalize">{user?.providerData?.[0]?.providerId.split('.')[0]}</span>. 
+                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-[2px] rounded-b-[40px] px-8">
+                                <div className="bg-amber-50 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-900/30 p-6 rounded-3xl shadow-xl max-w-md text-center">
+                                    <RiErrorWarningLine size={40} className="text-amber-500 dark:text-amber-400 mx-auto mb-4" />
+                                    <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Social Account Detected</h3>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                                        You are logged in via <span className="font-bold text-slate-900 dark:text-white capitalize">{user?.providerData?.[0]?.providerId.split('.')[0]}</span>. 
                                         Password management for social accounts is handled directly by the provider.
                                     </p>
                                 </div>
@@ -158,8 +158,8 @@ const SecuritySettings = () => {
                         {/* Current Password */}
                         <div className="space-y-3">
                             <div className="flex items-center justify-between px-1">
-                                <label className="text-sm font-bold text-slate-700">Current Password</label>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verification Required</span>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Current Password</label>
+                                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verification Required</span>
                             </div>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-lime-500 transition-colors">
@@ -169,7 +169,7 @@ const SecuritySettings = () => {
                                     type={showCurrentPass ? "text" : "password"}
                                     {...register('currentPassword', { required: 'Current password is required' })}
                                     placeholder="••••••••"
-                                    className="w-full h-14 pl-12 pr-12 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-lime-500/5 focus:border-lime-500 transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300"
+                                    className="w-full h-14 pl-12 pr-12 bg-slate-50/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl focus:ring-4 focus:ring-lime-500/5 focus:border-lime-500 transition-all outline-none font-bold text-slate-700 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-500"
                                 />
                                 <button
                                     type="button"
@@ -179,23 +179,23 @@ const SecuritySettings = () => {
                                     {showCurrentPass ? <RiEyeOffLine size={20} /> : <RiEyeLine size={20} />}
                                 </button>
                             </div>
-                            {errors.currentPassword && <p className="text-red-500 text-xs font-bold mt-1 ml-1">{errors.currentPassword.message}</p>}
+                            {errors.currentPassword && <p className="text-red-500 dark:text-red-400 text-xs font-bold mt-1 ml-1">{errors.currentPassword.message}</p>}
                         </div>
 
                         {/* Divider */}
                         <div className="relative py-4">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-slate-100"></div>
+                                <div className="w-full border-t border-slate-100 dark:border-slate-700"></div>
                             </div>
                             <div className="relative flex justify-center text-xs">
-                                <span className="px-4 bg-white text-slate-400 font-bold uppercase tracking-widest">New Credentials</span>
+                                <span className="px-4 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">New Credentials</span>
                             </div>
                         </div>
 
                         {/* New Password */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-3">
-                                <label className="text-sm font-bold text-slate-700 ml-1">New Password</label>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">New Password</label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-lime-500 transition-colors">
                                         <RiShieldCheckLine size={20} />
@@ -207,7 +207,7 @@ const SecuritySettings = () => {
                                             minLength: { value: 8, message: 'Password must be at least 8 characters' }
                                         })}
                                         placeholder="••••••••"
-                                        className="w-full h-14 pl-12 pr-12 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-lime-500/5 focus:border-lime-500 transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300"
+                                        className="w-full h-14 pl-12 pr-12 bg-slate-50/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl focus:ring-4 focus:ring-lime-500/5 focus:border-lime-500 transition-all outline-none font-bold text-slate-700 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-500"
                                     />
                                     <button
                                         type="button"
@@ -221,21 +221,21 @@ const SecuritySettings = () => {
                                 {/* Strength Meter */}
                                 <div className="mt-4 space-y-2 px-1">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase">Strength</span>
+                                        <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">Strength</span>
                                         <span className={`text-[10px] font-black uppercase ${strengthColor.replace('bg-', 'text-')}`}>{strengthText}</span>
                                     </div>
-                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
                                         <div 
                                             className={`h-full ${strengthColor} transition-all duration-500`}
                                             style={{ width: `${strength}%` }}
                                         ></div>
                                     </div>
                                 </div>
-                                {errors.newPassword && <p className="text-red-500 text-xs font-bold mt-1 ml-1">{errors.newPassword.message}</p>}
+                                {errors.newPassword && <p className="text-red-500 dark:text-red-400 text-xs font-bold mt-1 ml-1">{errors.newPassword.message}</p>}
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-sm font-bold text-slate-700 ml-1">Confirm New Password</label>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Confirm New Password</label>
                                 <div className="relative group">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-lime-500 transition-colors">
                                         <RiShieldCheckLine size={20} />
@@ -247,7 +247,7 @@ const SecuritySettings = () => {
                                             validate: value => value === newPassword || 'Passwords do not match'
                                         })}
                                         placeholder="••••••••"
-                                        className="w-full h-14 pl-12 pr-12 bg-slate-50/50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-lime-500/5 focus:border-lime-500 transition-all outline-none font-bold text-slate-700 placeholder:text-slate-300"
+                                        className="w-full h-14 pl-12 pr-12 bg-slate-50/50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl focus:ring-4 focus:ring-lime-500/5 focus:border-lime-500 transition-all outline-none font-bold text-slate-700 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-500"
                                     />
                                     <button
                                         type="button"
@@ -257,7 +257,7 @@ const SecuritySettings = () => {
                                         {showConfirmPass ? <RiEyeOffLine size={20} /> : <RiEyeLine size={20} />}
                                     </button>
                                 </div>
-                                {errors.confirmPassword && <p className="text-red-500 text-xs font-bold mt-1 ml-1">{errors.confirmPassword.message}</p>}
+                                {errors.confirmPassword && <p className="text-red-500 dark:text-red-400 text-xs font-bold mt-1 ml-1">{errors.confirmPassword.message}</p>}
                             </div>
                         </div>
 
@@ -265,7 +265,7 @@ const SecuritySettings = () => {
                             <button
                                 type="submit"
                                 disabled={passwordMutation.isPending}
-                                className="w-full md:w-auto px-10 h-14 bg-slate-900 hover:bg-lime-500 disabled:bg-slate-200 text-white rounded-2xl font-black shadow-xl shadow-slate-900/10 transition-all flex items-center justify-center gap-3 active:scale-95 group/btn"
+                                className="w-full md:w-auto px-10 h-14 bg-slate-900 dark:bg-slate-950 hover:bg-lime-500 disabled:bg-slate-200 dark:disabled:bg-slate-700 text-white rounded-2xl font-black shadow-xl shadow-slate-900/10 dark:shadow-black/20 transition-all flex items-center justify-center gap-3 active:scale-95 group/btn"
                             >
                                 {passwordMutation.isPending ? (
                                     <span className="loading loading-spinner loading-sm"></span>
@@ -279,15 +279,15 @@ const SecuritySettings = () => {
                 </div>
 
                 {/* Session Management Card */}
-                <div className="bg-white rounded-[40px] border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden border-l-4 border-l-red-500">
+                <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-200 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden border-l-4 border-l-red-500 transition-colors duration-300">
                     <div className="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="flex items-center gap-6">
-                            <div className="w-16 h-16 rounded-[24px] bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
+                            <div className="w-16 h-16 rounded-[24px] bg-red-50 dark:bg-red-950/20 text-red-500 flex items-center justify-center border border-red-100 dark:border-red-900/30 shadow-sm">
                                 <RiDeviceLine size={32} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-black text-slate-900">Active Sessions</h3>
-                                <p className="text-slate-500 text-sm font-medium mt-1 leading-relaxed max-w-md">
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white">Active Sessions</h3>
+                                <p className="text-slate-500 dark:text-slate-350 text-sm font-medium mt-1 leading-relaxed max-w-md">
                                     Lost a device or suspect unauthorized access? Log out of all active sessions across all your devices immediately.
                                 </p>
                             </div>
@@ -299,7 +299,7 @@ const SecuritySettings = () => {
                                 }
                             }}
                             disabled={revokeSessionsMutation.isPending}
-                            className="w-full md:w-auto px-8 h-14 bg-red-500 hover:bg-red-600 disabled:bg-slate-200 text-white rounded-2xl font-black shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-3 active:scale-95 group/logout"
+                            className="w-full md:w-auto px-8 h-14 bg-red-500 hover:bg-red-600 disabled:bg-slate-200 dark:disabled:bg-slate-700 text-white rounded-2xl font-black shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-3 active:scale-95 group/logout"
                         >
                             {revokeSessionsMutation.isPending ? (
                                 <span className="loading loading-spinner loading-sm"></span>
@@ -315,7 +315,7 @@ const SecuritySettings = () => {
             {/* Right Column: Information & Metadata */}
             <div className="space-y-8">
                 {/* Security Metadata Card */}
-                <div className="bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl">
+                <div className="bg-slate-900 dark:bg-slate-950 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl transition-colors duration-300">
                     <div className="relative z-10 space-y-8">
                         <div className="flex items-center justify-between">
                             <h3 className="font-black text-lg">Account Integrity</h3>
@@ -383,15 +383,15 @@ const SecuritySettings = () => {
                 </div>
 
                 {/* Help Section */}
-                <div className="bg-white rounded-[40px] border border-slate-200 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative group hover:border-lime-500 transition-all duration-500">
-                    <div className="w-14 h-14 bg-blue-50 rounded-[20px] flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform duration-500">
+                <div className="bg-white dark:bg-slate-800 rounded-[40px] border border-slate-200 dark:border-slate-700 p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative group hover:border-lime-500 dark:hover:border-lime-400 transition-all duration-500">
+                    <div className="w-14 h-14 bg-blue-50 dark:bg-blue-950/20 rounded-[20px] flex items-center justify-center text-blue-600 dark:text-blue-400 mb-6 group-hover:scale-110 transition-transform duration-500">
                         <RiShieldCheckLine size={28} />
                     </div>
-                    <h4 className="text-xl font-black text-slate-900">Security Center</h4>
-                    <p className="text-slate-400 text-sm font-medium leading-relaxed mt-3">
+                    <h4 className="text-xl font-black text-slate-900 dark:text-white">Security Center</h4>
+                    <p className="text-slate-400 dark:text-slate-350 text-sm font-medium leading-relaxed mt-3">
                         If you believe your account has been compromised, please contact our security team immediately.
                     </p>
-                    <button className="mt-8 w-full h-12 bg-slate-50 hover:bg-slate-900 hover:text-white text-slate-900 rounded-xl font-black transition-all flex items-center justify-center gap-2 group/btn">
+                    <button className="mt-8 w-full h-12 bg-slate-50 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-900 hover:text-white text-slate-900 dark:text-white rounded-xl font-black transition-all flex items-center justify-center gap-2 group/btn">
                         Contact Security
                     </button>
                 </div>

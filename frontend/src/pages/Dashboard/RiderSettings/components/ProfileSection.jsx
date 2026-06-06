@@ -50,12 +50,12 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
     >
       <div className="space-y-6">
         {/* Top Header & Edit Action */}
-        <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-          <h4 className="text-sm font-bold text-slate-800 tracking-tight uppercase">Profile Information</h4>
+        <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-700">
+          <h4 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight uppercase">Profile Information</h4>
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer shadow-2xs"
             >
               <FiEdit2 className="w-3.5 h-3.5 text-emerald-600" />
               Edit
@@ -65,7 +65,7 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
               <button
                 onClick={handleCancel}
                 disabled={isUpdating}
-                className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition cursor-pointer"
               >
                 <FiX className="w-3.5 h-3.5" />
                 Cancel
@@ -89,10 +89,10 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
             <img
               src={formData.photo || profile?.photo || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80"}
               alt={profile?.name || "Avatar"}
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-emerald-50 shadow-sm"
+              className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-emerald-50 dark:border-slate-800 shadow-sm"
             />
             {isEditing && (
-              <label className="absolute bottom-1 right-1 bg-white p-2 rounded-full shadow-md border border-slate-100 text-emerald-600 cursor-pointer hover:bg-emerald-50 transition">
+              <label className="absolute bottom-1 right-1 bg-white dark:bg-slate-700 p-2 rounded-full shadow-md border border-slate-100 dark:border-slate-650 text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-600 transition">
                 <FiCamera className="w-4 h-4" />
                 <input
                   type="text"
@@ -107,81 +107,81 @@ export default function ProfileSection({ profile, onUpdate, isUpdating }) {
           {/* Details Grid */}
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 w-full">
             <div>
-              <span className="text-xs text-slate-400 font-semibold block mb-1">Name</span>
+              <span className="text-xs text-slate-400 dark:text-slate-350 font-semibold block mb-1">Name</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.name || "N/A"}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{profile?.name || "N/A"}</p>
               ) : (
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter name"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
+                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-650 rounded-xl text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-600 transition"
                 />
               )}
             </div>
 
             <div>
-              <span className="text-xs text-slate-400 font-semibold block mb-1">Email</span>
-              <p className="text-sm font-bold text-slate-600 select-all">{profile?.email || "N/A"}</p>
+              <span className="text-xs text-slate-400 dark:text-slate-350 font-semibold block mb-1">Email</span>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-350 select-all">{profile?.email || "N/A"}</p>
             </div>
 
             <div>
-              <span className="text-xs text-slate-400 font-semibold block mb-1">Phone</span>
+              <span className="text-xs text-slate-400 dark:text-slate-350 font-semibold block mb-1">Phone</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.phone || "N/A"}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{profile?.phone || "N/A"}</p>
               ) : (
                 <input
                   type="text"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="Enter phone number"
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
+                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-650 rounded-xl text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-600 transition"
                 />
               )}
             </div>
 
             <div>
-              <span className="text-xs text-slate-400 font-semibold block mb-1">Gender</span>
+              <span className="text-xs text-slate-400 dark:text-slate-350 font-semibold block mb-1">Gender</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.gender || "N/A"}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{profile?.gender || "N/A"}</p>
               ) : (
                 <select
                   value={formData.gender}
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
+                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-650 rounded-xl text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-600 transition"
                 >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <option value="" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Select Gender</option>
+                  <option value="Male" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Male</option>
+                  <option value="Female" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Female</option>
+                  <option value="Other" className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white">Other</option>
                 </select>
               )}
             </div>
 
             <div className="sm:col-span-2">
-              <span className="text-xs text-slate-400 font-semibold block mb-1">Date of Birth</span>
+              <span className="text-xs text-slate-400 dark:text-slate-350 font-semibold block mb-1">Date of Birth</span>
               {!isEditing ? (
-                <p className="text-sm font-bold text-slate-900">{profile?.dateOfBirth || "N/A"}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{profile?.dateOfBirth || "N/A"}</p>
               ) : (
                 <input
                   type="date"
                   value={formData.dateOfBirth}
                   onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                  className="w-full sm:w-1/2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
+                  className="w-full sm:w-1/2 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-650 rounded-xl text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-600 transition"
                 />
               )}
             </div>
 
             {isEditing && (
-              <div className="sm:col-span-2 pt-2 border-t border-slate-100">
-                <span className="text-xs text-slate-400 font-semibold block mb-1">Avatar Image URL</span>
+              <div className="sm:col-span-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                <span className="text-xs text-slate-400 dark:text-slate-350 font-semibold block mb-1">Avatar Image URL</span>
                 <input
                   type="text"
                   placeholder="https://..."
                   value={formData.photo}
                   onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 transition"
+                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-650 rounded-xl text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:border-emerald-600 transition"
                 />
               </div>
             )}

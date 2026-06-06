@@ -125,16 +125,16 @@ export default function RiderSettings() {
 
   if (isProfileLoading || isSessionsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 lg:p-8 font-sans animate-pulse space-y-6 max-w-7xl mx-auto">
-        <div className="h-28 bg-slate-200 rounded-3xl" />
-        <div className="h-64 bg-slate-200 rounded-3xl" />
-        <div className="h-64 bg-slate-200 rounded-3xl" />
+      <div className="min-h-screen bg-slate-50/50 dark:bg-[#060a14] p-4 md:p-6 lg:p-8 font-sans animate-pulse space-y-6 max-w-7xl mx-auto transition-colors duration-300">
+        <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-3xl" />
+        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-3xl" />
+        <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-3xl" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 lg:p-8 font-sans pb-16">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-[#060a14] p-4 md:p-6 lg:p-8 font-sans pb-16 transition-colors duration-300">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Top Header Banner */}
         <SettingsHeader />

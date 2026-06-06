@@ -9,16 +9,16 @@ import useAxiosSecure from '../../hooks/useAxiosSecure';
 import useAuth from '../../hooks/useAuth';
 
 const inputStyle =
-  "w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition";
+  "w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-800 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-500 transition";
 
 const cardStyle =
-  "bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8";
+  "bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 md:p-8";
 
 const labelStyle =
-  "block text-sm font-medium text-gray-700 mb-2";
+  "block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2";
 
 const headingStyle =
-  "text-xl font-semibold text-gray-900";
+  "text-xl font-semibold text-gray-900 dark:text-white";
 
 const SendParcel = () => {
   const navigate = useNavigate();
@@ -266,13 +266,13 @@ const SendParcel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#060a14] py-10 px-4 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-900">Send A Parcel</h1>
-          <p className="text-gray-600 mt-2">Enter Your Parcel Details</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Send A Parcel</h1>
+          <p className="text-gray-600 dark:text-slate-300 mt-2">Enter Your Parcel Details</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -283,11 +283,11 @@ const SendParcel = () => {
             <div className="flex gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" value="document" {...register("parcelType")} className="accent-lime-500 w-5 h-5" />
-                <span className="text-gray-800 font-medium">Document</span>
+                <span className="text-gray-800 dark:text-slate-200 font-medium">Document</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" value="non-document" {...register("parcelType")} className="accent-lime-500 w-5 h-5" />
-                <span className="text-gray-800 font-medium">Non-Document</span>
+                <span className="text-gray-800 dark:text-slate-200 font-medium">Non-Document</span>
               </label>
             </div>
           </div>
@@ -300,13 +300,13 @@ const SendParcel = () => {
               <div>
                 <label className={labelStyle}>Parcel Name *</label>
                 <input {...register("parcelName", { required: "Parcel name is required" })} className={inputStyle} placeholder="Enter parcel name" />
-                {errors.parcelName && <p className="text-red-500 text-sm mt-1">{errors.parcelName.message}</p>}
+                {errors.parcelName && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.parcelName.message}</p>}
               </div>
 
               <div>
                 <label className={labelStyle}>Weight (KG) *</label>
                 <input type="number" step="0.1" {...register("parcelWeight", { required: "Weight is required", min: { value: 0.1, message: "Weight must be greater than 0" } })} className={inputStyle} placeholder="Enter weight in KG" />
-                {errors.parcelWeight && <p className="text-red-500 text-sm mt-1">{errors.parcelWeight.message}</p>}
+                {errors.parcelWeight && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.parcelWeight.message}</p>}
               </div>
 
             </div>
@@ -321,15 +321,15 @@ const SendParcel = () => {
                 <div className="space-y-3">
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="radio" value="within-city" {...register("deliveryType")} className="accent-lime-500 w-5 h-5" />
-                    <span className="text-gray-800 font-medium">Within City</span>
+                    <span className="text-gray-800 dark:text-slate-200 font-medium">Within City</span>
                   </label>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="radio" value="outside-city" {...register("deliveryType")} className="accent-lime-500 w-5 h-5" />
-                    <span className="text-gray-800 font-medium">Outside City/District</span>
+                    <span className="text-gray-800 dark:text-slate-200 font-medium">Outside City/District</span>
                   </label>
                 </div>
                 {deliveryTypeWarning && (
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                  <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30 rounded-lg text-sm text-blue-700 dark:text-blue-300">
                     ℹ️ {deliveryTypeWarning}
                   </div>
                 )}
@@ -338,15 +338,15 @@ const SendParcel = () => {
               <div>
                 <label className={labelStyle}>Estimated Price</label>
                 {priceInfo ? (
-                  <div className="bg-gradient-to-br from-lime-50 to-green-50 border-2 border-lime-500 rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-2">Base Charge: ৳{priceInfo.basePrice}</div>
+                  <div className="bg-gradient-to-br from-lime-50 to-green-50 dark:from-lime-950/20 dark:to-green-950/20 border-2 border-lime-500 rounded-lg p-4">
+                    <div className="text-sm text-gray-600 dark:text-slate-300 mb-2">Base Charge: ৳{priceInfo.basePrice}</div>
                     {priceInfo.extraCharges > 0 && (
-                      <div className="text-sm text-gray-600 mb-2">Extra Charges: ৳{priceInfo.extraCharges}</div>
+                      <div className="text-sm text-gray-600 dark:text-slate-300 mb-2">Extra Charges: ৳{priceInfo.extraCharges}</div>
                     )}
-                    <div className="text-2xl font-bold text-lime-600">৳{priceInfo.totalPrice}</div>
+                    <div className="text-2xl font-bold text-lime-600 dark:text-lime-400">৳{priceInfo.totalPrice}</div>
                   </div>
                 ) : (
-                  <div className="bg-gray-100 rounded-lg p-4 text-gray-500 text-center">
+                  <div className="bg-gray-100 dark:bg-slate-700 rounded-lg p-4 text-gray-500 dark:text-slate-400 text-center border border-gray-200 dark:border-slate-600">
                     Enter weight to calculate price
                   </div>
                 )}
@@ -388,13 +388,13 @@ const SendParcel = () => {
                     className={inputStyle} 
                     placeholder="Enter your email" 
                   />
-                  {errors.senderEmail && <p className="text-red-500 text-sm mt-1">{errors.senderEmail.message}</p>}
+                  {errors.senderEmail && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.senderEmail.message}</p>}
                 </div>
 
                 <div>
                   <label className={labelStyle}>Phone Number *</label>
                   <input {...register("senderPhone", { required: "Phone is required", pattern: { value: /^[0-9]{10,11}$/, message: "Phone must be 10-11 digits" } })} className={inputStyle} placeholder="Enter phone number" />
-                  {errors.senderPhone && <p className="text-red-500 text-sm mt-1">{errors.senderPhone.message}</p>}
+                  {errors.senderPhone && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.senderPhone.message}</p>}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -406,9 +406,9 @@ const SendParcel = () => {
                       className={inputStyle}
                       required
                     >
-                      <option value="">Select Division</option>
+                      <option value="" className="text-gray-800 dark:text-white bg-white dark:bg-slate-800">Select Division</option>
                       {divisions.map(div => (
-                        <option key={div} value={div}>{div}</option>
+                        <option key={div} value={div} className="text-gray-800 dark:text-white bg-white dark:bg-slate-800">{div}</option>
                       ))}
                     </select>
                   </div>
@@ -427,7 +427,7 @@ const SendParcel = () => {
                       />
 
                       {showSenderDropdown && senderDistricts.length > 0 && (
-                        <div className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
+                        <div className="absolute w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
                           {filteredSenderDistricts.length > 0 ? (
                             filteredSenderDistricts.map(d => (
                               <div
@@ -436,13 +436,13 @@ const SendParcel = () => {
                                   setSenderDistrictSearch(d);
                                   setShowSenderDropdown(false);
                                 }}
-                                className="px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer transition"
+                                className="px-4 py-2 text-gray-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition border-b border-gray-100 dark:border-slate-700 last:border-b-0"
                               >
                                 {d}
                               </div>
                             ))
                           ) : (
-                            <div className="px-4 py-2 text-gray-500">No districts found</div>
+                            <div className="px-4 py-2 text-gray-500 dark:text-slate-400">No districts found</div>
                           )}
                         </div>
                       )}
@@ -476,7 +476,7 @@ const SendParcel = () => {
                 <div>
                   <label className={labelStyle}>Contact Number *</label>
                   <input {...register("receiverPhone", { required: "Phone is required", pattern: { value: /^[0-9]{10,11}$/, message: "Phone must be 10-11 digits" } })} className={inputStyle} placeholder="Enter contact number" />
-                  {errors.receiverPhone && <p className="text-red-500 text-sm mt-1">{errors.receiverPhone.message}</p>}
+                  {errors.receiverPhone && <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.receiverPhone.message}</p>}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -488,9 +488,9 @@ const SendParcel = () => {
                       className={inputStyle}
                       required
                     >
-                      <option value="">Select Division</option>
+                      <option value="" className="text-gray-800 dark:text-white bg-white dark:bg-slate-800">Select Division</option>
                       {divisions.map(div => (
-                        <option key={div} value={div}>{div}</option>
+                        <option key={div} value={div} className="text-gray-800 dark:text-white bg-white dark:bg-slate-800">{div}</option>
                       ))}
                     </select>
                   </div>
@@ -509,7 +509,7 @@ const SendParcel = () => {
                       />
 
                       {showReceiverDropdown && receiverDistricts.length > 0 && (
-                        <div className="absolute w-full bg-white border border-gray-200 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
+                        <div className="absolute w-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-md max-h-48 overflow-auto z-50 mt-1">
                           {filteredReceiverDistricts.length > 0 ? (
                             filteredReceiverDistricts.map(d => (
                               <div
@@ -518,13 +518,13 @@ const SendParcel = () => {
                                   setReceiverDistrictSearch(d);
                                   setShowReceiverDropdown(false);
                                 }}
-                                className="px-4 py-2 text-gray-800 hover:bg-gray-100 cursor-pointer transition"
+                                className="px-4 py-2 text-gray-800 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition border-b border-gray-100 dark:border-slate-700 last:border-b-0"
                               >
                                 {d}
                               </div>
                             ))
                           ) : (
-                            <div className="px-4 py-2 text-gray-500">No districts found</div>
+                            <div className="px-4 py-2 text-gray-500 dark:text-slate-400">No districts found</div>
                           )}
                         </div>
                       )}
@@ -543,12 +543,12 @@ const SendParcel = () => {
           </div>
 
           {/* Note */}
-          <div className="bg-gradient-to-r from-lime-50 to-green-50 border border-lime-200 p-6 rounded-xl">
+          <div className="bg-gradient-to-r from-lime-50 to-green-50 dark:from-lime-950/20 dark:to-green-950/20 border border-lime-200 dark:border-lime-800/30 p-6 rounded-xl">
             <div className="flex items-start gap-3">
               <span className="text-2xl">⏱️</span>
               <div>
-                <p className="font-semibold text-gray-900">Pickup time: 4 PM – 7 PM (approx)</p>
-                <p className="text-sm text-gray-600 mt-1">Our rider will pick up your parcel within the specified time window.</p>
+                <p className="font-semibold text-gray-900 dark:text-white">Pickup time: 4 PM – 7 PM (approx)</p>
+                <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">Our rider will pick up your parcel within the specified time window.</p>
               </div>
             </div>
           </div>

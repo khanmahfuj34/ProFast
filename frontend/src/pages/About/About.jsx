@@ -49,15 +49,15 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white dark:bg-[#060a14] transition-colors duration-300">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-lime-50 to-green-50 py-16 md:py-24">
+      <section className="bg-gradient-to-r from-lime-50 to-green-50 dark:from-lime-950/20 dark:to-green-950/20 py-16 md:py-24 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              About <span className="text-lime-600">ProFast</span>
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+              About <span className="text-lime-600 dark:text-lime-400">ProFast</span>
             </h1>
-            <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
               Transforming the delivery industry with cutting-edge technology, reliable service, and a commitment to excellence. 
               We're not just delivering parcels—we're delivering trust.
             </p>
@@ -66,14 +66,14 @@ const About = () => {
       </section>
 
       {/* Mission & Vision */}
-      <section className="py-16 md:py-24 bg-gray-50">
+      <section className="py-16 md:py-24 bg-gray-50 dark:bg-slate-900/50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12">
             {/* Mission */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all border border-gray-100 dark:border-slate-700">
               <div className="text-4xl mb-4">🎯</div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
-              <p className="text-gray-700 text-lg leading-relaxed">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Mission</h2>
+              <p className="text-gray-700 dark:text-slate-300 text-lg leading-relaxed">
                 To revolutionize last-mile delivery by providing fast, affordable, and reliable parcel delivery services 
                 across Bangladesh. We empower riders, delight customers, and create sustainable economic opportunities through 
                 innovative logistics solutions.
@@ -81,10 +81,10 @@ const About = () => {
             </div>
 
             {/* Vision */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-shadow">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all border border-gray-100 dark:border-slate-700">
               <div className="text-4xl mb-4">🌟</div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
-              <p className="text-gray-700 text-lg leading-relaxed">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Vision</h2>
+              <p className="text-gray-700 dark:text-slate-300 text-lg leading-relaxed">
                 To become the most trusted and efficient delivery platform in South Asia, leveraging technology and 
                 human excellence to connect businesses and customers seamlessly. We envision a future where delivery is 
                 predictable, secure, and environmentally responsible.
@@ -95,17 +95,17 @@ const About = () => {
       </section>
 
       {/* Statistics */}
-      <section className="py-16 md:py-24 bg-white">
+      <section className="py-16 md:py-24 bg-white dark:bg-[#060a14] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">Our Impact by Numbers</h2>
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">Our Impact by Numbers</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div 
                 key={index} 
-                className="text-center p-6 bg-gradient-to-br from-lime-50 to-green-50 rounded-xl hover:shadow-lg transition-shadow"
+                className="text-center p-6 bg-gradient-to-br from-lime-50 to-green-50 dark:from-lime-950/20 dark:to-green-950/20 rounded-xl hover:shadow-lg transition-shadow border border-lime-100/50 dark:border-lime-900/10"
               >
-                <p className="text-5xl font-bold text-lime-600 mb-2">{stat.number}</p>
-                <p className="text-gray-700 font-semibold text-lg">{stat.label}</p>
+                <p className="text-5xl font-bold text-lime-600 dark:text-lime-400 mb-2">{stat.number}</p>
+                <p className="text-gray-700 dark:text-slate-300 font-semibold text-lg">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -113,18 +113,18 @@ const About = () => {
       </section>
 
       {/* Core Values */}
-      <section className="py-16 md:py-24 bg-gray-50">
+      <section className="py-16 md:py-24 bg-gray-50 dark:bg-slate-900/50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">Our Core Values</h2>
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">Our Core Values</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, index) => (
               <div 
                 key={index} 
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg hover:-translate-y-1 transition-all"
+                className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6 hover:shadow-lg hover:-translate-y-1 transition-all border border-gray-100 dark:border-slate-700"
               >
                 <div className="text-4xl mb-4">{value.icon}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{value.title}</h3>
+                <p className="text-gray-600 dark:text-slate-300 leading-relaxed">{value.description}</p>
               </div>
             ))}
           </div>
@@ -132,20 +132,20 @@ const About = () => {
       </section>
 
       {/* Timeline */}
-      <section className="py-16 md:py-24 bg-white">
+      <section className="py-16 md:py-24 bg-white dark:bg-[#060a14] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">Our Journey</h2>
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">Our Journey</h2>
           <div className="space-y-8">
             {milestones.map((milestone, index) => (
               <div key={index} className="flex gap-8 items-start">
                 <div className="flex-shrink-0">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-lime-500 text-white font-bold text-xl">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-lime-500 text-white font-bold text-xl shadow-md">
                     {milestone.year}
                   </div>
                 </div>
                 <div className="flex-grow pt-2">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{milestone.title}</h3>
-                  <p className="text-gray-600 text-lg">{milestone.description}</p>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{milestone.title}</h3>
+                  <p className="text-gray-600 dark:text-slate-300 text-lg">{milestone.description}</p>
                 </div>
               </div>
             ))}
@@ -154,21 +154,21 @@ const About = () => {
       </section>
 
       {/* Team Overview */}
-      <section className="py-16 md:py-24 bg-gray-50">
+      <section className="py-16 md:py-24 bg-gray-50 dark:bg-slate-900/50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-4">Meet Our Team</h2>
-          <p className="text-center text-gray-600 text-lg mb-16 max-w-2xl mx-auto">
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-4">Meet Our Team</h2>
+          <p className="text-center text-gray-600 dark:text-slate-300 text-lg mb-16 max-w-2xl mx-auto">
             Our diverse team of 65+ dedicated professionals works tirelessly to ensure your parcels reach their destination safely and on time.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {teamRoles.map((team, index) => (
               <div 
                 key={index} 
-                className="bg-white rounded-xl shadow-md p-8 text-center hover:shadow-lg transition-shadow"
+                className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8 text-center hover:shadow-lg transition-all border border-gray-100 dark:border-slate-700"
               >
                 <div className="text-5xl mb-4">{team.icon}</div>
-                <p className="text-3xl font-bold text-lime-600 mb-2">{team.count}</p>
-                <p className="text-gray-700 font-semibold">{team.role}</p>
+                <p className="text-3xl font-bold text-lime-600 dark:text-lime-400 mb-2">{team.count}</p>
+                <p className="text-gray-700 dark:text-slate-300 font-semibold">{team.role}</p>
               </div>
             ))}
           </div>
@@ -176,33 +176,33 @@ const About = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-16 md:py-24 bg-white">
+      <section className="py-16 md:py-24 bg-white dark:bg-[#060a14] transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">Why Choose ProFast?</h2>
+          <h2 className="text-4xl font-bold text-center text-gray-900 dark:text-white mb-16">Why Choose ProFast?</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <div className="bg-gradient-to-br from-lime-50 to-green-50 rounded-xl p-8">
+            <div className="bg-gradient-to-br from-lime-50 to-green-50 dark:from-lime-950/10 dark:to-green-950/10 rounded-xl p-8 border border-lime-100/50 dark:border-lime-900/10">
               <img src={trackingImg} alt="Real-time Tracking" className="w-16 h-16 mb-6" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Real-Time Tracking</h3>
-              <p className="text-gray-700 leading-relaxed">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Real-Time Tracking</h3>
+              <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                 Monitor your parcels every step of the way with our advanced tracking system. Get instant notifications from pickup to delivery.
               </p>
             </div>
 
             {/* Feature 2 */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-8">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/10 dark:to-cyan-950/10 rounded-xl p-8 border border-blue-100/50 dark:border-blue-900/10">
               <img src={deliveryImg} alt="Safe Delivery" className="w-16 h-16 mb-6" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Safe & Reliable</h3>
-              <p className="text-gray-700 leading-relaxed">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Safe & Reliable</h3>
+              <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                 Your parcels are in safe hands. Our trained riders and quality assurance processes guarantee damage-free delivery every time.
               </p>
             </div>
 
             {/* Feature 3 */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-8">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/10 dark:to-pink-950/10 rounded-xl p-8 border border-purple-100/50 dark:border-purple-900/10">
               <div className="text-4xl mb-6">🚀</div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">Fast & Affordable</h3>
-              <p className="text-gray-700 leading-relaxed">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Fast & Affordable</h3>
+              <p className="text-gray-700 dark:text-slate-300 leading-relaxed">
                 Competitive pricing without compromising quality. Express delivery options available to meet your urgent delivery needs.
               </p>
             </div>
@@ -220,7 +220,7 @@ const About = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               to="/send-parcel" 
-              className="btn btn-lg bg-white text-lime-600 hover:bg-gray-100 border-none rounded-xl font-semibold transition-all"
+              className="btn btn-lg bg-white text-lime-600 hover:bg-gray-100 border-none rounded-xl font-semibold transition-all shadow-md"
             >
               Send a Parcel
             </Link>
