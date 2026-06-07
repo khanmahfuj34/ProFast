@@ -99,6 +99,7 @@ let paymentsCollection;
 let usersCollection;
 let riderCollection;
 let parcelRequestsCollection;
+let adminSettingsCollection;
 
 async function run() {
     try {
@@ -111,6 +112,7 @@ async function run() {
         paymentsCollection = db.collection("payments");
         riderCollection = db.collection("rider");
         parcelRequestsCollection = db.collection("parcel_requests");
+        adminSettingsCollection = db.collection("admin_settings");
 
         // ✅ Create UNIQUE index on transactionId to prevent duplicate payments
         // Use sparse index to handle null values, and ignore if index already exists
@@ -2904,7 +2906,63 @@ app.get('/admin/analytics', verifyJWT, verifyAdmin, async(req, res) => {
             }
         });
     } catch (error) {
-        console.error('❌ Get admin analytics error:', error.message);
+        console.log(`❌ Get admin analytics error:`, error.message);
         res.status(500).send({ message: 'Error fetching analytics', error: error.message });
+    }
+});
+
+// GET /admin/settings - Get global admin settings (Admin only)
+app.get('/admin/settings', verifyJWT, verifyAdmin, async (req, res) => {
+    try {
+        let settings = await adminSettingsCollection.findOne({ type: 'global' });
+        if (!settings) {
+            // Seed defaults
+            settings = {
+                type: 'global',
+                defaultFee: 60,
+                expressFee: 120,
+                codPercent: 1.5,
+                minWeight: 0.1,
+                maxWeight: 50,
+                autoApproveRiders: false,
+                maxActiveDeliveries: 5,
+                assignmentRule: 'nearest',
+                createdAt: new Date()
+            };
+            await adminSettingsCollection.insertOne(settings);
+        }
+        res.send({ success: true, settings });
+    } catch (error) {
+        console.error('❌ Get admin settings error:', error.message);
+        res.status(500).send({ message: 'Error fetching settings', error: error.message });
+    }
+});
+
+// PATCH /admin/settings - Update global admin settings (Admin only)
+app.patch('/admin/settings', verifyJWT, verifyAdmin, async (req, res) => {
+    try {
+        const updateData = { ...req.body };
+        // Remove _id if passed
+        delete updateData._id;
+        
+        // Ensure proper types
+        if (updateData.defaultFee !== undefined) updateData.defaultFee = Number(updateData.defaultFee);
+        if (updateData.expressFee !== undefined) updateData.expressFee = Number(updateData.expressFee);
+        if (updateData.codPercent !== undefined) updateData.codPercent = Number(updateData.codPercent);
+        if (updateData.minWeight !== undefined) updateData.minWeight = Number(updateData.minWeight);
+        if (updateData.maxWeight !== undefined) updateData.maxWeight = Number(updateData.maxWeight);
+        if (updateData.maxActiveDeliveries !== undefined) updateData.maxActiveDeliveries = Number(updateData.maxActiveDeliveries);
+        if (updateData.autoApproveRiders !== undefined) updateData.autoApproveRiders = Boolean(updateData.autoApproveRiders);
+
+        const result = await adminSettingsCollection.updateOne(
+            { type: 'global' },
+            { $set: { ...updateData, updatedAt: new Date() } },
+            { upsert: true }
+        );
+        
+        res.send({ success: true, message: 'Settings updated successfully' });
+    } catch (error) {
+        console.error('❌ Patch admin settings error:', error.message);
+        res.status(500).send({ message: 'Error updating settings', error: error.message });
     }
 });

@@ -82,11 +82,10 @@ const Reports = () => {
               <button
                 key={filter.value}
                 onClick={() => handleTimeFilterChange(filter.value)}
-                className={`px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 ${
-                  timeFilter === filter.value
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                }`}
+                className={`px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 ${timeFilter === filter.value
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                  }`}
               >
                 {filter.label}
               </button>

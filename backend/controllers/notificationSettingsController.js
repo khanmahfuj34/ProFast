@@ -26,7 +26,12 @@ const updateSettings = async (req, res) => {
             'announcement',
             'promotion',
             'emailNotifications',
-            'smsNotifications'
+            'smsNotifications',
+            'newParcel',
+            'riderApplication',
+            'supportTicket',
+            'deliveryComplete',
+            'broadcast'
         ];
 
         const updateData = {};

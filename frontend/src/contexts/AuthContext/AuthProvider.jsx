@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { AuthContext } from './AuthContext';
 import { auth } from '../../firebase/firebase.init';
+import { useTheme } from '../ThemeContext';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -14,10 +15,19 @@ import axios from 'axios';
 const USE_MOCK_AUTH = false; // Set to true for testing without valid Firebase credentials
 
 const AuthProvider = ({ children }) => {
+    const { setTheme } = useTheme();
     const [user, setUser] = useState(null);
     const [userProfile, setUserProfile] = useState(null); // ✅ Backend user profile with role
     const [loading, setLoading] = useState(true);
     const [authError, setAuthError] = useState(null);
+
+    // Sync theme from user profile
+    useEffect(() => {
+        if (userProfile?.theme) {
+            console.log('🎨 [Theme Sync] Setting theme from user profile:', userProfile.theme);
+            setTheme(userProfile.theme);
+        }
+    }, [userProfile?.theme, setTheme]);
 
     // ✅ tokenReady: true only after /jwt POST succeeds and cookie is stored in browser.
     // All protected API calls (e.g. /riders/:email, /user) must wait for this flag.
