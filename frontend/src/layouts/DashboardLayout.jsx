@@ -6,6 +6,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import logo from '../assets/logo.png';
 import useRiderStatus from '../hooks/useRiderStatus';
 import ThemeToggle from '../components/ThemeToggle';
+import DashboardFooter from '../components/DashboardFooter';
 
 import { RiTaskLine, RiCustomerService2Line } from 'react-icons/ri';
 
@@ -656,7 +657,12 @@ const DashboardLayout = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          <Outlet />
+          <div className="min-h-full flex flex-col justify-between">
+            <div className="flex-1 pb-8">
+              <Outlet />
+            </div>
+            <DashboardFooter role={userProfile?.role} />
+          </div>
         </main>
       </div>
     </div>

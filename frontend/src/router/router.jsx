@@ -53,6 +53,7 @@ import ProfileSettings from "../pages/Dashboard/Settings/ProfileSettings";
 import NotificationSettings from "../pages/Dashboard/Settings/NotificationSettings";
 import SecuritySettings from "../pages/Dashboard/Settings/SecuritySettings";
 import Support from "../pages/Dashboard/Support/Support";
+import ComingSoon from "../pages/ComingSoon/ComingSoon";
 import useAuth from "../hooks/useAuth";
 
 const DashboardIndexRedirect = () => {
@@ -134,6 +135,22 @@ export const router = createBrowserRouter([
           {
             path: 'be-rider-status',
             element: <PrivateRoute><RiderStatus /></PrivateRoute>
+          },
+          {
+            path: 'contact',
+            Component: ComingSoon
+          },
+          {
+            path: 'support',
+            Component: ComingSoon
+          },
+          {
+            path: 'privacy',
+            Component: ComingSoon
+          },
+          {
+            path: 'terms',
+            Component: ComingSoon
           }
         ]
       },
@@ -222,6 +239,10 @@ export const router = createBrowserRouter([
           {
             path: 'support',
             element: <PrivateRoute><Support /></PrivateRoute>
+          },
+          {
+            path: 'contact-admin',
+            Component: ComingSoon
           },
           {
             path: 'settings',
