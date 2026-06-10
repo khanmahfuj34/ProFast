@@ -7,6 +7,7 @@ import logo from '../assets/logo.png';
 import useRiderStatus from '../hooks/useRiderStatus';
 import ThemeToggle from '../components/ThemeToggle';
 import DashboardFooter from '../components/DashboardFooter';
+import UniversalSearch from '../components/UniversalSearch';
 
 import { RiTaskLine, RiCustomerService2Line } from 'react-icons/ri';
 
@@ -628,18 +629,7 @@ const DashboardLayout = () => {
 
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <div className="form-control hidden sm:block">
-              <div className="relative">
-                <svg xmlns="http://www.w3.org/2000/svg" className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-56 lg:w-72 pl-9 pr-4 py-1.5 text-sm bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500 rounded-full transition-all"
-                />
-              </div>
-            </div>
+            <UniversalSearch isMobileHidden={true} />
 
             {/* Rider Status Toggle */}
             {isRider && (

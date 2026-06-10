@@ -25,16 +25,31 @@ const Payment = () => {
         enabled: !!parcel?._id,
     });
 
+    // Fetch exchange rate from backend for display purposes
+    const { data: exchangeRateData } = useQuery({
+        queryKey: ['exchangeRate'],
+        queryFn: async () => {
+            const res = await axiosSecure.get('/api/exchange-rate');
+            return res.data;
+        },
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    });
+
     // Mutation: call backend → get Stripe checkout URL → redirect
     const paymentMutation = useMutation({
         mutationFn: async (paymentDetails) => {
             const res = await axiosSecure.post('/create-payment-intent', paymentDetails);
-            return res.data; // { url: 'https://checkout.stripe.com/...' }
+            return res.data; // { url, sessionId, originalAmountBDT, convertedAmountUSD, exchangeRate }
         },
         onSuccess: (data) => {
             if (data?.url && data?.sessionId) {
-                // Store session ID before redirecting
+                // Store session ID and conversion details before redirecting
                 localStorage.setItem('stripeSessionId', data.sessionId);
+                localStorage.setItem('paymentConversion', JSON.stringify({
+                    originalAmountBDT: data.originalAmountBDT,
+                    convertedAmountUSD: data.convertedAmountUSD,
+                    exchangeRate: data.exchangeRate,
+                }));
                 // Redirect to Stripe hosted checkout page
                 window.location.href = data.url;
             } else {
@@ -61,9 +76,9 @@ const Payment = () => {
         try {
             const paymentDetails = {
                 parcelId: parcel._id,
-                cost: parcel.totalPrice,        // backend reads paymentInfo.cost
+                cost: parcel.totalPrice,        // ✅ BDT amount — backend converts to USD
                 parcelName: parcel.parcelName,
-                senderEmail: user?.email,       // backend reads paymentInfo.senderEmail
+                senderEmail: user?.email,
             };
 
             paymentMutation.mutate(paymentDetails);
@@ -98,8 +113,13 @@ const Payment = () => {
     const formatLabel = (value) =>
         value ? value.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) : 'N/A';
 
+    // ✅ Currency conversion preview (for display only — backend does the real conversion)
+    const bdtAmount = parseFloat(currentParcel.totalPrice) || 0;
+    const rate = exchangeRateData?.rate || 110;
+    const usdPreview = bdtAmount > 0 ? (Math.round((bdtAmount / rate) * 100) / 100).toFixed(2) : '0.00';
+
     return (
-        <div className="min-h-screen bg-linear-to-b from-slate-50 to-slate-100 py-8 px-4">
+        <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 py-8 px-4">
             <div className="max-w-7xl mx-auto">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-slate-800">Payment</h1>
@@ -125,7 +145,7 @@ const Payment = () => {
                     <div className="space-y-6">
                         {/* Parcel Information Card */}
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="bg-linear-to-r from-lime-50 to-emerald-50 px-6 py-4 border-b border-slate-200">
+                            <div className="bg-gradient-to-r from-lime-50 to-emerald-50 px-6 py-4 border-b border-slate-200">
                                 <h2 className="text-xl font-bold text-slate-800">Parcel Information</h2>
                             </div>
                             <div className="p-6 space-y-4">
@@ -199,11 +219,32 @@ const Payment = () => {
                                 <h3 className="font-bold text-slate-800">Payment Summary</h3>
                             </div>
                             <div className="p-6 space-y-4">
+
+                                {/* BDT Amount — primary */}
                                 <div className="flex justify-between items-center">
-                                    <span className="text-slate-700 font-medium">Total Amount</span>
-                                    <span className="text-2xl font-bold text-lime-700">৳{currentParcel.totalPrice ?? 0}</span>
+                                    <span className="text-slate-700 font-medium">Amount (BDT)</span>
+                                    <span className="text-2xl font-bold text-lime-700">৳{bdtAmount.toFixed(2)}</span>
                                 </div>
+
+                                {/* Divider */}
+                                <div className="border-t border-slate-100" />
+
+                                {/* USD Equivalent */}
                                 <div className="flex justify-between items-center">
+                                    <span className="text-slate-600 text-sm font-medium">Equivalent (USD)</span>
+                                    <span className="text-lg font-semibold text-blue-600">${usdPreview}</span>
+                                </div>
+
+                                {/* Exchange Rate used */}
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-500 text-xs font-medium">Exchange Rate</span>
+                                    <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                                        1 USD = ৳{rate}
+                                    </span>
+                                </div>
+
+                                {/* Payment Status */}
+                                <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
                                     <span className="text-slate-700 font-medium">Payment Status</span>
                                     <span
                                         className={`px-4 py-2 rounded-full text-sm font-semibold ${
@@ -216,15 +257,21 @@ const Payment = () => {
                                     </span>
                                 </div>
 
-                                {/* Stripe info note */}
+                                {/* Info note */}
                                 {!isPaid && (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-2 mt-2">
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-3 mt-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 110 20A10 10 0 0112 2z" />
                                         </svg>
-                                        <p className="text-sm text-blue-700">
-                                            You will be redirected to <strong>Stripe's secure checkout</strong> to complete the payment.
-                                        </p>
+                                        <div className="text-sm text-blue-700">
+                                            <p>
+                                                You will be charged <strong>${usdPreview} USD</strong> on{' '}
+                                                <strong>Stripe's secure checkout</strong>.
+                                            </p>
+                                            <p className="mt-1 text-blue-500 text-xs">
+                                                ৳{bdtAmount.toFixed(2)} BDT converted at 1 USD = ৳{rate}
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -241,6 +288,7 @@ const Payment = () => {
 
                             {!isPaid && (
                                 <button
+                                    id="stripe-pay-btn"
                                     onClick={handlePaymentSubmit}
                                     disabled={isProcessing || paymentMutation.isPending}
                                     className="btn bg-lime-600 hover:bg-lime-700 border-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -255,7 +303,7 @@ const Payment = () => {
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                             </svg>
-                                            Pay with Stripe
+                                            Pay ${usdPreview} with Stripe
                                         </>
                                     )}
                                 </button>

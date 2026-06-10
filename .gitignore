@@ -1,45 +1,80 @@
-# ─── Dependencies ───────────────────────────────
+# ════════════════════════════════════════════════
+#  ZEP-SHIFT  —  Production .gitignore
+#  Generated for secure deployment
+# ════════════════════════════════════════════════
+
+# ─── Dependencies ────────────────────────────────
 node_modules/
 **/node_modules/
 
-# ─── Build output ───────────────────────────────
+# ─── Build Output ────────────────────────────────
 dist/
 dist-ssr/
 build/
+coverage/
+.next/
 
-# ─── Environment variables ──────────────────────
+# ─── Environment Variables & Secrets ─────────────
 .env
 .env.local
+.env.production
+.env.production.local
+.env.staging
 .env.*.local
 */.env
 */.env.local
+*/.env.production
+frontend/.env
+backend/.env
 
-# ─── Firebase credentials ───────────────────────
+# ─── Firebase / Google Cloud Credentials ─────────
 *firebase-adminsdk*.json
-backend/*.json
+*service-account*.json
+service-account.json
+# NOTE: backend/package.json and backend/package-lock.json are NOT ignored
+#       Only the firebase SDK key files are ignored above.
 
-# ─── Logs ───────────────────────────────────────
+# ─── Private Keys & Certificates ─────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# ─── Logs & Temp Files ───────────────────────────
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.orig
 
-# ─── Editor ─────────────────────────────────────
+# ─── Editor & OS Artifacts ───────────────────────
 .vscode/*
 !.vscode/extensions.json
 .idea/
 .DS_Store
+Thumbs.db
+desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# ─── Scratch / Temporary Workspaces ─────────────
+scratch/
+scratch
+
+# ─── Project-Specific Doc Files (Not for Repo) ───
 SECURITY.md
 SECURE_PUBLIC_UX_COMPLETE.md
-README.md
 projectdetails.md
 FILE_REFERENCE.md
 DUPLICATE_PAYMENT_FIX.md
-# misc
-scratch

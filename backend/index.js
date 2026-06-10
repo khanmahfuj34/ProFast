@@ -31,7 +31,8 @@ const adminSupportRoutes = require('./routes/adminSupportRoutes');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
-const serviceAccount = require('./zep-shift-8dd9f-firebase-adminsdk-fbsvc-e1c130ae1d.json');
+const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './zep-shift-8dd9f-firebase-adminsdk-fbsvc-e1c130ae1d.json';
+const serviceAccount = require(serviceAccountPath);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -80,8 +81,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
 
-// MongoDB URI
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ttnzsdq.mongodb.net/?retryWrites=true&w=majority`;
+// MongoDB URI — prefer full MONGODB_URI override (for production), fallback to DB_USER/DB_PASS template
+const uri = process.env.MONGODB_URI ||
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ttnzsdq.mongodb.net/?retryWrites=true&w=majority`;
 
 // MongoClient
 const client = new MongoClient(uri, {
@@ -616,6 +618,19 @@ app.get('/payments', verifyJWT, async(req, res) => {
     }
 });
 
+// ============ 💱 EXCHANGE RATE API ============
+// GET /api/exchange-rate — returns configured BDT→USD rate
+app.get('/api/exchange-rate', verifyJWT, (req, res) => {
+    const USD_BDT_RATE = parseFloat(process.env.USD_BDT_RATE) || 110;
+    res.send({
+        baseCurrency: 'BDT',
+        targetCurrency: 'USD',
+        rate: USD_BDT_RATE,
+        rateDescription: `1 USD = ৳${USD_BDT_RATE} BDT`,
+        updatedAt: new Date().toISOString()
+    });
+});
+
 // POST /create-payment-intent - Create Stripe session
 app.post('/create-payment-intent', verifyJWT, async(req, res) => {
     try {
@@ -630,13 +645,25 @@ app.post('/create-payment-intent', verifyJWT, async(req, res) => {
             return res.status(403).send({ message: 'Forbidden: Cannot pay for this parcel' });
         }
 
-        // totalPrice is in BDT (Taka), convert to smallest unit (paisa)
-        // Stripe needs amount in cents → use USD conversion or charge as-is in cents
-        const amount = Math.round(parseFloat(paymentInfo.cost) * 100);
+        // ✅ CURRENCY CONVERSION: parcel cost is stored in BDT
+        // Convert BDT → USD using configured exchange rate
+        const USD_BDT_RATE = parseFloat(process.env.USD_BDT_RATE) || 110;
+        const originalAmountBDT = parseFloat(paymentInfo.cost);
 
-        if (!amount || amount <= 0) {
+        if (!originalAmountBDT || originalAmountBDT <= 0) {
             return res.status(400).send({ error: 'Invalid payment amount' });
         }
+
+        // Convert BDT to USD, then to Stripe cents (USD * 100)
+        // e.g. 380 BDT / 110 = 3.4545... USD → round to 2dp → $3.45 → 345 cents
+        const convertedAmountUSD = Math.round((originalAmountBDT / USD_BDT_RATE) * 100) / 100;
+        const amountInCents = Math.round(convertedAmountUSD * 100);
+
+        if (amountInCents <= 0) {
+            return res.status(400).send({ error: 'Converted USD amount is too small' });
+        }
+
+        console.log(`💱 Payment conversion: ৳${originalAmountBDT} BDT → $${convertedAmountUSD} USD (rate: 1 USD = ৳${USD_BDT_RATE}) → ${amountInCents} cents`);
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -645,22 +672,32 @@ app.post('/create-payment-intent', verifyJWT, async(req, res) => {
                     currency: 'usd',
                     product_data: {
                         name: paymentInfo.parcelName || 'Parcel Delivery',
+                        description: `Parcel charge: ৳${originalAmountBDT} BDT (converted at 1 USD = ৳${USD_BDT_RATE})`,
                     },
-                    unit_amount: amount,
+                    unit_amount: amountInCents, // ✅ Correct USD cents
                 },
                 quantity: 1,
-            }, ],
-            customer_email: req.user.email, // ✅ Use verified email from token
+            }],
+            customer_email: req.user.email,
             mode: 'payment',
             metadata: {
                 parcelId: paymentInfo.parcelId,
                 parcelName: paymentInfo.parcelName,
+                originalAmountBDT: String(originalAmountBDT),
+                convertedAmountUSD: String(convertedAmountUSD),
+                exchangeRate: String(USD_BDT_RATE),
             },
             success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-failed?session_id={CHECKOUT_SESSION_ID}`,
         });
 
-        res.send({ url: session.url, sessionId: session.id });
+        res.send({
+            url: session.url,
+            sessionId: session.id,
+            originalAmountBDT,
+            convertedAmountUSD,
+            exchangeRate: USD_BDT_RATE,
+        });
     } catch (error) {
         console.error('Stripe error:', error.message);
         res.status(500).send({ error: error.message });
@@ -695,9 +732,21 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
         // ✅ Use ATOMIC findOneAndUpdate with upsert to prevent race condition
         // This ensures only ONE payment is created per transactionId
         const trackingId = parcel.trackingId || generateTrackingId();
+
+        // ✅ Recover conversion details from Stripe session metadata
+        const originalAmountBDT = parseFloat(session.metadata.originalAmountBDT) || (parcel.totalPrice || 0);
+        const convertedAmountUSD = parseFloat(session.metadata.convertedAmountUSD) || (session.amount_total / 100);
+        const exchangeRate = parseFloat(session.metadata.exchangeRate) || (parseFloat(process.env.USD_BDT_RATE) || 110);
+
         const paymentData = {
-            amount: session.amount_total / 100,
-            currency: session.currency,
+            // USD fields (what Stripe actually charged)
+            amount: convertedAmountUSD,           // USD amount charged by Stripe
+            currency: session.currency,            // 'usd'
+            // BDT fields (original parcel price)
+            originalAmountBDT: originalAmountBDT, // ৳ original amount
+            convertedAmountUSD: convertedAmountUSD,
+            exchangeRate: exchangeRate,            // rate used at time of payment
+            // Common fields
             customerEmail: session.customer_email,
             parcelId: parcelId,
             parcelName: session.metadata.parcelName,
@@ -709,7 +758,7 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
             receiverPhone: parcel.receiverPhone || 'N/A',
             receiverAddress: parcel.receiverAddress || 'N/A',
             parcelType: parcel.parcelType || 'N/A',
-            totalPrice: parcel.totalPrice || 0
+            totalPrice: parcel.totalPrice || 0  // BDT total stored on parcel
         };
 
         // ✅ Atomic operation: findOneAndUpdate with upsert
@@ -738,9 +787,9 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
                 recipientEmail: session.customer_email,
                 type: 'payment',
                 title: 'Payment Successful',
-                message: `Payment of ৳${session.amount_total / 100} for parcel "${session.metadata.parcelName}" was successful.`,
+                message: `Payment of ৳${originalAmountBDT} for parcel "${session.metadata.parcelName}" was successful. (Charged: $${convertedAmountUSD} USD)`,
                 relatedId: parcelId,
-                metadata: { transactionId: transactionId, amount: session.amount_total / 100, trackingId: trackingId }
+                metadata: { transactionId: transactionId, originalAmountBDT, convertedAmountUSD, exchangeRate, trackingId: trackingId }
             });
         } catch (nError) {
             console.error('Failed to create notification:', nError.message);
@@ -785,6 +834,82 @@ app.get('/parcels/:id', async(req, res) => {
     const query = { _id: new ObjectId(id) };
     const result = await parcelsCollection.findOne(query);
     res.send(result);
+});
+
+// ============ 🔍 UNIVERSAL SEARCH API ============
+app.get('/api/search', verifyJWT, async (req, res) => {
+    try {
+        const q = req.query.q ? req.query.q.trim() : '';
+        if (!q) return res.send([]);
+
+        // Get user role
+        const user = await usersCollection.findOne({ email: req.user.email });
+        const role = user?.role || 'user';
+
+        // Exact match for IDs, partial match for phone numbers
+        const parcelSearchConditions = [
+            { trackingId: new RegExp(`^${q}$`, 'i') },
+            { receiverPhone: new RegExp(q, 'i') },
+            { senderPhone: new RegExp(q, 'i') }
+        ];
+
+        const parcelQuery = { $or: parcelSearchConditions };
+        
+        // Apply role permissions
+        if (role === 'user') {
+            parcelQuery.senderEmail = req.user.email;
+        } else if (role === 'rider') {
+            parcelQuery.riderEmail = req.user.email;
+        }
+
+        const parcelPromise = parcelsCollection.find(parcelQuery).limit(10).toArray();
+
+        let paymentPromise = Promise.resolve([]);
+        // Riders don't search payments
+        if (role === 'user' || role === 'admin') {
+            const paymentSearchConditions = [
+                { transactionId: new RegExp(`^${q}$`, 'i') },
+                { trackingId: new RegExp(`^${q}$`, 'i') }
+            ];
+            const paymentQuery = { $or: paymentSearchConditions };
+            
+            if (role === 'user') {
+                paymentQuery.customerEmail = req.user.email;
+            }
+            paymentPromise = paymentsCollection.find(paymentQuery).limit(10).toArray();
+        }
+
+        const [parcels, payments] = await Promise.all([parcelPromise, paymentPromise]);
+
+        const results = [];
+        
+        parcels.forEach(p => {
+            results.push({
+                id: p.trackingId || p._id.toString(),
+                type: 'parcel',
+                title: p.trackingId || 'N/A',
+                subtitle: `Parcel to ${p.receiverName || 'Unknown'}`,
+                status: p.deliveryStatus || 'Unknown',
+                date: p.createdAt
+            });
+        });
+
+        payments.forEach(p => {
+            results.push({
+                id: p.transactionId || p._id.toString(),
+                type: 'payment',
+                title: p.transactionId || 'N/A',
+                subtitle: `Payment of ৳${p.amount || p.totalPrice || 0}`,
+                status: p.paymentStatus || 'Unknown',
+                date: p.paidAt || p.createdAt
+            });
+        });
+
+        res.send(results);
+    } catch (error) {
+        console.error('Search API error:', error);
+        res.status(500).send({ message: 'Error performing search', error: error.message });
+    }
 });
 
 // ============ 🔍 PUBLIC TRACKING ROUTE ============
