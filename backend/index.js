@@ -53,6 +53,11 @@ admin.initializeApp({
 
 const allowedOrigins = [
     process.env.SITE_DOMAIN,
+    'https://pro-fast-three.vercel.app',
+
+    // Vercel preview deployments
+    'https://pro-fast-git-main-khanmahfuj34s-projects.vercel.app',
+
     'http://localhost:5173',
     'http://localhost:5174'
 ].filter(Boolean);
