@@ -117,6 +117,8 @@ app.use((err, req, res, next) => {
     });
 });
 
+app.set('trust proxy', 1);
+
 // MongoDB URI — prefer full MONGODB_URI override (for production), fallback to DB_USER/DB_PASS template
 const uri = process.env.MONGODB_URI ||
     `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ttnzsdq.mongodb.net/?retryWrites=true&w=majority`;
