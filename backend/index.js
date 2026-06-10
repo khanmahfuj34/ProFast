@@ -31,8 +31,23 @@ const adminSupportRoutes = require('./routes/adminSupportRoutes');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
-const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './zep-shift-8dd9f-firebase-adminsdk-fbsvc-e1c130ae1d.json';
-const serviceAccount = require(serviceAccountPath);
+const admin = require('firebase-admin');
+
+let serviceAccount;
+
+if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    serviceAccount = JSON.parse(
+        process.env.FIREBASE_SERVICE_ACCOUNT_KEY
+    );
+} else {
+    serviceAccount = require(
+        './zep-shift-8dd9f-firebase-adminsdk-fbsvc-e1c130ae1d.json'
+    );
+}
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -222,7 +237,7 @@ async function run() {
 run();
 
 // 🔐 JWT Verification Middleware
-const verifyJWT = async(req, res, next) => {
+const verifyJWT = async (req, res, next) => {
     try {
         // Extract token from cookies first, then from Authorization header
         const cookieToken = req.cookies.token;
@@ -254,7 +269,7 @@ const verifyJWT = async(req, res, next) => {
 
 // 🔐 Admin Role Verification Middleware
 // Apply after verifyJWT to check if user has admin role
-const verifyAdmin = async(req, res, next) => {
+const verifyAdmin = async (req, res, next) => {
     try {
         if (!req.user || !req.user.email) {
             console.log('🔴 [Admin Verify] No user in request');
@@ -287,7 +302,7 @@ const verifyAdmin = async(req, res, next) => {
 
 
 // 🔐 Verify Rider Middleware
-const verifyRider = async(req, res, next) => {
+const verifyRider = async (req, res, next) => {
     try {
         if (!req.user || !req.user.email) {
             console.log('🔴 [Rider Verify] No user in request');
@@ -340,7 +355,7 @@ app.use('/api/delivery-control', verifyJWT, verifyAdmin, deliveryControlRoutes);
 // ============ 🔐 AUTH ROUTES ============
 
 // POST /jwt - Store Firebase token in httpOnly cookie
-app.post('/jwt', async(req, res) => {
+app.post('/jwt', async (req, res) => {
     try {
         const { token } = req.body;
 
@@ -411,7 +426,7 @@ app.get('/debug/cookies', (req, res) => {
 });
 
 //user related apis
-app.get('/user', verifyJWT, async(req, res) => {
+app.get('/user', verifyJWT, async (req, res) => {
     try {
         const user = await usersCollection.findOne({ email: req.user.email });
         if (user) {
@@ -424,32 +439,32 @@ app.get('/user', verifyJWT, async(req, res) => {
     }
 });
 
-app.post('/save-social-user', async(req, res) => {
+app.post('/save-social-user', async (req, res) => {
     const user = req.body;
     const existingUser = await usersCollection.findOne({ email: user.email });
     if (!existingUser) {
         user.role = 'user';
         user.createdAt = new Date();
         const result = await usersCollection.insertOne(user);
-    
+
         // 🎁 Create default notification settings
         await notificationSettingsService.createDefaultSettings(user.email);
-    
+
         res.send(result);
     } else {
         res.send({ message: 'User already exists', insertedId: null });
     }
 });
 
-app.post('/users', async(req, res) => {
+app.post('/users', async (req, res) => {
     const user = req.body;
     user.role = 'user';
     user.createdAt = new Date();
     const result = await usersCollection.insertOne(user);
-    
+
     // 🎁 Create default notification settings
     await notificationSettingsService.createDefaultSettings(user.email);
-    
+
     res.send(result);
 });
 
@@ -467,7 +482,7 @@ app.post('/logout', (req, res) => {
 // ============ PARCEL ROUTES (Protected) ============
 
 // GET /parcels/assigned - Get rider's assigned parcels
-app.get('/parcels/assigned', verifyJWT, async(req, res) => {
+app.get('/parcels/assigned', verifyJWT, async (req, res) => {
     try {
         const query = { riderEmail: req.user.email };
         const cursor = parcelsCollection.find(query).sort({ updatedAt: -1, createdAt: -1 });
@@ -480,7 +495,7 @@ app.get('/parcels/assigned', verifyJWT, async(req, res) => {
 });
 
 // GET /parcels - Get user's parcels
-app.get('/parcels', verifyJWT, async(req, res) => {
+app.get('/parcels', verifyJWT, async (req, res) => {
     try {
         const query = {};
         const { email } = req.query;
@@ -502,7 +517,7 @@ app.get('/parcels', verifyJWT, async(req, res) => {
 });
 
 // POST /parcels - Create new parcel
-app.post('/parcels', verifyJWT, async(req, res) => {
+app.post('/parcels', verifyJWT, async (req, res) => {
     try {
         const parcel = req.body;
         parcel.createdAt = new Date();
@@ -518,7 +533,7 @@ app.post('/parcels', verifyJWT, async(req, res) => {
         parcel.trackingId = `TRK-${timestamp}-${random}`;
 
         const result = await parcelsCollection.insertOne(parcel);
-        
+
         // 🔔 Notify User: Parcel Created
         try {
             await notificationService.createNotification({
@@ -536,23 +551,17 @@ app.post('/parcels', verifyJWT, async(req, res) => {
         // 🏍️ TRIGGER RIDER MATCHING
         const savedParcel = { ...parcel, _id: result.insertedId };
         const matchingRiders = await riderMatchingService.findMatchingRiders(savedParcel);
-        
+
         if (matchingRiders.length > 0) {
             // Update status to indicate we are waiting for rider response
-            await parcelsCollection.updateOne(
-                { _id: result.insertedId },
-                { $set: { status: 'pending_rider_response', matchingCount: matchingRiders.length } }
-            );
-            
+            await parcelsCollection.updateOne({ _id: result.insertedId }, { $set: { status: 'pending_rider_response', matchingCount: matchingRiders.length } });
+
             // Notify matching riders
             await riderMatchingService.notifyRiders(matchingRiders, savedParcel);
         } else {
             console.log(`⚠️ No riders matched for ${savedParcel.trackingId}`);
             // Ensure status is 'pending_rider'
-            await parcelsCollection.updateOne(
-                { _id: result.insertedId },
-                { $set: { status: 'pending_rider' } }
-            );
+            await parcelsCollection.updateOne({ _id: result.insertedId }, { $set: { status: 'pending_rider' } });
         }
 
         res.send({ ...result, trackingId: parcel.trackingId });
@@ -563,7 +572,7 @@ app.post('/parcels', verifyJWT, async(req, res) => {
 });
 
 // DELETE /parcels/:id - Delete parcel
-app.delete('/parcels/:id', verifyJWT, async(req, res) => {
+app.delete('/parcels/:id', verifyJWT, async (req, res) => {
     try {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -585,14 +594,14 @@ app.delete('/parcels/:id', verifyJWT, async(req, res) => {
 // ============ PAYMENT ROUTES (Protected) ============
 
 // GET /payments - Get user's payment history (latest first)
-app.get('/payments', verifyJWT, async(req, res) => {
+app.get('/payments', verifyJWT, async (req, res) => {
     try {
         const query = { customerEmail: req.user.email };
         const cursor = paymentsCollection.find(query).sort({ paidAt: -1 });
         let payments = await cursor.toArray();
 
         // Enrich payment data with parcel info if missing
-        payments = await Promise.all(payments.map(async(payment) => {
+        payments = await Promise.all(payments.map(async (payment) => {
             if (!payment.receiverName || payment.receiverName === 'N/A') {
                 try {
                     const parcel = await parcelsCollection.findOne({ _id: new ObjectId(payment.parcelId) });
@@ -632,7 +641,7 @@ app.get('/api/exchange-rate', verifyJWT, (req, res) => {
 });
 
 // POST /create-payment-intent - Create Stripe session
-app.post('/create-payment-intent', verifyJWT, async(req, res) => {
+app.post('/create-payment-intent', verifyJWT, async (req, res) => {
     try {
         const paymentInfo = req.body;
 
@@ -705,7 +714,7 @@ app.post('/create-payment-intent', verifyJWT, async(req, res) => {
 });
 
 // PATCH /payment-success - Verify payment and update parcel status (ATOMIC)
-app.patch('/payment-success', verifyJWT, async(req, res) => {
+app.patch('/payment-success', verifyJWT, async (req, res) => {
     try {
         const sessionId = req.query.session_id;
         const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -740,12 +749,12 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
 
         const paymentData = {
             // USD fields (what Stripe actually charged)
-            amount: convertedAmountUSD,           // USD amount charged by Stripe
-            currency: session.currency,            // 'usd'
+            amount: convertedAmountUSD, // USD amount charged by Stripe
+            currency: session.currency, // 'usd'
             // BDT fields (original parcel price)
             originalAmountBDT: originalAmountBDT, // ৳ original amount
             convertedAmountUSD: convertedAmountUSD,
-            exchangeRate: exchangeRate,            // rate used at time of payment
+            exchangeRate: exchangeRate, // rate used at time of payment
             // Common fields
             customerEmail: session.customer_email,
             parcelId: parcelId,
@@ -758,7 +767,7 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
             receiverPhone: parcel.receiverPhone || 'N/A',
             receiverAddress: parcel.receiverAddress || 'N/A',
             parcelType: parcel.parcelType || 'N/A',
-            totalPrice: parcel.totalPrice || 0  // BDT total stored on parcel
+            totalPrice: parcel.totalPrice || 0 // BDT total stored on parcel
         };
 
         // ✅ Atomic operation: findOneAndUpdate with upsert
@@ -829,7 +838,7 @@ app.patch('/payment-success', verifyJWT, async(req, res) => {
     }
 });
 // get single parcel by id
-app.get('/parcels/:id', async(req, res) => {
+app.get('/parcels/:id', async (req, res) => {
     const id = req.params.id;
     const query = { _id: new ObjectId(id) };
     const result = await parcelsCollection.findOne(query);
@@ -844,7 +853,7 @@ app.get('/api/search', verifyJWT, async (req, res) => {
 
         // Get user role
         const user = await usersCollection.findOne({ email: req.user.email });
-        const role = user?.role || 'user';
+        const role = user ? user.role : 'user';
 
         // Exact match for IDs, partial match for phone numbers
         const parcelSearchConditions = [
@@ -854,7 +863,7 @@ app.get('/api/search', verifyJWT, async (req, res) => {
         ];
 
         const parcelQuery = { $or: parcelSearchConditions };
-        
+
         // Apply role permissions
         if (role === 'user') {
             parcelQuery.senderEmail = req.user.email;
@@ -872,7 +881,7 @@ app.get('/api/search', verifyJWT, async (req, res) => {
                 { trackingId: new RegExp(`^${q}$`, 'i') }
             ];
             const paymentQuery = { $or: paymentSearchConditions };
-            
+
             if (role === 'user') {
                 paymentQuery.customerEmail = req.user.email;
             }
@@ -882,7 +891,7 @@ app.get('/api/search', verifyJWT, async (req, res) => {
         const [parcels, payments] = await Promise.all([parcelPromise, paymentPromise]);
 
         const results = [];
-        
+
         parcels.forEach(p => {
             results.push({
                 id: p.trackingId || p._id.toString(),
@@ -914,7 +923,7 @@ app.get('/api/search', verifyJWT, async (req, res) => {
 
 // ============ 🔍 PUBLIC TRACKING ROUTE ============
 // GET /track/:trackingId - Public, no auth required
-app.get('/track/:trackingId', async(req, res) => {
+app.get('/track/:trackingId', async (req, res) => {
     try {
         const { trackingId } = req.params;
         if (!trackingId) return res.status(400).send({ success: false, message: 'Tracking ID required' });
@@ -966,7 +975,7 @@ app.get('/track/:trackingId', async(req, res) => {
 });
 
 // PATCH /parcels/:id - Update parcel (assign rider, update status, log activity)
-app.patch('/parcels/:id', verifyJWT, async(req, res) => {
+app.patch('/parcels/:id', verifyJWT, async (req, res) => {
     try {
         const id = req.params.id;
         const { riderId, riderName, riderEmail, deliveryStatus, clearRider, ...rest } = req.body;
@@ -1003,8 +1012,8 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
             const logEntry = {
                 status: deliveryStatus,
                 timestamp: new Date(),
-                updatedBy: req.user?.email || 'system',
-                role: req.user?.role || 'unknown'
+                updatedBy: req.user ? req.user.email : 'system',
+                role: req.user ? req.user.role : 'unknown'
             };
             updateOp.$push = { activityLog: logEntry };
         }
@@ -1045,10 +1054,10 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
         // If delivered/cancelled, set rider back to available
         if (['delivered', 'cancelled', 'delivery_failed'].includes(deliveryStatus)) {
             const parcel = await parcelsCollection.findOne(filter);
-            if (parcel?.riderId) {
+            if (parcel && parcel.riderId) {
                 try {
                     await riderCollection.updateOne({ _id: new ObjectId(parcel.riderId) }, { $set: { workStatus: 'Available', updatedAt: new Date() } });
-                } catch (_) {}
+                } catch (_) { }
             }
         }
 
@@ -1090,7 +1099,7 @@ app.patch('/parcels/:id', verifyJWT, async(req, res) => {
 
 //rider related apis
 // POST /riders - Submit rider application (JWT Protected)
-app.post('/riders', verifyJWT, async(req, res) => {
+app.post('/riders', verifyJWT, async (req, res) => {
     try {
         const riderData = req.body;
 
@@ -1134,7 +1143,7 @@ app.post('/riders', verifyJWT, async(req, res) => {
 });
 
 // GET /riders/:email - Get rider application status (JWT Protected)
-app.get('/riders/:email', verifyJWT, async(req, res) => {
+app.get('/riders/:email', verifyJWT, async (req, res) => {
     try {
         const email = req.params.email;
 
@@ -1160,7 +1169,7 @@ app.get('/riders/:email', verifyJWT, async(req, res) => {
 });
 
 // PATCH /riders/:id - Update rider status (Admin) OR update rider profile (User)
-app.patch('/riders/:id', verifyJWT, async(req, res) => {
+app.patch('/riders/:id', verifyJWT, async (req, res) => {
     try {
         const riderId = req.params.id;
         const rider = await riderCollection.findOne({ _id: new ObjectId(riderId) });
@@ -1298,7 +1307,7 @@ const getCoords = (districtName) => {
 };
 
 // GET /rider/dashboard-stats - Rider dashboard statistics
-app.get('/rider/dashboard-stats', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/dashboard-stats', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const rider = await riderCollection.findOne({ email: riderEmail });
@@ -1348,7 +1357,7 @@ app.get('/rider/dashboard-stats', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/assigned-deliveries - Get rider's assigned deliveries
-app.get('/rider/assigned-deliveries', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/assigned-deliveries', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const query = {
@@ -1400,7 +1409,7 @@ function mapDeliveryStatus(status) {
 }
 
 // GET /rider/active-delivery - Get rider's most recent active delivery with route
-app.get('/rider/active-delivery', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/active-delivery', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const query = {
@@ -1449,7 +1458,7 @@ app.get('/rider/active-delivery', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/weekly-earnings - Get last 7 days earnings
-app.get('/rider/weekly-earnings', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/weekly-earnings', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const now = new Date();
@@ -1485,7 +1494,7 @@ app.get('/rider/weekly-earnings', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // PATCH /rider/status - Toggle rider online/offline status
-app.patch('/rider/status', verifyJWT, verifyRider, async(req, res) => {
+app.patch('/rider/status', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const { isOnline } = req.body;
@@ -1544,7 +1553,7 @@ app.patch('/rider/status', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/status - Get rider current status
-app.get('/rider/status', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/status', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const rider = await riderCollection.findOne({ email: riderEmail });
@@ -1564,10 +1573,10 @@ app.get('/rider/status', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/parcel-requests - Get pending requests for the rider
-app.get('/rider/parcel-requests', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/parcel-requests', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
-        
+
         // 1. Fetch rider's current profile to get their area
         const rider = await riderCollection.findOne({ email: riderEmail });
         if (!rider) return res.status(404).send({ message: 'Rider profile not found' });
@@ -1594,14 +1603,14 @@ app.get('/rider/parcel-requests', verifyJWT, verifyRider, async(req, res) => {
                 const bulkOps = availableParcels.map(parcel => ({
                     updateOne: {
                         filter: { parcelId: parcel._id, riderEmail: riderEmail },
-                        update: { 
-                            $setOnInsert: { 
+                        update: {
+                            $setOnInsert: {
                                 parcelId: parcel._id,
                                 trackingId: parcel.trackingId,
                                 riderEmail: riderEmail,
                                 status: 'pending',
                                 createdAt: new Date()
-                            } 
+                            }
                         },
                         upsert: true
                     }
@@ -1611,8 +1620,8 @@ app.get('/rider/parcel-requests', verifyJWT, verifyRider, async(req, res) => {
         }
 
         // 4. Return all pending requests
-        const requests = await parcelRequestsCollection.find({ 
-            riderEmail: riderEmail, 
+        const requests = await parcelRequestsCollection.find({
+            riderEmail: riderEmail,
             status: 'pending'
         }).sort({ createdAt: -1 }).toArray();
 
@@ -1633,15 +1642,12 @@ app.get('/rider/parcel-requests', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // PATCH /rider/parcel-requests/:id/reject - Reject a request
-app.patch('/rider/parcel-requests/:id/reject', verifyJWT, verifyRider, async(req, res) => {
+app.patch('/rider/parcel-requests/:id/reject', verifyJWT, verifyRider, async (req, res) => {
     try {
         const requestId = req.params.id;
         const riderEmail = req.user.email;
 
-        const result = await parcelRequestsCollection.updateOne(
-            { _id: new ObjectId(requestId), riderEmail: riderEmail },
-            { $set: { status: 'rejected', rejectedAt: new Date() } }
-        );
+        const result = await parcelRequestsCollection.updateOne({ _id: new ObjectId(requestId), riderEmail: riderEmail }, { $set: { status: 'rejected', rejectedAt: new Date() } });
 
         if (result.modifiedCount === 0) {
             return res.status(404).send({ message: 'Request not found' });
@@ -1655,18 +1661,18 @@ app.patch('/rider/parcel-requests/:id/reject', verifyJWT, verifyRider, async(req
 });
 
 // POST /rider/deliveries/:id/accept - Accept a delivery request
-app.post('/rider/deliveries/:id/accept', verifyJWT, verifyRider, async(req, res) => {
+app.post('/rider/deliveries/:id/accept', verifyJWT, verifyRider, async (req, res) => {
     try {
         const parcelId = req.params.id;
         const riderEmail = req.user.email;
 
         // Use the centralized riderService to handle the transaction-like logic
         const result = await riderService.acceptParcel(riderEmail, parcelId);
-        
-        res.send({ 
-            success: true, 
-            message: 'Delivery accepted successfully!', 
-            parcel: result 
+
+        res.send({
+            success: true,
+            message: 'Delivery accepted successfully!',
+            parcel: result
         });
     } catch (error) {
         console.error('❌ [AcceptDelivery] Error:', error.message);
@@ -1675,7 +1681,7 @@ app.post('/rider/deliveries/:id/accept', verifyJWT, verifyRider, async(req, res)
 });
 
 // PATCH /rider/delivery/:id/status - Update delivery status by rider
-app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) => {
+app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async (req, res) => {
     try {
         const parcelId = req.params.id;
         const { deliveryStatus } = req.body;
@@ -1708,21 +1714,18 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
             setFields.deliveredAt = new Date();
         }
 
-        const result = await parcelsCollection.updateOne(
-            { _id: new ObjectId(parcelId) }, 
-            { 
-                $set: setFields,
-                $push: {
-                    activityLog: {
-                        status: deliveryStatus,
-                        timestamp: new Date(),
-                        updatedBy: riderEmail,
-                        role: 'rider',
-                        message: `Parcel status updated to ${deliveryStatus.replace(/_/g, ' ')} by rider`
-                    }
+        const result = await parcelsCollection.updateOne({ _id: new ObjectId(parcelId) }, {
+            $set: setFields,
+            $push: {
+                activityLog: {
+                    status: deliveryStatus,
+                    timestamp: new Date(),
+                    updatedBy: riderEmail,
+                    role: 'rider',
+                    message: `Parcel status updated to ${deliveryStatus.replace(/_/g, ' ')} by rider`
                 }
             }
-        );
+        });
 
         // 🔔 Notify User: Status Update by Rider
         try {
@@ -1778,16 +1781,16 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async(req, res) 
 });
 
 // GET /rider/delivery-history - Get rider's complete delivery history with filters & pagination
-app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/delivery-history', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const {
             page = 1,
-                limit = 10,
-                search = '',
-                status = 'all',
-                fromDate,
-                toDate
+            limit = 10,
+            search = '',
+            status = 'all',
+            fromDate,
+            toDate
         } = req.query;
 
         const pageNum = Math.max(1, parseInt(page));
@@ -1831,7 +1834,7 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
         }
 
         // Build final query
-        const query = {...baseQuery };
+        const query = { ...baseQuery };
         if (dateFilter.$or) {
             query.$and = [baseQuery, dateFilter];
         }
@@ -1941,7 +1944,7 @@ app.get('/rider/delivery-history', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/deliveries - Alias for assigned-deliveries (frontend compatibility)
-app.get('/rider/deliveries', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/deliveries', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const query = {
@@ -1979,7 +1982,7 @@ app.get('/rider/deliveries', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/earnings-dashboard - Premium rider earnings data
-app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const { range = '30d', page = 1, limit = 10, search = '', status = 'all' } = req.query;
@@ -2010,17 +2013,17 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
             })
             .reduce((sum, p) => sum + Math.round((p.totalPrice || 0) * 0.7), 0);
 
-        const earningsChange = prevPeriodEarnings > 0 
-            ? Math.round(((currentPeriodEarnings - prevPeriodEarnings) / prevPeriodEarnings) * 100 * 10) / 10 
-            : (currentPeriodEarnings > 0 ? 12.5 : 12.5); // fallback realistic %
+        const earningsChange = prevPeriodEarnings > 0 ?
+            Math.round(((currentPeriodEarnings - prevPeriodEarnings) / prevPeriodEarnings) * 100 * 10) / 10 :
+            (currentPeriodEarnings > 0 ? 12.5 : 12.5); // fallback realistic %
 
-        const deliveriesChange = prevPeriodEarnings > 0
-            ? deliveredParcels.filter(p => new Date(p.deliveredAt || p.updatedAt || p.createdAt) >= thirtyDaysAgo).length - 
-              deliveredParcels.filter(p => {
-                  const dt = new Date(p.deliveredAt || p.updatedAt || p.createdAt);
-                  return dt >= sixtyDaysAgo && dt < thirtyDaysAgo;
-              }).length
-            : 7;
+        const deliveriesChange = prevPeriodEarnings > 0 ?
+            deliveredParcels.filter(p => new Date(p.deliveredAt || p.updatedAt || p.createdAt) >= thirtyDaysAgo).length -
+            deliveredParcels.filter(p => {
+                const dt = new Date(p.deliveredAt || p.updatedAt || p.createdAt);
+                return dt >= sixtyDaysAgo && dt < thirtyDaysAgo;
+            }).length :
+            7;
 
         // Assign payment status to delivered parcels dynamically based on date
         // Payout happens every Sunday. So deliveries in the last 2 days are Processing, 2-7 days are Pending, >7 days are Paid.
@@ -2030,7 +2033,7 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
             let paymentStatus = 'Paid';
             if (daysAgo <= 2) paymentStatus = 'Processing';
             else if (daysAgo <= 7) paymentStatus = 'Pending';
-            
+
             const earning = Math.round((p.totalPrice || 0) * 0.7);
             return {
                 ...p,
@@ -2125,7 +2128,7 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
 
         if (search.trim()) {
             const q = search.toLowerCase();
-            tableParcels = tableParcels.filter(p => 
+            tableParcels = tableParcels.filter(p =>
                 (p.trackingId && p.trackingId.toLowerCase().includes(q)) ||
                 (p.receiverName && p.receiverName.toLowerCase().includes(q)) ||
                 (p.senderName && p.senderName.toLowerCase().includes(q)) ||
@@ -2194,7 +2197,7 @@ app.get('/rider/earnings-dashboard', verifyJWT, verifyRider, async(req, res) => 
 });
 
 // GET /rider/activity-feed - Get rider's recent delivery activity logs
-app.get('/rider/activity-feed', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/activity-feed', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const limit = parseInt(req.query.limit) || 20;
@@ -2230,7 +2233,7 @@ app.get('/rider/activity-feed', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/analytics - Get rider's delivery analytics and stats
-app.get('/rider/analytics', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/analytics', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
         const range = req.query.range || '7d';
@@ -2273,7 +2276,7 @@ app.get('/rider/analytics', verifyJWT, verifyRider, async(req, res) => {
 });
 
 // GET /rider/performance - Get rider's performance metrics
-app.get('/rider/performance', verifyJWT, verifyRider, async(req, res) => {
+app.get('/rider/performance', verifyJWT, verifyRider, async (req, res) => {
     try {
         const riderEmail = req.user.email;
 
@@ -2349,7 +2352,7 @@ function mapActivityIcon(status) {
 // ============ USER ROUTES (Protected) ============
 
 // POST /user - Save or update user info during registration (JWT Protected)
-app.post('/user', verifyJWT, async(req, res) => {
+app.post('/user', verifyJWT, async (req, res) => {
     try {
         const userInfo = req.body;
         const email = userInfo.email;
@@ -2397,7 +2400,7 @@ app.post('/user', verifyJWT, async(req, res) => {
 });
 
 // GET /user - Get current user info (Protected)
-app.get('/user', verifyJWT, async(req, res) => {
+app.get('/user', verifyJWT, async (req, res) => {
     try {
         const email = req.user.email;
         const user = await usersCollection.findOne({ email: email });
@@ -2423,7 +2426,7 @@ app.get('/user', verifyJWT, async(req, res) => {
 });
 
 // PATCH /user - Update user profile (Protected)
-app.patch('/user', verifyJWT, async(req, res) => {
+app.patch('/user', verifyJWT, async (req, res) => {
     try {
         const email = req.user.email;
         const updateData = req.body;
@@ -2471,7 +2474,7 @@ app.patch('/user', verifyJWT, async(req, res) => {
 });
 
 // POST /save-social-user - Save or update social user data (Google, Facebook, etc.) (Protected)
-app.post('/save-social-user', verifyJWT, async(req, res) => {
+app.post('/save-social-user', verifyJWT, async (req, res) => {
     try {
         const socialUserData = req.body;
         const email = socialUserData.email;
@@ -2542,7 +2545,7 @@ app.post('/save-social-user', verifyJWT, async(req, res) => {
 });
 
 // GET /admin/stats - Get admin dashboard statistics (Admin only)
-app.get('/admin/stats', verifyJWT, verifyAdmin, async(req, res) => {
+app.get('/admin/stats', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const totalUsers = await usersCollection.countDocuments({});
         const totalRiders = await riderCollection.countDocuments({});
@@ -2572,7 +2575,7 @@ app.get('/admin/stats', verifyJWT, verifyAdmin, async(req, res) => {
 });
 
 // GET /admin/dashboard-stats - Get comprehensive dashboard statistics (Admin only)
-app.get('/admin/dashboard-stats', verifyJWT, verifyAdmin, async(req, res) => {
+app.get('/admin/dashboard-stats', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         // Parcel stats
         const totalParcels = await parcelsCollection.countDocuments({});
@@ -2682,7 +2685,7 @@ app.get('/admin/dashboard-stats', verifyJWT, verifyAdmin, async(req, res) => {
 
 // GET /riders - Get rider applications with optional filters (Admin only)
 // Query params: ?status=approved&district=Dhaka&workStatus=available
-app.get('/riders', verifyJWT, verifyAdmin, async(req, res) => {
+app.get('/riders', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const { status, district, workStatus } = req.query;
 
@@ -2717,7 +2720,7 @@ app.get('/riders', verifyJWT, verifyAdmin, async(req, res) => {
 });
 
 // PATCH /user/role - Update user role (Admin only)
-app.patch('/user/role', verifyJWT, verifyAdmin, async(req, res) => {
+app.patch('/user/role', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const { email, userId, role } = req.body;
         const adminEmail = req.user.email;
@@ -2773,7 +2776,7 @@ app.patch('/user/role', verifyJWT, verifyAdmin, async(req, res) => {
 });
 
 // GET /users - Get paginated users (Admin only)
-app.get('/users', verifyJWT, verifyAdmin, async(req, res) => {
+app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
@@ -2816,7 +2819,7 @@ app.get('/users', verifyJWT, verifyAdmin, async(req, res) => {
 });
 
 // DELETE /user/:id - Delete a user (Admin only)
-app.delete('/user/:id', verifyJWT, verifyAdmin, async(req, res) => {
+app.delete('/user/:id', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const userId = req.params.id;
 
@@ -2856,12 +2859,12 @@ app.delete('/user/:id', verifyJWT, verifyAdmin, async(req, res) => {
 });
 
 // GET /admin/payments - Get all payments from all users (Admin only)
-app.get('/admin/payments', verifyJWT, verifyAdmin, async(req, res) => {
+app.get('/admin/payments', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         let allPayments = await paymentsCollection.find({}).sort({ paidAt: -1 }).toArray();
 
         // Enrich each payment with parcel details if any fields are missing
-        allPayments = await Promise.all(allPayments.map(async(payment) => {
+        allPayments = await Promise.all(allPayments.map(async (payment) => {
             if (!payment.receiverName || payment.receiverName === 'N/A' ||
                 !payment.parcelType || !payment.totalPrice) {
                 try {
@@ -2896,7 +2899,7 @@ app.get('/admin/payments', verifyJWT, verifyAdmin, async(req, res) => {
 });
 
 // GET /admin/parcels - Get all parcels (Admin only)
-app.get('/admin/parcels', verifyJWT, verifyAdmin, async(req, res) => {
+app.get('/admin/parcels', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const allParcels = await parcelsCollection.find({}).toArray();
 
@@ -2914,7 +2917,7 @@ app.get('/admin/parcels', verifyJWT, verifyAdmin, async(req, res) => {
 });
 
 // GET /admin/analytics - Get analytics data for admin dashboard (Admin only)
-app.get('/admin/analytics', verifyJWT, verifyAdmin, async(req, res) => {
+app.get('/admin/analytics', verifyJWT, verifyAdmin, async (req, res) => {
     try {
         const { range = '7d', customStart, customEnd } = req.query;
         const now = new Date();
@@ -3069,7 +3072,7 @@ app.patch('/admin/settings', verifyJWT, verifyAdmin, async (req, res) => {
         const updateData = { ...req.body };
         // Remove _id if passed
         delete updateData._id;
-        
+
         // Ensure proper types
         if (updateData.defaultFee !== undefined) updateData.defaultFee = Number(updateData.defaultFee);
         if (updateData.expressFee !== undefined) updateData.expressFee = Number(updateData.expressFee);
@@ -3079,12 +3082,8 @@ app.patch('/admin/settings', verifyJWT, verifyAdmin, async (req, res) => {
         if (updateData.maxActiveDeliveries !== undefined) updateData.maxActiveDeliveries = Number(updateData.maxActiveDeliveries);
         if (updateData.autoApproveRiders !== undefined) updateData.autoApproveRiders = Boolean(updateData.autoApproveRiders);
 
-        const result = await adminSettingsCollection.updateOne(
-            { type: 'global' },
-            { $set: { ...updateData, updatedAt: new Date() } },
-            { upsert: true }
-        );
-        
+        const result = await adminSettingsCollection.updateOne({ type: 'global' }, { $set: { ...updateData, updatedAt: new Date() } }, { upsert: true });
+
         res.send({ success: true, message: 'Settings updated successfully' });
     } catch (error) {
         console.error('❌ Patch admin settings error:', error.message);
