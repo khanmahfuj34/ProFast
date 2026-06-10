@@ -31,7 +31,7 @@ const adminSupportRoutes = require('./routes/adminSupportRoutes');
 
 // 🔐 Firebase Admin SDK initialization
 const admin = require('firebase-admin');
-const admin = require('firebase-admin');
+
 
 let serviceAccount;
 
