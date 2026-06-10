@@ -247,11 +247,10 @@ const Payment = () => {
                                 <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
                                     <span className="text-slate-700 font-medium">Payment Status</span>
                                     <span
-                                        className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                                            isPaid
+                                        className={`px-4 py-2 rounded-full text-sm font-semibold ${isPaid
                                                 ? 'bg-emerald-100 text-emerald-700'
                                                 : 'bg-amber-100 text-amber-700'
-                                        }`}
+                                            }`}
                                     >
                                         {formatLabel(paymentStatus)}
                                     </span>
