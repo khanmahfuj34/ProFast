@@ -42,7 +42,7 @@ const AuthProvider = ({ children }) => {
         try {
             setUserProfile(null);
             const response = await axios.get(
-                'http://localhost:3000/user',
+                 `${API_URL}/user`,
                 {
                     withCredentials: true,
                     headers: {
