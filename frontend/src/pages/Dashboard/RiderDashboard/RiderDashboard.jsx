@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { useNotifications } from '../../../contexts/NotificationContext';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
-import RiderTopNavbar from './components/RiderTopNavbar';
 import RiderOverviewCards from './components/RiderOverviewCards';
 import RiderActiveDeliveries from './components/RiderActiveDeliveries';
 import RiderAnalytics from './components/RiderAnalytics';
@@ -237,14 +236,6 @@ const RiderDashboard = () => {
         />
       )}
       
-      {/* Fixed Top Navigation Bar */}
-      <RiderTopNavbar 
-        user={user} 
-        userProfile={userProfile}
-        isOnline={isOnline}
-        setIsOnline={setIsOnline}
-      />
-
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
