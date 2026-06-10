@@ -258,10 +258,10 @@ const MyParcels = () => {
                 <button
                     onClick={() => refetch()}
                     disabled={isFetching}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-semibold transition disabled:opacity-50"
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 transition-all text-sm font-medium"
                 >
-                    <FiRefreshCw className={`text-sm ${isFetching ? 'animate-spin' : ''}`} />
-                    {isFetching ? 'Refreshing…' : 'Refresh'}
+                    <FiRefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-lime-600' : 'text-slate-500'}`} />
+                    {isFetching ? 'Refreshing...' : 'Refresh'}
                 </button>
             </div>
 

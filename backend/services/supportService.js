@@ -127,17 +127,17 @@ const updateTicketStatus = async (ticketId, status) => {
 
     const result = await ticketsCollection.findOneAndUpdate(
         { ticketId },
-        { 
-            $set: { 
-                status, 
-                updatedAt: new Date().toISOString() 
-            } 
+        {
+            $set: {
+                status,
+                updatedAt: new Date().toISOString()
+            }
         },
         { returnDocument: 'after' }
     );
 
     const updatedTicket = result.value || result; // Handle both driver versions
-    
+
     // Emit real-time event
     if (socketIo && updatedTicket) {
         socketIo.emit('support_ticket_updated', updatedTicket);
@@ -162,18 +162,18 @@ const replyToTicket = async (ticketId, replyText, adminEmail, adminName) => {
 
     const result = await ticketsCollection.findOneAndUpdate(
         { ticketId },
-        { 
+        {
             $push: { replies: reply },
-            $set: { 
+            $set: {
                 status: 'in-progress', // Auto change status to in-progress when replied
-                updatedAt: new Date().toISOString() 
-            } 
+                updatedAt: new Date().toISOString()
+            }
         },
         { returnDocument: 'after' }
     );
 
     const updatedTicket = result.value || result;
-    
+
     // Emit real-time event
     if (socketIo && updatedTicket) {
         socketIo.emit('support_ticket_replied', { ticketId, reply });

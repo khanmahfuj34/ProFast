@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import useAxiosSecure from '../hooks/useAxiosSecure';
+import useAuth from '../hooks/useAuth';
+import { useNotifications } from '../contexts/NotificationContext';
+import { io } from 'socket.io-client';
 import {
   MdDashboard,
   MdGroup,
@@ -17,7 +22,82 @@ import {
 
 const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse = () => {} }) => {
   const location = useLocation();
-  const [expandedSection, setExpandedSection] = useState(null);
+  
+  const axiosSecure = useAxiosSecure();
+  const { user } = useAuth();
+  const { unreadCount } = useNotifications();
+  const queryClient = useQueryClient();
+
+  // 1. Delivery Control & All Parcels counts (from dashboard-stats)
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['admin-dashboard-stats'],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/admin/dashboard-stats');
+      return res.data?.stats || {};
+    },
+    enabled: !!user?.email,
+    refetchInterval: 20000,
+    staleTime: 5000,
+  });
+
+  // 2. Approve Riders count (from stats endpoint which returns pending riders)
+  const { data: adminStats } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/admin/stats');
+      return res.data?.stats || {};
+    },
+    enabled: !!user?.email,
+    refetchInterval: 30000,
+  });
+
+  // 3. pending support tickets
+  const { data: supportTicketsCount } = useQuery({
+    queryKey: ['admin-support-open-count'],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/admin/support?status=open');
+      return res.data?.count || 0;
+    },
+    enabled: !!user?.email,
+    refetchInterval: 30000,
+  });
+
+  // Real-time socket updates for sidebar
+  useEffect(() => {
+    if (!user?.email) return;
+
+    // Connect to sockets (assuming same namespace or default)
+    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+      withCredentials: true
+    });
+
+    // Listen for events that should update sidebar counts
+    socket.on('parcelUpdate', () => {
+      queryClient.invalidateQueries(['admin-dashboard-stats']);
+    });
+    
+    socket.on('newParcel', () => {
+      queryClient.invalidateQueries(['admin-dashboard-stats']);
+    });
+    
+    socket.on('ticketCreated', () => {
+      queryClient.invalidateQueries(['admin-support-open-count']);
+    });
+    
+    socket.on('riderApplication', () => {
+      queryClient.invalidateQueries(['admin-stats']);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, queryClient]);
+
+  const deliveryControlCount = dashboardStats?.pendingParcels > 0 ? dashboardStats.pendingParcels.toString() : null;
+  const approveRidersCount = adminStats?.riderStats?.pending > 0 ? adminStats.riderStats.pending.toString() : null;
+  const allParcelsCount = dashboardStats?.totalParcels > 0 ? dashboardStats.totalParcels.toString() : null;
+  const notificationBadge = unreadCount > 0 ? unreadCount.toString() : null;
+  const supportTicketsBadge = supportTicketsCount > 0 ? supportTicketsCount.toString() : null;
 
   // Navigation items grouped by sections
   const navSections = [
@@ -41,13 +121,13 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
           label: 'Delivery Control',
           icon: MdDeliveryDining,
           path: '/admin/delivery-control',
-          badge: '12',
+          badge: deliveryControlCount,
         },
         {
           label: 'Approve Riders',
           icon: MdAssignment,
           path: '/admin/approve-riders',
-          badge: '5',
+          badge: approveRidersCount,
         },
         {
           label: 'Manage Users',
@@ -59,7 +139,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
           label: 'All Parcels',
           icon: MdDeliveryDining,
           path: '/admin/parcels',
-          badge: '249',
+          badge: allParcelsCount,
         },
       ],
     },
@@ -89,13 +169,13 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
           label: 'Notifications',
           icon: MdNotifications,
           path: '/admin/notifications',
-          badge: '7',
+          badge: notificationBadge,
         },
         {
           label: 'Support Tickets',
           icon: MdSupportAgent,
           path: '/admin/support-tickets',
-          badge: '3',
+          badge: supportTicketsBadge,
         },
         {
           label: 'Settings',
