@@ -110,6 +110,12 @@ app.get('/health', (req, res) => {
         status: 'ok'
     });
 });
+app.use((err, req, res, next) => {
+    console.error("GLOBAL ERROR:", err);
+    res.status(500).json({
+        error: err.message
+    });
+});
 
 // MongoDB URI — prefer full MONGODB_URI override (for production), fallback to DB_USER/DB_PASS template
 const uri = process.env.MONGODB_URI ||
