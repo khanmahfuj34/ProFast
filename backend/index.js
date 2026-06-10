@@ -94,6 +94,13 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
 
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'Backend API Running'
+    });
+});
+
 // MongoDB URI — prefer full MONGODB_URI override (for production), fallback to DB_USER/DB_PASS template
 const uri = process.env.MONGODB_URI ||
     `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ttnzsdq.mongodb.net/?retryWrites=true&w=majority`;
