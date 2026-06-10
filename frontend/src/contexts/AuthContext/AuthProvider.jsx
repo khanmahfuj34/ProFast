@@ -11,7 +11,7 @@ import {
     updateProfile
 } from 'firebase/auth';
 import axios from 'axios';
-
+const API_URL = import.meta.env.VITE_API_URL;
 const USE_MOCK_AUTH = false; // Set to true for testing without valid Firebase credentials
 
 const AuthProvider = ({ children }) => {
@@ -75,7 +75,7 @@ const AuthProvider = ({ children }) => {
 
             console.log('🔐 [Token Flow] POSTing token to /jwt endpoint...');
             const response = await axios.post(
-                'http://localhost:3000/jwt',
+                 `${API_URL}/jwt`,
                 { token },
                 {
                     withCredentials: true, // ✅ CRITICAL: Send cookies
@@ -128,7 +128,7 @@ const AuthProvider = ({ children }) => {
             // Get token for authorization
             const token = await user.getIdToken();
             const response = await axios.post(
-                'http://localhost:3000/save-social-user',
+                `${API_URL}/save-social-user`,
                 socialUserData,
                 {
                     withCredentials: true,
@@ -252,7 +252,7 @@ const AuthProvider = ({ children }) => {
         try {
             // 🔐 Call backend logout endpoint to clear cookie
             await axios.post(
-                'http://localhost:3000/logout',
+                `${API_URL}/logout`,
                 {},
                 { withCredentials: true }
             );
@@ -364,7 +364,7 @@ const AuthProvider = ({ children }) => {
 
             // 2. Update Backend profile
             const response = await axios.patch(
-                'http://localhost:3000/users/update-profile-data',
+                `${API_URL}/users/update-profile-data`,
                 data,
                 {
                     withCredentials: true,
