@@ -100,6 +100,11 @@ app.get('/', (req, res) => {
         message: 'Backend API Running'
     });
 });
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok'
+    });
+});
 
 // MongoDB URI — prefer full MONGODB_URI override (for production), fallback to DB_USER/DB_PASS template
 const uri = process.env.MONGODB_URI ||
