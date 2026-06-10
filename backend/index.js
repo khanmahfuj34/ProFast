@@ -261,6 +261,9 @@ run();
 
 // 🔐 JWT Verification Middleware
 const verifyJWT = async (req, res, next) => {
+    console.log('==== JWT DEBUG ====');
+    console.log('Cookies:', req.cookies);
+    console.log('Headers Cookie:', req.headers.cookie);
     try {
         // Extract token from cookies first, then from Authorization header
         const cookieToken = req.cookies.token;
@@ -394,6 +397,7 @@ app.post('/jwt', async (req, res) => {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
+
             maxAge: 24 * 60 * 60 * 1000
         });
 
