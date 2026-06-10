@@ -111,10 +111,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     try {
       // Connect to Socket.IO server
-      const socketURL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000' 
-        : window.location.origin.replace(/:\d+/, ':3000');
-      
+      const socketURL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
       const socket = io(socketURL, {
         reconnection: true,
         reconnectionDelay: 1000,
@@ -223,8 +220,8 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Left Column: Charts & Analytics */}
           <div className="lg:col-span-2">
-            <AdminAnalytics 
-              analyticsData={analyticsData} 
+            <AdminAnalytics
+              analyticsData={analyticsData}
               isLoading={analyticsLoading}
               onFilterChange={handleAnalyticsFilterChange}
             />
