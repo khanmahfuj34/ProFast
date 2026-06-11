@@ -55,21 +55,42 @@ const useAxiosSecure = () => {
             }
         );
 
-        // 🔐 Response Interceptor - Handle auth errors globally
+        // 🔐 Response Interceptor - Handle auth errors globally with retry logic
         const responseInterceptor = axiosSecure.interceptors.response.use(
             response => response,
             async error => {
+                const originalRequest = error.config;
                 const status = error.response?.status;
                 const path = error.config?.url;
 
-                if (status === 401 || status === 403) {
-                    console.warn(`🔐 [Axios Interceptor] ${status} error on ${path}`);
-                    console.warn('🔐 [Axios Interceptor] Error:', error.response?.data?.message);
+                // Handle 401/403 with automatic token refresh and single retry
+                if ((status === 401 || status === 403) && originalRequest && !originalRequest._retry) {
+                    originalRequest._retry = true;
+                    const currentUser = auth.currentUser;
+                    
+                    if (currentUser) {
+                        try {
+                            console.log(`🔄 [Axios Interceptor] ${status} on ${path}. Attempting Firebase ID token refresh...`);
+                            // Force refresh the token
+                            const token = await currentUser.getIdToken(true);
+                            localStorage.setItem('authToken', token);
+                            
+                            // Re-apply the new token to request headers
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                            
+                            console.log(`🔄 [Axios Interceptor] Retrying request to: ${path}`);
+                            return axiosSecure(originalRequest);
+                        } catch (refreshError) {
+                            console.error('❌ [Axios Interceptor] Firebase ID token refresh failed:', refreshError);
+                        }
+                    }
+                }
 
+                // If retrying didn't resolve the 401/403, or no user is signed in
+                if (status === 401 || status === 403) {
+                    console.warn(`🔐 [Axios Interceptor] Unresolved ${status} on ${path}`);
+                    
                     // ✅ KEY FIX: Do NOT log out if the token is not ready yet.
-                    // During the initial login flow the JWT cookie is being written by /jwt;
-                    // any protected request that fires before that completes will 401.
-                    // We should silently swallow those errors instead of logging the user out.
                     if (!tokenReadyRef.current) {
                         console.log('🔐 [Axios Interceptor] Token not ready yet — skipping logout on', path);
                         return Promise.reject(error);

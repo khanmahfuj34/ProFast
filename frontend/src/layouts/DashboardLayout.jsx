@@ -37,6 +37,18 @@ const DashboardLayout = () => {
     }
   }, [isAdmin, isRider, loading, location.pathname, navigate]);
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900">
@@ -59,7 +71,7 @@ const DashboardLayout = () => {
       <aside
         className={`fixed lg:static inset-y-0 left-0 z-50 bg-white dark:bg-[#0b1120] border-r border-slate-100 dark:border-slate-800/80 flex flex-col h-full shadow-xl transition-all duration-300 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } ${sidebarCollapsed ? 'w-20' : 'w-64'}`}
+        } ${sidebarCollapsed ? 'lg:w-20 w-64' : 'w-64'}`}
       >
         {/* Sidebar Header */}
         <div className="bg-white dark:bg-[#0b1120] border-b border-slate-100 dark:border-slate-800/80 p-4 flex items-center justify-between h-[72px]">

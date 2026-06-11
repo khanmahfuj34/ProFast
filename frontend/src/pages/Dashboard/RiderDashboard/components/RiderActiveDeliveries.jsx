@@ -80,18 +80,18 @@ const RiderActiveDeliveries = ({ deliveries = [], isLoading }) => {
                 </div>
                 {getStatusIcon(delivery.status)}
               </div>
-              <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-gray-500 dark:text-slate-500">Pickup:</p>
-                  <p className="text-gray-900 dark:text-slate-200 font-medium">{delivery.pickupLocation}</p>
+                  <p className="text-gray-900 dark:text-slate-200 font-medium truncate">{delivery.pickupLocation}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-slate-500">Delivery:</p>
-                  <p className="text-gray-900 dark:text-slate-200 font-medium">{delivery.deliveryLocation}</p>
+                  <p className="text-gray-900 dark:text-slate-200 font-medium truncate">{delivery.deliveryLocation}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 dark:text-slate-500">Amount:</p>
-                  <p className="text-gray-900 dark:text-slate-200 font-medium">৳{delivery.amount}</p>
+                  <p className="text-gray-900 dark:text-slate-200 font-medium font-semibold">৳{delivery.amount}</p>
                 </div>
               </div>
             </div>

@@ -145,43 +145,50 @@ const Register = () => {
     const handleGoogleRegister = async () => {
         try {
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
-            // ✅ Get Firebase ID token for API authentication
-            const firebaseToken = await result.user.getIdToken();
-            localStorage.setItem('authToken', firebaseToken);
-            console.log('✅ Firebase token stored for API requests');
-            
-            // Prepare user data for database
-            const userInfo = {
-                email: result.user.email,
-                displayName: result.user.displayName || 'Google User',
-                photoURL: result.user.photoURL || null
-            };
+            if (isMobile) {
+                console.log('📱 Mobile detected. Using signInWithRedirect for Google Auth...');
+                await signInWithRedirect(auth, provider);
+            } else {
+                console.log('💻 Desktop detected. Using signInWithPopup for Google Auth...');
+                const result = await signInWithPopup(auth, provider);
+                
+                // ✅ Get Firebase ID token for API authentication
+                const firebaseToken = await result.user.getIdToken();
+                localStorage.setItem('authToken', firebaseToken);
+                console.log('✅ Firebase token stored for API requests');
+                
+                // Prepare user data for database
+                const userInfo = {
+                    email: result.user.email,
+                    displayName: result.user.displayName || 'Google User',
+                    photoURL: result.user.photoURL || null
+                };
 
-            try {
-                // Save user to database with explicit Authorization header
-                const dbResponse = await axiosSecure.post('/users', userInfo, {
-                    headers: {
-                        'Authorization': `Bearer ${firebaseToken}`
-                    }
+                try {
+                    // Save user to database with explicit Authorization header
+                    const dbResponse = await axiosSecure.post('/users', userInfo, {
+                        headers: {
+                            'Authorization': `Bearer ${firebaseToken}`
+                        }
+                    });
+                    console.log('✅ Google user saved to database:', dbResponse.data);
+                } catch (dbError) {
+                    console.warn('⚠️  Database save skipped (user may already exist):', dbError?.response?.data?.message);
+                    // Don't fail if user already exists in database
+                }
+
+                toast.success(`👋 Welcome ${result.user.displayName}!`, {
+                    position: 'top-right',
+                    autoClose: 4000,
                 });
-                console.log('✅ Google user saved to database:', dbResponse.data);
-            } catch (dbError) {
-                console.warn('⚠️  Database save skipped (user may already exist):', dbError?.response?.data?.message);
-                // Don't fail if user already exists in database
+
+                console.log('✅ Google Registration successful:', result.user.email);
+                
+                // Redirect to home page
+                setTimeout(() => navigation('/', { replace: true }), 1000);
             }
-
-            toast.success(`👋 Welcome ${result.user.displayName}!`, {
-                position: 'top-right',
-                autoClose: 4000,
-            });
-
-            console.log('✅ Google Registration successful:', result.user.email);
-            
-            // Redirect to home page
-            setTimeout(() => navigation('/', { replace: true }), 1000);
-
         } catch (error) {
             console.error('❌ Google Registration Error:', error.code, error.message);
             

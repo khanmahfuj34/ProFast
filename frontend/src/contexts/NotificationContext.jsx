@@ -87,13 +87,19 @@ export const NotificationProvider = ({ children }) => {
     }, [user?.email, tokenReady, isRider, fetchNotifications, fetchRiderStatus]);
 
     // Setup Socket
+    // Setup Socket with mobile stability features (auto-reconnect, visibilitychange checks)
     useEffect(() => {
         if (!user?.email) return;
 
         const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
         const newSocket = io(socketUrl, {
             withCredentials: true,
-            transports: ['websocket', 'polling']
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000
         });
 
         newSocket.on('connect', () => {
@@ -143,13 +149,34 @@ export const NotificationProvider = ({ children }) => {
             ), { duration: 5000, position: 'top-right' });
         });
 
-        newSocket.on('disconnect', () => {
-            console.log('🔌 [Socket] Disconnected');
+        newSocket.on('disconnect', (reason) => {
+            console.log(`🔌 [Socket] Disconnected: ${reason}`);
         });
+
+        // Mobile background tab optimization: Force reconnect when user returns/tab is visible
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && newSocket.disconnected) {
+                console.log('🔌 [Socket] Tab became visible. Forcing reconnection...');
+                newSocket.connect();
+            }
+        };
+
+        // Network connection restored: Force reconnect
+        const handleOnline = () => {
+            if (newSocket.disconnected) {
+                console.log('🔌 [Socket] Network online. Forcing reconnection...');
+                newSocket.connect();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('online', handleOnline);
 
         setSocket(newSocket);
 
         return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('online', handleOnline);
             newSocket.disconnect();
         };
     }, [user?.email]);

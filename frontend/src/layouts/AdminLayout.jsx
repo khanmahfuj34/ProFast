@@ -19,6 +19,18 @@ const AdminLayout = () => {
     }
   }, [isAdmin, loading, navigate]);
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
+
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const closeSidebar = () => setSidebarOpen(false);
   const toggleSidebarCollapse = () => setSidebarCollapsed(!sidebarCollapsed);

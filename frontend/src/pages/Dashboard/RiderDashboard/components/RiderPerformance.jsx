@@ -7,6 +7,7 @@ const RiderPerformance = ({ performance = {}, isLoading }) => {
       label: 'Success Rate',
       value: `${performance.successRate || 0}%`,
       target: '98%',
+      progress: Math.max(0, Math.min(100, performance.successRate || 0)),
       iconBg: 'bg-green-100 dark:bg-green-900/30',
       textColor: 'text-green-700 dark:text-green-400',
       barColor: 'bg-green-500',
@@ -16,6 +17,7 @@ const RiderPerformance = ({ performance = {}, isLoading }) => {
       label: 'Avg Delivery Time',
       value: `${performance.avgDeliveryTime || 0} min`,
       target: '< 30 min',
+      progress: Math.max(10, Math.min(100, (30 / Math.max(1, performance.avgDeliveryTime || 30)) * 100)),
       iconBg: 'bg-blue-100 dark:bg-blue-900/30',
       textColor: 'text-blue-700 dark:text-blue-400',
       barColor: 'bg-blue-500',
@@ -25,6 +27,7 @@ const RiderPerformance = ({ performance = {}, isLoading }) => {
       label: 'Customer Rating',
       value: `${performance.customerRating || 0}`,
       target: '/ 5.0',
+      progress: Math.max(0, Math.min(100, ((performance.customerRating || 0) / 5) * 100)),
       iconBg: 'bg-yellow-100 dark:bg-yellow-900/30',
       textColor: 'text-yellow-700 dark:text-yellow-400',
       barColor: 'bg-yellow-500',
@@ -34,6 +37,7 @@ const RiderPerformance = ({ performance = {}, isLoading }) => {
       label: 'Completed Today',
       value: `${performance.completedToday || 0}`,
       target: 'deliveries',
+      progress: Math.max(0, Math.min(100, ((performance.completedToday || 0) / 10) * 100)),
       iconBg: 'bg-purple-100 dark:bg-purple-900/30',
       textColor: 'text-purple-700 dark:text-purple-400',
       barColor: 'bg-purple-500',
@@ -72,10 +76,7 @@ const RiderPerformance = ({ performance = {}, isLoading }) => {
                 <div
                   className={`h-full ${metric.barColor} rounded-full transition-all duration-700`}
                   style={{
-                    width: `${Math.min(
-                      parseFloat(metric.value) / parseFloat(metric.target.split(' ')[0]) * 100 || 0,
-                      100
-                    )}%`
+                    width: `${metric.progress}%`
                   }}
                 ></div>
               </div>

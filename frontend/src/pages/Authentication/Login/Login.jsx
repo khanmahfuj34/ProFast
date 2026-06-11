@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendPasswordResetEmail } from 'firebase/auth';
 import { Navigate, useLocation, Link } from 'react-router-dom';
 import { auth } from '../../../firebase/firebase.init';
 import { useForm } from 'react-hook-form';
@@ -47,15 +47,23 @@ const Login = () => {
     const handleGoogleLogin = async () => {
         try {
             const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
-            await result.user.reload();
-            if (!result.user.emailVerified) {
-                toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
-                return;
+            if (isMobile) {
+                console.log('📱 Mobile detected. Using signInWithRedirect for Google Auth...');
+                await signInWithRedirect(auth, provider);
+            } else {
+                console.log('💻 Desktop detected. Using signInWithPopup for Google Auth...');
+                const result = await signInWithPopup(auth, provider);
+                
+                await result.user.reload();
+                if (!result.user.emailVerified) {
+                    toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
+                    return;
+                }
+                
+                toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 2000 });
             }
-            
-            toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 2000 });
         } catch (error) {
             console.error('❌ Google Login Error:', error.message);
             toast.error(`Login failed: ${error.message}`, { position: 'top-right', autoClose: 4000 });
