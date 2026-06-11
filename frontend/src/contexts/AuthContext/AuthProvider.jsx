@@ -8,7 +8,8 @@ import {
     onAuthStateChanged,
     signOut,
     sendEmailVerification,
-    updateProfile
+    updateProfile,
+    getRedirectResult
 } from 'firebase/auth';
 import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL;
@@ -41,7 +42,7 @@ const AuthProvider = ({ children }) => {
     const fetchUserProfile = useCallback(async (explicitToken = null) => {
         try {
             setUserProfile(null);
-            
+
             // Retrieve token dynamically if not explicitly provided
             let token = explicitToken;
             if (!token && auth.currentUser) {
@@ -56,7 +57,7 @@ const AuthProvider = ({ children }) => {
             }
 
             const response = await axios.get(
-                 `${API_URL}/user`,
+                `${API_URL}/user`,
                 {
                     withCredentials: true,
                     headers
@@ -90,7 +91,7 @@ const AuthProvider = ({ children }) => {
 
             console.log('🔐 [Token Flow] POSTing token to /jwt endpoint...');
             const response = await axios.post(
-                 `${API_URL}/jwt`,
+                `${API_URL}/jwt`,
                 { token },
                 {
                     withCredentials: true, // ✅ CRITICAL: Send cookies
@@ -366,7 +367,7 @@ const AuthProvider = ({ children }) => {
     const updateProfileData = async (data) => {
         try {
             setLoading(true);
-            
+
             // 1. Update Firebase profile if displayName or photoURL changed
             if (auth.currentUser && (data.displayName || data.photoURL)) {
                 await updateProfile(auth.currentUser, {
@@ -410,6 +411,22 @@ const AuthProvider = ({ children }) => {
             setLoading(false);
         }
     };
+
+    // ✅ Capture Firebase Auth redirect results (Google Redirect Login)
+    useEffect(() => {
+        if (!USE_MOCK_AUTH) {
+            getRedirectResult(auth)
+                .then((result) => {
+                    if (result) {
+                        console.log('✅ [Redirect Auth] Sign in successful:', result.user.email);
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ [Redirect Auth] Error handling redirect result:', error);
+                    setAuthError(error.message);
+                });
+        }
+    }, []);
 
     // ✅ Firebase auth listener - ONLY updates user state (no async work in callback)
     // loading stays true when user exists; the token effect below will set it false
