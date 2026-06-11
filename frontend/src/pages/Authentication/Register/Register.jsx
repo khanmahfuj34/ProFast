@@ -76,7 +76,7 @@ const Register = () => {
 
             try {
                 // Save user to database with explicit Authorization header
-                const dbResponse = await axiosSecure.post('/user', userInfo, {
+                const dbResponse = await axiosSecure.post('/users', userInfo, {
                     headers: {
                         'Authorization': `Bearer ${firebaseToken}`
                     }
@@ -161,7 +161,7 @@ const Register = () => {
 
             try {
                 // Save user to database with explicit Authorization header
-                const dbResponse = await axiosSecure.post('/user', userInfo, {
+                const dbResponse = await axiosSecure.post('/users', userInfo, {
                     headers: {
                         'Authorization': `Bearer ${firebaseToken}`
                     }

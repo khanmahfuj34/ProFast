@@ -38,16 +38,28 @@ const AuthProvider = ({ children }) => {
     const tokenSentForUidRef = useRef(null);
 
     // 🔐 Send Firebase ID token to backend for JWT storage in httpOnly cookie
-    const fetchUserProfile = useCallback(async () => {
+    const fetchUserProfile = useCallback(async (explicitToken = null) => {
         try {
             setUserProfile(null);
+            
+            // Retrieve token dynamically if not explicitly provided
+            let token = explicitToken;
+            if (!token && auth.currentUser) {
+                token = await auth.currentUser.getIdToken();
+            }
+
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await axios.get(
                  `${API_URL}/user`,
                 {
                     withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers
                 }
             );
 
@@ -73,6 +85,9 @@ const AuthProvider = ({ children }) => {
             const token = await user.getIdToken(true); // Force refresh to get latest token
             console.log('🔐 [Token Flow] Token obtained, length:', token.length);
 
+            // Sync token to localStorage for compatibility/initial calls
+            localStorage.setItem('authToken', token);
+
             console.log('🔐 [Token Flow] POSTing token to /jwt endpoint...');
             const response = await axios.post(
                  `${API_URL}/jwt`,
@@ -94,8 +109,8 @@ const AuthProvider = ({ children }) => {
             // ✅ Save social user data to database
             await saveSocialUserData(user);
 
-            // ✅ Fetch user profile from backend to get role
-            await fetchUserProfile();
+            // ✅ Fetch user profile from backend to get role (passing explicit token)
+            await fetchUserProfile(token);
 
             return true;
         } catch (error) {
@@ -363,20 +378,26 @@ const AuthProvider = ({ children }) => {
             }
 
             // 2. Update Backend profile
+            const token = await auth.currentUser?.getIdToken();
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await axios.patch(
                 `${API_URL}/users/update-profile-data`,
                 data,
                 {
                     withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers
                 }
             );
 
             if (response.data.success) {
-                // 3. Refresh user profile state from backend
-                await fetchUserProfile();
+                // 3. Refresh user profile state from backend (passing explicit token)
+                await fetchUserProfile(token);
                 return { success: true, message: response.data.message };
             } else {
                 throw new Error(response.data.message || 'Failed to update profile');

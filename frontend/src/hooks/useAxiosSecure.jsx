@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import useAuth from './useAuth';
+import { auth } from '../firebase/firebase.init';
 
 const axiosSecure = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
@@ -28,13 +29,23 @@ const useAxiosSecure = () => {
 
         // 🔐 Request Interceptor - Add Firebase token to Authorization header
         const requestInterceptor = axiosSecure.interceptors.request.use(
-            config => {
-                // Try to get token from localStorage (set during registration/login)
-                const token = localStorage.getItem('authToken');
-
-                if (token && !config.headers.Authorization) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                    console.log('🔐 [Request Interceptor] Added Authorization header');
+            async config => {
+                try {
+                    const currentUser = auth.currentUser;
+                    if (currentUser) {
+                        // Dynamically retrieve the token (auto-refreshes if expired)
+                        const token = await currentUser.getIdToken();
+                        config.headers.Authorization = `Bearer ${token}`;
+                        localStorage.setItem('authToken', token);
+                    } else {
+                        // Fallback to localStorage for compatibility/initial calls
+                        const token = localStorage.getItem('authToken');
+                        if (token) {
+                            config.headers.Authorization = `Bearer ${token}`;
+                        }
+                    }
+                } catch (error) {
+                    console.error('🔐 [Request Interceptor] Error retrieving Firebase ID token:', error);
                 }
 
                 return config;

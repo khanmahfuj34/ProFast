@@ -66,7 +66,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin) || /^https:\/\/pro-fast(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
+                return callback(null, true);
+            }
+            callback(new Error(`Not allowed by CORS (Socket.IO): ${origin}`));
+        },
         methods: ['GET', 'POST'],
         credentials: true
     },
@@ -85,7 +90,8 @@ const port = process.env.PORT || 3000;
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        // Allow if no origin (e.g. mobile/servers/postman), or in allowed origins list, or matches Vercel preview domain pattern
+        if (!origin || allowedOrigins.includes(origin) || /^https:\/\/pro-fast(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
             return callback(null, true);
         }
 
@@ -488,25 +494,34 @@ app.post('/save-social-user', async (req, res) => {
     }
 });
 
-app.post('/users', async (req, res) => {
-    const user = req.body;
-    user.role = 'user';
-    user.createdAt = new Date();
-    const result = await usersCollection.insertOne(user);
+// POST /users & /user - Create new user in database
+const handleCreateUser = async (req, res) => {
+    try {
+        const user = req.body;
+        user.role = 'user';
+        user.createdAt = new Date();
+        const result = await usersCollection.insertOne(user);
 
-    // 🎁 Create default notification settings
-    await notificationSettingsService.createDefaultSettings(user.email);
+        // 🎁 Create default notification settings
+        await notificationSettingsService.createDefaultSettings(user.email);
 
-    res.send(result);
-});
+        res.send(result);
+    } catch (error) {
+        console.error('Error creating user:', error.message);
+        res.status(500).send({ message: 'Error creating user', error: error.message });
+    }
+};
+
+app.post('/users', handleCreateUser);
+app.post('/user', handleCreateUser);
 
 
-// POST /logout - Clear cookie
+// POST /logout - Clear cookie (uses same cross-site attributes as cookie setting to ensure browser deletes it)
 app.post('/logout', (req, res) => {
     res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
+        secure: true,
+        sameSite: 'none'
     });
     res.send({ message: 'Logged out successfully' });
 });
