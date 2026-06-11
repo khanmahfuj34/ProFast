@@ -67,7 +67,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
     if (!user?.email) return;
 
     // Connect to sockets (assuming same namespace or default)
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+    const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000', {
       withCredentials: true
     });
 

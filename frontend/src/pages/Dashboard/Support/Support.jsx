@@ -31,7 +31,7 @@ const Support = () => {
 
     // Socket Connection for Real-time Ticket Updates
     React.useEffect(() => {
-        const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+        const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000', {
             withCredentials: true,
             transports: ['polling', 'websocket']
         });

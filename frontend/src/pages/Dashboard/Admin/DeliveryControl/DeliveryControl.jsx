@@ -11,7 +11,7 @@ import useAxiosSecure from '../../../../hooks/useAxiosSecure';
 
 export const getNormalizedStatus = (req) => {
   const status = (req?.deliveryStatus || req?.status || '').toLowerCase();
-  
+
   if (['pending', 'pending_rider', 'pending_rider_response', 'pending-pickup', 'awaiting-payment'].includes(status)) {
     return 'pending';
   }
@@ -37,7 +37,7 @@ const DeliveryControl = () => {
   const { userProfile } = useAuth();
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
-  
+
   const [socket, setSocket] = useState(null);
   const [activeTab, setActiveTab] = useState('All Requests');
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,7 +85,7 @@ const DeliveryControl = () => {
 
   // Socket IO Setup
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
+    const newSocket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000', {
       withCredentials: true,
     });
     setSocket(newSocket);
@@ -96,7 +96,7 @@ const DeliveryControl = () => {
       queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
       queryClient.invalidateQueries({ queryKey: ['failedAssignments'] });
     });
-    
+
     newSocket.on('dashboard_stats_updated', () => {
       queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
       queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
@@ -126,7 +126,7 @@ const DeliveryControl = () => {
     if (activeTab === 'On The Way' && normStatus !== 'on_the_way') return false;
     if (activeTab === 'Delivered' && normStatus !== 'delivered') return false;
     if (activeTab === 'Cancelled' && normStatus !== 'cancelled') return false;
-    
+
     // Status Filter dropdown
     if (statusFilter !== 'All') {
       const dropStatus = statusFilter.toLowerCase();
@@ -138,10 +138,10 @@ const DeliveryControl = () => {
         if (normStatus !== dropStatus) return false;
       }
     }
-    
+
     // District Filter dropdown
     if (districtFilter !== 'All' && req.senderDistrict !== districtFilter && req.receiverDistrict !== districtFilter) return false;
-    
+
     // Payment Filter dropdown
     if (paymentFilter !== 'All') {
       const reqPayment = (req.paymentStatus || 'unpaid').toLowerCase();
@@ -156,14 +156,14 @@ const DeliveryControl = () => {
       const matchReceiver = req.receiverName?.toLowerCase().includes(lowerQ);
       if (!matchTrack && !matchSender && !matchReceiver) return false;
     }
-    
+
     return true;
   });
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 lg:p-6 text-slate-850 w-full overflow-x-hidden font-sans">
       <div className="flex flex-col gap-6">
-        
+
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-slate-900 mb-1">Delivery Control</h1>
@@ -172,7 +172,7 @@ const DeliveryControl = () => {
 
 
         <div className="bg-white border border-slate-250 rounded-xl overflow-hidden shadow-xl">
-          <FiltersBar 
+          <FiltersBar
             activeTab={activeTab} setActiveTab={setActiveTab}
             searchQuery={searchQuery} setSearchQuery={setSearchQuery}
             districtFilter={districtFilter} setDistrictFilter={setDistrictFilter}
@@ -180,22 +180,22 @@ const DeliveryControl = () => {
             paymentFilter={paymentFilter} setPaymentFilter={setPaymentFilter}
             requests={requests}
           />
-          <RequestTable 
-            requests={filteredRequests} 
-            isLoading={isRequestsLoading} 
+          <RequestTable
+            requests={filteredRequests}
+            isLoading={isRequestsLoading}
             onViewDetails={openDrawer}
           />
         </div>
-        
+
         {failedAssignments.length > 0 && (
           <FailedAssignments failedAssignments={failedAssignments} />
         )}
 
       </div>
-      <ParcelDetailsModal 
-        isOpen={isDrawerOpen} 
-        onClose={closeDrawer} 
-        parcel={selectedParcel} 
+      <ParcelDetailsModal
+        isOpen={isDrawerOpen}
+        onClose={closeDrawer}
+        parcel={selectedParcel}
       />
     </div>
   );
