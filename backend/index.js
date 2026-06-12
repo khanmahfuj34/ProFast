@@ -1827,6 +1827,35 @@ app.patch('/rider/delivery/:id/status', verifyJWT, verifyRider, async (req, res)
     }
 });
 
+// GET /rider/delivery/:id - Get active delivery details for a rider by ID
+app.get('/rider/delivery/:id', verifyJWT, verifyRider, async (req, res) => {
+    try {
+        const parcelId = req.params.id;
+        const riderEmail = req.user.email;
+
+        if (!ObjectId.isValid(parcelId)) {
+            return res.status(400).send({ success: false, message: 'Invalid parcel ID' });
+        }
+
+        const parcel = await parcelsCollection.findOne({ _id: new ObjectId(parcelId) });
+        if (!parcel) {
+            return res.status(404).send({ success: false, message: 'Delivery not found' });
+        }
+
+        if (parcel.riderEmail !== riderEmail) {
+            return res.status(403).send({ success: false, message: 'Forbidden: This delivery is not assigned to you' });
+        }
+
+        res.send({
+            success: true,
+            delivery: parcel
+        });
+    } catch (error) {
+        console.error('❌ Get rider delivery details error:', error.message);
+        res.status(500).send({ success: false, message: 'Error fetching delivery details', error: error.message });
+    }
+});
+
 // GET /rider/delivery-history - Get rider's complete delivery history with filters & pagination
 app.get('/rider/delivery-history', verifyJWT, verifyRider, async (req, res) => {
     try {
