@@ -309,81 +309,10 @@ const Login = () => {
                         </button>
 
                         {/* Demo Credentials */}
-                        <div className={`p-4 rounded-2xl border transition-all duration-300 ${isDarkMode
-                            ? 'bg-[#1f2937]/10 border-gray-800/80'
-                            : 'bg-gray-50/50 border-gray-200'
-                            }`}>
-                            <div className="flex items-center justify-between mb-3">
-                                <span className={`font-semibold font-syne text-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-                                    Demo Credentials
-                                </span>
-                                <span className="text-[10px] text-gray-400 font-medium">For preview only</span>
-                            </div>
-
-                            <div className="space-y-2">
-                                {/* User */}
-                                <div className={`p-3 rounded-xl border flex flex-col gap-1.5 transition-all duration-200 ${isDarkMode
-                                    ? 'bg-[#111827]/40 border-gray-800/80 hover:border-gray-700/80'
-                                    : 'bg-white border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-gray-200'
-                                    }`}>
-                                    <div className="flex items-center gap-2 font-semibold text-xs">
-                                        <span className="text-sm">👤</span>
-                                        <span className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>User</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
-                                        <div className="flex items-center justify-between sm:justify-start gap-1">
-                                            <span className="text-gray-400">Email:</span>
-                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>user2@gmail.com</span>
-                                        </div>
-                                        <div className="flex items-center justify-between sm:justify-start gap-1">
-                                            <span className="text-gray-400">Password:</span>
-                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>11223344</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Rider */}
-                                <div className={`p-3 rounded-xl border flex flex-col gap-1.5 transition-all duration-200 ${isDarkMode
-                                    ? 'bg-[#111827]/40 border-gray-800/80 hover:border-gray-700/80'
-                                    : 'bg-white border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-gray-200'
-                                    }`}>
-                                    <div className="flex items-center gap-2 font-semibold text-xs">
-                                        <span className="text-sm">🏍️</span>
-                                        <span className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Rider</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
-                                        <div className="flex items-center justify-between sm:justify-start gap-1">
-                                            <span className="text-gray-400">Email:</span>
-                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>rider2@gmail.com</span>
-                                        </div>
-                                        <div className="flex items-center justify-between sm:justify-start gap-1">
-                                            <span className="text-gray-400">Password:</span>
-                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>11223344</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Admin */}
-                                <div className={`p-3 rounded-xl border flex flex-col gap-1.5 transition-all duration-200 ${isDarkMode
-                                    ? 'bg-[#111827]/40 border-gray-800/80 hover:border-gray-700/80'
-                                    : 'bg-white border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-gray-200'
-                                    }`}>
-                                    <div className="flex items-center gap-2 font-semibold text-xs">
-                                        <span className="text-sm">🛡️</span>
-                                        <span className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Admin</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
-                                        <div className="flex items-center justify-between sm:justify-start gap-1">
-                                            <span className="text-gray-400">Email:</span>
-                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>admin@gmail.com</span>
-                                        </div>
-                                        <div className="flex items-center justify-between sm:justify-start gap-1">
-                                            <span className="text-gray-400">Password:</span>
-                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>11223344</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="text-xs font-bold space-y-1">
+                            <p>👤 User: user2@gmail.com | 11223344</p>
+                            <p>🏍️ Rider: rider2@gmail.com | 11223344</p>
+                            <p>🛡️ Admin: admin@gmail.com | 11223344</p>
                         </div>
 
                         <div className="relative py-4 flex items-center justify-center">
