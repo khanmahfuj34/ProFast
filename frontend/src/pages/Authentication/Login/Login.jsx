@@ -21,13 +21,13 @@ const Login = () => {
     const [resetLoading, setResetLoading] = useState(false);
     const [resetError, setResetError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    
+
     // Theme State
     const { isDark: isDarkMode } = useTheme();
 
     const onSubmit = data => {
         signIn(data.email, data.password)
-            .then(() => {})
+            .then(() => { })
             .catch(error => {
                 console.error('❌ Auth Error Code:', error.code);
                 if (error.code === 'auth/api-key-not-valid') {
@@ -48,20 +48,20 @@ const Login = () => {
         try {
             const provider = new GoogleAuthProvider();
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
+
             if (isMobile) {
                 console.log('📱 Mobile detected. Using signInWithRedirect for Google Auth...');
                 await signInWithRedirect(auth, provider);
             } else {
                 console.log('💻 Desktop detected. Using signInWithPopup for Google Auth...');
                 const result = await signInWithPopup(auth, provider);
-                
+
                 await result.user.reload();
                 if (!result.user.emailVerified) {
                     toast.error('⚠️ Verify your email first. Check your inbox for verification link.', { position: 'top-right', autoClose: 5000 });
                     return;
                 }
-                
+
                 toast.success(`Welcome back ${result.user.displayName}!`, { position: 'top-right', autoClose: 2000 });
             }
         } catch (error) {
@@ -122,7 +122,7 @@ const Login = () => {
 
     return (
         <div className={`min-h-screen w-full relative overflow-hidden transition-colors duration-700 font-sans ${isDarkMode ? 'bg-[#060a14]' : 'bg-[#f4f7fc]'}`}>
-            
+
             {/* Theme Toggle */}
             <div className="absolute top-6 right-4 sm:right-6 z-50">
                 <ThemeToggle />
@@ -132,38 +132,38 @@ const Login = () => {
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                 {/* Global Map/Grid Pattern */}
                 <div className={`absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CgkJPHBhdGggZD0iTTAgMGg0MHY0MEgwem00MCA0MGMwLTEuMS0uOS0yLTItMmgtOGMtMS4xIDAtMi0uOS0yLTJzLjktMiAyLTJoOGMxLjEtMi0uOS0yLTIgMnYuMDlsLTIgMmgtMmMtMS4xIDAtMiAuOS0yIDJ2OGMwIDEuMS0uOSAyLTIgMnMtMi0uOS0yLTJ2LThjMC0xLjEtLjktMi0yLTJoLThjLTEuMSAwLTIgLjktMiAyczIuOS0yLTIgMmg4Yy0xLjEtMi0uOS0yLTIgMnoiIGZpbGw9IiMzMzMiIGZpbGwtb3BhY2l0eT0iMC4wNSIgZmlsbC1ydWxlPSJldmVub2RkIi8+Cjwvc3ZnPg==')] opacity-30`}></div>
-                
+
                 {/* Glowing Nodes / Lines (Dark Mode emphasis) */}
-                <motion.div 
-                    animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.05, 1] }} 
+                <motion.div
+                    animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.05, 1] }}
                     transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                    className={`absolute top-[-10%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[120px] ${isDarkMode ? 'bg-[#FF6A13]/20' : 'bg-[#FF6A13]/10'}`} 
+                    className={`absolute top-[-10%] -left-[10%] w-[50%] h-[50%] rounded-full blur-[120px] ${isDarkMode ? 'bg-[#FF6A13]/20' : 'bg-[#FF6A13]/10'}`}
                 />
-                <motion.div 
-                    animate={{ opacity: [0.2, 0.5, 0.2], scale: [1, 1.1, 1] }} 
+                <motion.div
+                    animate={{ opacity: [0.2, 0.5, 0.2], scale: [1, 1.1, 1] }}
                     transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                    className={`absolute bottom-[-10%] -right-[10%] w-[60%] h-[60%] rounded-full blur-[140px] ${isDarkMode ? 'bg-[#1E40AF]/20' : 'bg-[#3B82F6]/10'}`} 
+                    className={`absolute bottom-[-10%] -right-[10%] w-[60%] h-[60%] rounded-full blur-[140px] ${isDarkMode ? 'bg-[#1E40AF]/20' : 'bg-[#3B82F6]/10'}`}
                 />
 
                 {/* Animated Route Lines */}
                 <svg className="absolute inset-0 w-full h-full opacity-40">
-                    <motion.path 
+                    <motion.path
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: [0.2, 0.8, 0.2] }}
                         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                        d="M -100 200 C 300 400 600 100 1000 600 S 1400 200 1800 400" 
-                        fill="transparent" 
-                        stroke={isDarkMode ? "#FF6A13" : "#F97316"} 
-                        strokeWidth="2" 
+                        d="M -100 200 C 300 400 600 100 1000 600 S 1400 200 1800 400"
+                        fill="transparent"
+                        stroke={isDarkMode ? "#FF6A13" : "#F97316"}
+                        strokeWidth="2"
                         strokeDasharray="4 8"
                     />
-                    <motion.path 
+                    <motion.path
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: [0.1, 0.5, 0.1] }}
                         transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                        d="M 1800 100 C 1400 300 1000 100 600 500 S 200 800 -100 400" 
-                        fill="transparent" 
-                        stroke={isDarkMode ? "#3B82F6" : "#60A5FA"} 
+                        d="M 1800 100 C 1400 300 1000 100 600 500 S 200 800 -100 400"
+                        fill="transparent"
+                        stroke={isDarkMode ? "#3B82F6" : "#60A5FA"}
                         strokeWidth="1.5"
                         strokeDasharray="6 6"
                     />
@@ -172,11 +172,11 @@ const Login = () => {
 
             {/* Main Content Layout */}
             <div className="relative z-10 w-full h-screen flex items-center justify-center p-4">
-                
+
                 {/* Left Side: Floating Widgets */}
                 <div className="hidden xl:flex flex-col justify-between h-full max-h-[800px] w-1/4 max-w-[320px] absolute left-12 py-12">
                     {/* Live Tracking Widget */}
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
                         className={`p-5 rounded-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white/70 border-white shadow-xl text-gray-800'}`}
                     >
@@ -199,7 +199,7 @@ const Login = () => {
                     </motion.div>
 
                     {/* Stats Widget */}
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}
                         className={`p-5 rounded-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-[#0B152A]/60 border-blue-500/20 text-white' : 'bg-white/80 border-blue-100 shadow-xl text-gray-800'}`}
                     >
@@ -219,13 +219,12 @@ const Login = () => {
                 </div>
 
                 {/* Center: Login Card */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, type: "spring" }}
-                    className={`w-full max-w-[440px] p-8 sm:p-10 rounded-3xl border backdrop-blur-2xl relative ${
-                        isDarkMode 
-                        ? 'bg-[#111827]/60 border-[#1F2937]/80 shadow-[0_0_50px_rgba(255,106,19,0.05)]' 
+                    className={`w-full max-w-[440px] p-8 sm:p-10 rounded-3xl border backdrop-blur-2xl relative ${isDarkMode
+                        ? 'bg-[#111827]/60 border-[#1F2937]/80 shadow-[0_0_50px_rgba(255,106,19,0.05)]'
                         : 'bg-white border-white/40 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)]'
-                    }`}
+                        }`}
                 >
                     {/* Glowing effect around the card in dark mode */}
                     {isDarkMode && (
@@ -245,7 +244,7 @@ const Login = () => {
                     </div>
 
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                        
+
                         {/* Email */}
                         <div className="space-y-1.5">
                             <div className="relative">
@@ -256,11 +255,10 @@ const Login = () => {
                                     type="email"
                                     placeholder="Enter your email"
                                     {...register('email', { required: "Email is required", pattern: { value: /^[^\s@]+@gmail\.com$/, message: "Must be a valid Gmail address" } })}
-                                    className={`w-full pl-11 pr-4 py-3.5 rounded-xl border text-sm transition-all outline-none ${
-                                        isDarkMode 
-                                        ? 'bg-[#1F2937]/50 border-gray-700 text-white placeholder-gray-500 focus:bg-[#1F2937] focus:border-[#FF6A13]/50 focus:ring-1 focus:ring-[#FF6A13]/50' 
+                                    className={`w-full pl-11 pr-4 py-3.5 rounded-xl border text-sm transition-all outline-none ${isDarkMode
+                                        ? 'bg-[#1F2937]/50 border-gray-700 text-white placeholder-gray-500 focus:bg-[#1F2937] focus:border-[#FF6A13]/50 focus:ring-1 focus:ring-[#FF6A13]/50'
                                         : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#FF6A13] focus:ring-2 focus:ring-[#FF6A13]/20'
-                                    }`}
+                                        }`}
                                 />
                             </div>
                             {errors.email && <p className="text-red-500 text-xs pl-2">{errors.email.message}</p>}
@@ -276,11 +274,10 @@ const Login = () => {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Enter your password"
                                     {...register('password', { required: "Password is required" })}
-                                    className={`w-full pl-11 pr-12 py-3.5 rounded-xl border text-sm transition-all outline-none ${
-                                        isDarkMode 
-                                        ? 'bg-[#1F2937]/50 border-gray-700 text-white placeholder-gray-500 focus:bg-[#1F2937] focus:border-[#FF6A13]/50 focus:ring-1 focus:ring-[#FF6A13]/50' 
+                                    className={`w-full pl-11 pr-12 py-3.5 rounded-xl border text-sm transition-all outline-none ${isDarkMode
+                                        ? 'bg-[#1F2937]/50 border-gray-700 text-white placeholder-gray-500 focus:bg-[#1F2937] focus:border-[#FF6A13]/50 focus:ring-1 focus:ring-[#FF6A13]/50'
                                         : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:bg-white focus:border-[#FF6A13] focus:ring-2 focus:ring-[#FF6A13]/20'
-                                    }`}
+                                        }`}
                                 />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className={`absolute inset-y-0 right-0 pr-4 flex items-center ${isDarkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
                                     {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
@@ -311,22 +308,99 @@ const Login = () => {
                             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out z-0"></div>
                         </button>
 
+                        {/* Demo Credentials */}
+                        <div className={`p-4 rounded-2xl border transition-all duration-300 ${isDarkMode
+                            ? 'bg-[#1f2937]/10 border-gray-800/80'
+                            : 'bg-gray-50/50 border-gray-200'
+                            }`}>
+                            <div className="flex items-center justify-between mb-3">
+                                <span className={`font-semibold font-syne text-xs ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                                    Demo Credentials
+                                </span>
+                                <span className="text-[10px] text-gray-400 font-medium">For preview only</span>
+                            </div>
+
+                            <div className="space-y-2">
+                                {/* User */}
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1.5 transition-all duration-200 ${isDarkMode
+                                    ? 'bg-[#111827]/40 border-gray-800/80 hover:border-gray-700/80'
+                                    : 'bg-white border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-gray-200'
+                                    }`}>
+                                    <div className="flex items-center gap-2 font-semibold text-xs">
+                                        <span className="text-sm">👤</span>
+                                        <span className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>User</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+                                        <div className="flex items-center justify-between sm:justify-start gap-1">
+                                            <span className="text-gray-400">Email:</span>
+                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>user2@gmail.com</span>
+                                        </div>
+                                        <div className="flex items-center justify-between sm:justify-start gap-1">
+                                            <span className="text-gray-400">Password:</span>
+                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>11223344</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Rider */}
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1.5 transition-all duration-200 ${isDarkMode
+                                    ? 'bg-[#111827]/40 border-gray-800/80 hover:border-gray-700/80'
+                                    : 'bg-white border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-gray-200'
+                                    }`}>
+                                    <div className="flex items-center gap-2 font-semibold text-xs">
+                                        <span className="text-sm">🏍️</span>
+                                        <span className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Rider</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+                                        <div className="flex items-center justify-between sm:justify-start gap-1">
+                                            <span className="text-gray-400">Email:</span>
+                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>rider2@gmail.com</span>
+                                        </div>
+                                        <div className="flex items-center justify-between sm:justify-start gap-1">
+                                            <span className="text-gray-400">Password:</span>
+                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>11223344</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Admin */}
+                                <div className={`p-3 rounded-xl border flex flex-col gap-1.5 transition-all duration-200 ${isDarkMode
+                                    ? 'bg-[#111827]/40 border-gray-800/80 hover:border-gray-700/80'
+                                    : 'bg-white border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-gray-200'
+                                    }`}>
+                                    <div className="flex items-center gap-2 font-semibold text-xs">
+                                        <span className="text-sm">🛡️</span>
+                                        <span className={isDarkMode ? 'text-gray-200' : 'text-gray-700'}>Admin</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+                                        <div className="flex items-center justify-between sm:justify-start gap-1">
+                                            <span className="text-gray-400">Email:</span>
+                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>admin@gmail.com</span>
+                                        </div>
+                                        <div className="flex items-center justify-between sm:justify-start gap-1">
+                                            <span className="text-gray-400">Password:</span>
+                                            <span className={`font-mono ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>11223344</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="relative py-4 flex items-center justify-center">
                             <div className={`absolute w-full h-[1px] ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}`}></div>
                             <span className={`relative px-4 text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'bg-[#111827] text-gray-500' : 'bg-white text-gray-400'}`}>OR</span>
                         </div>
 
                         {/* Google Auth */}
-                        <button type="button" onClick={handleGoogleLogin} className={`w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl border font-medium transition-all active:scale-[0.98] ${
-                            isDarkMode 
-                            ? 'bg-transparent border-gray-700 text-gray-200 hover:bg-gray-800 hover:border-gray-600' 
+                        <button type="button" onClick={handleGoogleLogin} className={`w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl border font-medium transition-all active:scale-[0.98] ${isDarkMode
+                            ? 'bg-transparent border-gray-700 text-gray-200 hover:bg-gray-800 hover:border-gray-600'
                             : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 shadow-sm'
-                        }`}>
+                            }`}>
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
                             Continue with Google
                         </button>
@@ -345,7 +419,7 @@ const Login = () => {
                 {/* Right Side: Floating Widgets */}
                 <div className="hidden xl:flex flex-col h-full max-h-[800px] w-1/4 max-w-[320px] absolute right-12 py-12 pt-[180px]">
                     {/* Delivery Status Widget */}
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
                         className={`p-5 rounded-2xl border backdrop-blur-xl ${isDarkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white/70 border-white shadow-xl text-gray-800'}`}
                     >
@@ -356,7 +430,7 @@ const Login = () => {
                             <div className="w-full">
                                 <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Delivery Status</p>
                                 <p className="font-semibold text-[#FF6A13] mb-3">Out for Delivery</p>
-                                
+
                                 <div className="flex justify-between text-xs mb-1">
                                     <span>85% Completed</span>
                                 </div>
@@ -374,17 +448,17 @@ const Login = () => {
             {/* Forgot Password Modal */}
             <AnimatePresence>
                 {showForgotPassword && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
                     >
-                        <motion.div 
+                        <motion.div
                             initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }}
                             className={`w-full max-w-md p-8 rounded-3xl border shadow-2xl ${isDarkMode ? 'bg-[#1F2937] border-gray-700' : 'bg-white border-gray-100'}`}
                         >
                             <h2 className={`text-2xl font-bold font-syne mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Reset Password</h2>
                             <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Enter your email address and we'll send you a link to reset your password.</p>
-                            
+
                             <form onSubmit={handleForgotPassword} className="space-y-4">
                                 <div className="space-y-1.5">
                                     <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Email Address</label>
