@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
-import { io } from 'socket.io-client';
+import useAuth from '../../../hooks/useAuth';
+import { useNotifications } from '../../../contexts/NotificationContext';
 import { 
     RiSearchLine, RiFilter3Line, RiCustomerService2Line, 
     RiHistoryLine, RiQuestionLine, RiLoader4Line, RiCheckboxCircleLine 
@@ -9,6 +10,8 @@ import {
 import SupportTicketModal from './SupportTicketModal';
 
 const SupportTickets = () => {
+    const { user, tokenReady } = useAuth();
+    const { socket } = useNotifications();
     const axiosSecure = useAxiosSecure();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -17,36 +20,40 @@ const SupportTickets = () => {
 
     // Socket Connection
     useEffect(() => {
-        const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000', {
-            withCredentials: true,
-            transports: ['polling', 'websocket']
-        });
+        if (!socket) return;
 
-        socket.on('new_support_ticket', (ticket) => {
-            queryClient.invalidateQueries(['adminTickets']);
-        });
+        const handleNewSupportTicket = () => {
+            queryClient.invalidateQueries({ queryKey: ['adminTickets'] });
+        };
 
-        socket.on('support_ticket_updated', (ticket) => {
-            queryClient.invalidateQueries(['adminTickets']);
+        const handleSupportTicketUpdated = (ticket) => {
+            queryClient.invalidateQueries({ queryKey: ['adminTickets'] });
             setSelectedTicket(prev => prev?.ticketId === ticket.ticketId ? ticket : prev);
-        });
+        };
 
-        socket.on('support_ticket_replied', () => {
-            queryClient.invalidateQueries(['adminTickets']);
-        });
+        const handleSupportTicketReplied = () => {
+            queryClient.invalidateQueries({ queryKey: ['adminTickets'] });
+        };
+
+        socket.on('new_support_ticket', handleNewSupportTicket);
+        socket.on('support_ticket_updated', handleSupportTicketUpdated);
+        socket.on('support_ticket_replied', handleSupportTicketReplied);
 
         return () => {
-            socket.disconnect();
+            socket.off('new_support_ticket', handleNewSupportTicket);
+            socket.off('support_ticket_updated', handleSupportTicketUpdated);
+            socket.off('support_ticket_replied', handleSupportTicketReplied);
         };
-    }, [queryClient]);
+    }, [socket, queryClient]);
 
     // Fetch Tickets
     const { data: ticketsData, isLoading } = useQuery({
-        queryKey: ['adminTickets', statusFilter, searchTerm],
+        queryKey: ['adminTickets', statusFilter, searchTerm, user?.email],
         queryFn: async () => {
             const res = await axiosSecure.get(`/admin/support?status=${statusFilter}&search=${searchTerm}`);
             return res.data.tickets;
-        }
+        },
+        enabled: !!user?.email && tokenReady
     });
 
     const getStatusColor = (status) => {
@@ -83,17 +90,25 @@ const SupportTickets = () => {
                     { label: 'Open', value: ticketsData?.filter(t => t.status === 'open').length || 0, icon: RiQuestionLine, color: 'blue' },
                     { label: 'In Progress', value: ticketsData?.filter(t => t.status === 'in-progress').length || 0, icon: RiLoader4Line, color: 'amber' },
                     { label: 'Resolved', value: ticketsData?.filter(t => t.status === 'resolved').length || 0, icon: RiCheckboxCircleLine, color: 'lime' },
-                ].map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 flex items-center justify-center text-${stat.color}-600`}>
-                            <stat.icon size={24} />
+                ].map((stat, i) => {
+                    const colorMap = {
+                        blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
+                        amber: { bg: 'bg-amber-50', text: 'text-amber-600' },
+                        lime: { bg: 'bg-lime-50', text: 'text-lime-600' }
+                    };
+                    const colors = colorMap[stat.color] || colorMap.blue;
+                    return (
+                        <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-2xl ${colors.bg} flex items-center justify-center ${colors.text}`}>
+                                <stat.icon size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                                <p className="text-2xl font-black text-slate-900">{stat.value}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-                            <p className="text-2xl font-black text-slate-900">{stat.value}</p>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Filters & Search */}

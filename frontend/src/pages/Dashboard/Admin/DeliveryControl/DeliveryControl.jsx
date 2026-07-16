@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { io } from 'socket.io-client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import FiltersBar from './FiltersBar';
 import RequestTable from './RequestTable';
@@ -8,8 +7,9 @@ import FailedAssignments from './FailedAssignments';
 import ParcelDetailsModal from './ParcelDetailsModal';
 import useAuth from '../../../../hooks/useAuth';
 import useAxiosSecure from '../../../../hooks/useAxiosSecure';
+import { useNotifications } from '../../../../contexts/NotificationContext';
 
-export const getNormalizedStatus = (req) => {
+const getNormalizedStatus = (req) => {
   const status = (req?.deliveryStatus || req?.status || '').toLowerCase();
 
   if (['pending', 'pending_rider', 'pending_rider_response', 'pending-pickup', 'awaiting-payment'].includes(status)) {
@@ -34,11 +34,11 @@ export const getNormalizedStatus = (req) => {
 };
 
 const DeliveryControl = () => {
-  const { userProfile } = useAuth();
+  const { user, tokenReady } = useAuth();
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
+  const { socket } = useNotifications();
 
-  const [socket, setSocket] = useState(null);
   const [activeTab, setActiveTab] = useState('All Requests');
   const [searchQuery, setSearchQuery] = useState('');
   const [districtFilter, setDistrictFilter] = useState('All');
@@ -46,28 +46,31 @@ const DeliveryControl = () => {
   const [paymentFilter, setPaymentFilter] = useState('All');
 
   // Fetch Data
-  const { data: stats = {}, isLoading: isStatsLoading } = useQuery({
-    queryKey: ['deliveryStats'],
+  useQuery({
+    queryKey: ['deliveryStats', user?.email],
     queryFn: async () => {
       const res = await axiosSecure.get('/api/delivery-control/stats');
       return res.data.stats;
-    }
+    },
+    enabled: !!user?.email && tokenReady
   });
 
   const { data: requests = [], isLoading: isRequestsLoading } = useQuery({
-    queryKey: ['deliveryRequests'],
+    queryKey: ['deliveryRequests', user?.email],
     queryFn: async () => {
       const res = await axiosSecure.get('/api/delivery-control/requests');
       return res.data.requests;
-    }
+    },
+    enabled: !!user?.email && tokenReady
   });
 
   const { data: failedAssignments = [] } = useQuery({
-    queryKey: ['failedAssignments'],
+    queryKey: ['failedAssignments', user?.email],
     queryFn: async () => {
       const res = await axiosSecure.get('/api/delivery-control/failed-assignments');
       return res.data.failed;
-    }
+    },
+    enabled: !!user?.email && tokenReady
   });
 
   const [selectedParcel, setSelectedParcel] = useState(null);
@@ -85,35 +88,42 @@ const DeliveryControl = () => {
 
   // Socket IO Setup
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000', {
-      withCredentials: true,
-    });
-    setSocket(newSocket);
+    if (!socket) return;
 
-    // Listen to admin matching updates
-    newSocket.on('admin_matching_update', () => {
+    const handleAdminMatchingUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
       queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
       queryClient.invalidateQueries({ queryKey: ['failedAssignments'] });
-    });
+    };
 
-    newSocket.on('dashboard_stats_updated', () => {
+    const handleDashboardStatsUpdated = () => {
       queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
       queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
-    });
+    };
 
-    newSocket.on('parcel_status_updated', () => {
+    const handleParcelStatusUpdated = () => {
       queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
       queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
-    });
+    };
 
-    newSocket.on('admin_dashboard_update', () => {
+    const handleAdminDashboardUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
       queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
-    });
+    };
 
-    return () => newSocket.close();
-  }, [queryClient]);
+    // Listen to admin matching updates
+    socket.on('admin_matching_update', handleAdminMatchingUpdate);
+    socket.on('dashboard_stats_updated', handleDashboardStatsUpdated);
+    socket.on('parcel_status_updated', handleParcelStatusUpdated);
+    socket.on('admin_dashboard_update', handleAdminDashboardUpdate);
+
+    return () => {
+      socket.off('admin_matching_update', handleAdminMatchingUpdate);
+      socket.off('dashboard_stats_updated', handleDashboardStatsUpdated);
+      socket.off('parcel_status_updated', handleParcelStatusUpdated);
+      socket.off('admin_dashboard_update', handleAdminDashboardUpdate);
+    };
+  }, [socket, queryClient]);
 
   // Derived state for filtering
   const filteredRequests = requests.filter(req => {

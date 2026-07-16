@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
-import { NotificationProvider } from "../contexts/NotificationContext";
+import { NotificationProvider } from "../contexts/NotificationProvider";
 import Home from "../pages/Home";
 import About from "../pages/About/About";
 import Pricing from "../pages/Pricing/Pricing";

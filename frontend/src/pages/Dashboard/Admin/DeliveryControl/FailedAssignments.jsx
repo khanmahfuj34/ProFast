@@ -20,9 +20,9 @@ const FailedAssignments = ({ failedAssignments }) => {
     },
     onSuccess: () => {
       toast.success('Rider manually assigned successfully');
-      queryClient.invalidateQueries(['failedAssignments']);
-      queryClient.invalidateQueries(['deliveryRequests']);
-      queryClient.invalidateQueries(['deliveryStats']);
+      queryClient.invalidateQueries({ queryKey: ['failedAssignments'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['deliveryStats'] });
       setSelectedParcel(null);
       setRiderEmailInput('');
     },

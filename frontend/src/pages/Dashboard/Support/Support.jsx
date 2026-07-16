@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-import { 
-    RiCustomerService2Line, 
-    RiAddLine, 
-    RiSearchLine, 
-    RiFilter3Line, 
-    RiTimeLine, 
-    RiCheckboxCircleLine, 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+    RiCustomerService2Line,
+    RiAddLine,
+    RiSearchLine,
+    RiFilter3Line,
+    RiTimeLine,
+    RiCheckboxCircleLine,
     RiInformationLine,
     RiArrowRightSLine,
     RiHistoryLine,
@@ -16,12 +15,15 @@ import {
     RiQuestionLine,
     RiLoader4Line
 } from 'react-icons/ri';
-import { io } from 'socket.io-client';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
+import useAuth from '../../../hooks/useAuth';
+import { useNotifications } from '../../../contexts/NotificationContext';
 import CreateTicketModal from './CreateTicketModal';
 import UserSupportTicketModal from './UserSupportTicketModal';
 
 const Support = () => {
+    const { user, tokenReady } = useAuth();
+    const { socket } = useNotifications();
     const axiosSecure = useAxiosSecure();
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,32 +33,34 @@ const Support = () => {
 
     // Socket Connection for Real-time Ticket Updates
     React.useEffect(() => {
-        const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000', {
-            withCredentials: true,
-            transports: ['polling', 'websocket']
-        });
+        if (!socket) return;
 
-        socket.on('support_ticket_updated', (ticket) => {
-            queryClient.invalidateQueries(['myTickets']);
+        const handleSupportTicketUpdated = (ticket) => {
+            queryClient.invalidateQueries({ queryKey: ['myTickets'] });
             setSelectedTicket(prev => prev?.ticketId === ticket.ticketId ? ticket : prev);
-        });
+        };
 
-        socket.on('support_ticket_replied', () => {
-            queryClient.invalidateQueries(['myTickets']);
-        });
+        const handleSupportTicketReplied = () => {
+            queryClient.invalidateQueries({ queryKey: ['myTickets'] });
+        };
+
+        socket.on('support_ticket_updated', handleSupportTicketUpdated);
+        socket.on('support_ticket_replied', handleSupportTicketReplied);
 
         return () => {
-            socket.disconnect();
+            socket.off('support_ticket_updated', handleSupportTicketUpdated);
+            socket.off('support_ticket_replied', handleSupportTicketReplied);
         };
-    }, [queryClient]);
+    }, [socket, queryClient]);
 
     // Fetch My Tickets
     const { data: ticketsData, isLoading } = useQuery({
-        queryKey: ['myTickets', statusFilter, searchTerm],
+        queryKey: ['myTickets', statusFilter, searchTerm, user?.email],
         queryFn: async () => {
             const res = await axiosSecure.get(`/support/my-tickets?status=${statusFilter}&search=${searchTerm}`);
             return res.data.tickets;
-        }
+        },
+        enabled: !!user?.email && tokenReady
     });
 
     const getStatusColor = (status) => {
@@ -182,8 +186,8 @@ const Support = () => {
                                 </tr>
                             ) : (
                                 ticketsData?.map((ticket) => (
-                                    <tr 
-                                        key={ticket.ticketId} 
+                                    <tr
+                                        key={ticket.ticketId}
                                         onClick={() => setSelectedTicket(ticket)}
                                         className="group hover:bg-slate-50/50 transition-all cursor-pointer"
                                     >
@@ -243,7 +247,7 @@ const Support = () => {
                         </p>
                         <div className="flex items-center gap-3 pt-2">
                             <div className="flex -space-x-3">
-                                {[1,2,3,4].map(i => (
+                                {[1, 2, 3, 4].map(i => (
                                     <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-700 overflow-hidden">
                                         <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=support${i}`} alt="Agent" />
                                     </div>
@@ -273,13 +277,13 @@ const Support = () => {
                 </div>
             </div>
 
-            <CreateTicketModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onSuccess={() => queryClient.invalidateQueries(['myTickets'])}
+            <CreateTicketModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={() => queryClient.invalidateQueries({ queryKey: ['myTickets'] })}
             />
 
-            <UserSupportTicketModal 
+            <UserSupportTicketModal
                 ticket={selectedTicket}
                 isOpen={!!selectedTicket}
                 onClose={() => setSelectedTicket(null)}

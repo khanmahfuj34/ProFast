@@ -51,7 +51,7 @@ export default function RiderSettings() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["rider-settings-profile"]);
+      queryClient.invalidateQueries({ queryKey: ["rider-settings-profile"] });
       toast.success("Profile information updated successfully!");
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to update profile.")
@@ -63,7 +63,7 @@ export default function RiderSettings() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["rider-settings-profile"]);
+      queryClient.invalidateQueries({ queryKey: ["rider-settings-profile"] });
       toast.success("Location coverage updated successfully!");
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to update location.")
@@ -75,7 +75,7 @@ export default function RiderSettings() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["rider-settings-profile"]);
+      queryClient.invalidateQueries({ queryKey: ["rider-settings-profile"] });
       toast.success("Vehicle records updated successfully!");
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to update vehicle.")
@@ -87,7 +87,7 @@ export default function RiderSettings() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["rider-settings-profile"]);
+      queryClient.invalidateQueries({ queryKey: ["rider-settings-profile"] });
       toast.success("Availability schedule updated successfully!");
     },
     onError: (err) => toast.error(err?.response?.data?.message || "Failed to update availability.")
@@ -108,10 +108,10 @@ export default function RiderSettings() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["rider-settings-sessions"]);
+      queryClient.invalidateQueries({ queryKey: ["rider-settings-sessions"] });
       toast.success("Logged out from all external devices.");
     },
-    onError: (err) => toast.error("Failed to revoke external sessions.")
+    onError: () => toast.error("Failed to revoke external sessions.")
   });
 
   const supportMutation = useMutation({
@@ -120,7 +120,7 @@ export default function RiderSettings() {
       return res.data;
     },
     onSuccess: (data) => toast.success(data?.message || "Support ticket submitted!"),
-    onError: (err) => toast.error("Failed to submit ticket.")
+    onError: () => toast.error("Failed to submit ticket.")
   });
 
   if (isProfileLoading || isSessionsLoading) {

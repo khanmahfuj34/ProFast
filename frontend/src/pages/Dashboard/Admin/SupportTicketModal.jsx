@@ -20,7 +20,7 @@ const SupportTicketModal = ({ ticket, isOpen, onClose }) => {
         },
         onSuccess: (data) => {
             toast.success(`Ticket marked as ${data.ticket.status}`);
-            queryClient.invalidateQueries(['adminTickets']);
+            queryClient.invalidateQueries({ queryKey: ['adminTickets'] });
             if (data.ticket.status === 'closed') {
                 onClose();
             }
@@ -39,7 +39,7 @@ const SupportTicketModal = ({ ticket, isOpen, onClose }) => {
         onSuccess: () => {
             toast.success('Reply sent successfully');
             setReplyText('');
-            queryClient.invalidateQueries(['adminTickets']);
+            queryClient.invalidateQueries({ queryKey: ['adminTickets'] });
             setIsReplying(false);
         },
         onError: (err) => {

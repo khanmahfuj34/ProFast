@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { 
-  FiPackage as Package, 
-  FiMapPin as MapPin, 
-  FiArrowRight as ArrowRight, 
-  FiDollarSign as DollarSign, 
-  FiClock as Clock, 
-  FiCheckCircle as CheckCircle, 
+import {
+  FiPackage as Package,
+  FiMapPin as MapPin,
+  FiArrowRight as ArrowRight,
+  FiDollarSign as DollarSign,
+  FiClock as Clock,
+  FiCheckCircle as CheckCircle,
   FiXCircle as XCircle,
   FiTruck as Truck,
   FiLayers as Layers,
@@ -30,7 +30,6 @@ import {
 import { IoClose } from 'react-icons/io5';
 import useAuth from '../../../hooks/useAuth';
 import useAxiosSecure from '../../../hooks/useAxiosSecure';
-import useRiderStatus from '../../../hooks/useRiderStatus';
 import { useNotifications } from '../../../contexts/NotificationContext';
 
 const ParcelRequests = () => {
@@ -38,7 +37,6 @@ const ParcelRequests = () => {
   const axiosSecure = useAxiosSecure();
   const queryClient = useQueryClient();
   const { socket } = useNotifications();
-  const { isOnline, toggleStatus, isLoading: statusLoading } = useRiderStatus();
   const [filter, setFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,7 +50,7 @@ const ParcelRequests = () => {
       return res.data;
     },
     enabled: !!user?.email,
-    refetchInterval: 30000 
+    refetchInterval: 30000
   });
 
   // Fetch dashboard stats for the summary cards
@@ -80,15 +78,15 @@ const ParcelRequests = () => {
     if (!socket) return;
 
     const handleNewRequest = () => {
-      queryClient.invalidateQueries(['rider-parcel-requests']);
-      toast.success('New delivery request available!', { 
+      queryClient.invalidateQueries({ queryKey: ['rider-parcel-requests'] });
+      toast.success('New delivery request available!', {
         icon: '📦',
         style: { borderRadius: '12px', background: '#1e293b', color: '#fff' }
       });
     };
 
     const handleRequestClosed = () => {
-      queryClient.invalidateQueries(['rider-parcel-requests']);
+      queryClient.invalidateQueries({ queryKey: ['rider-parcel-requests'] });
     };
 
     socket.on('new_delivery_request', handleNewRequest);
@@ -114,13 +112,13 @@ const ParcelRequests = () => {
       });
       // Start removal animation
       setRemovingIds(prev => [...prev, acceptMutation.variables]);
-      
+
       // Delay query invalidation slightly for the animation
       setTimeout(() => {
-        queryClient.invalidateQueries(['rider-parcel-requests']);
-        queryClient.invalidateQueries(['rider-deliveries']);
-        queryClient.invalidateQueries(['rider-dashboard-stats']);
-        queryClient.invalidateQueries(['assigned-deliveries']);
+        queryClient.invalidateQueries({ queryKey: ['rider-parcel-requests'] });
+        queryClient.invalidateQueries({ queryKey: ['rider-deliveries'] });
+        queryClient.invalidateQueries({ queryKey: ['rider-dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['assigned-deliveries'] });
       }, 500);
     },
     onError: (error) => {
@@ -136,7 +134,7 @@ const ParcelRequests = () => {
     },
     onSuccess: () => {
       toast.success('Request dismissed');
-      queryClient.invalidateQueries(['rider-parcel-requests']);
+      queryClient.invalidateQueries({ queryKey: ['rider-parcel-requests'] });
     }
   });
 
@@ -150,7 +148,7 @@ const ParcelRequests = () => {
         </div>
         <h2 className="text-3xl font-black text-slate-900 mb-3">Connection Interrupted</h2>
         <p className="text-slate-500 mb-8 max-w-md text-lg">We lost connection to the dispatch server. Please check your signal.</p>
-        <button 
+        <button
           onClick={() => refetch()}
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-2xl transition-all shadow-xl shadow-blue-200 active:scale-95"
         >
@@ -162,7 +160,7 @@ const ParcelRequests = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700">
-      
+
       {/* Header Section */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
         <div>
@@ -198,36 +196,36 @@ const ParcelRequests = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          label="New Requests" 
-          value={requests.length} 
-          subtext="Nearby requests" 
-          icon={<Package />} 
+        <StatCard
+          label="New Requests"
+          value={requests.length}
+          subtext="Nearby requests"
+          icon={<Package />}
           color="blue"
           loading={isLoading}
         />
-        <StatCard 
-          label="Response Rate" 
-          value="92%" 
-          subtext="Excellent" 
-          icon={<Activity />} 
-          color="indigo" 
+        <StatCard
+          label="Response Rate"
+          value="92%"
+          subtext="Excellent"
+          icon={<Activity />}
+          color="indigo"
           loading={isLoading}
         />
-        <StatCard 
-          label="Acceptance Rate" 
-          value={`${performanceData?.successRate || 0}%`} 
-          subtext="Great" 
-          icon={<TrendingUp />} 
-          color="emerald" 
+        <StatCard
+          label="Acceptance Rate"
+          value={`${performanceData?.successRate || 0}%`}
+          subtext="Great"
+          icon={<TrendingUp />}
+          color="emerald"
           loading={isLoading}
         />
-        <StatCard 
-          label="Total Earnings Today" 
-          value={`৳${(statsData?.todayEarnings || 0).toLocaleString()}`} 
-          subtext="+12% from yesterday" 
-          icon={<DollarSign />} 
-          color="amber" 
+        <StatCard
+          label="Total Earnings Today"
+          value={`৳${(statsData?.todayEarnings || 0).toLocaleString()}`}
+          subtext="+12% from yesterday"
+          icon={<DollarSign />}
+          color="amber"
           loading={isLoading}
         />
       </div>
@@ -239,7 +237,7 @@ const ParcelRequests = () => {
           <TabButton label="High Priority" count={requests.filter(r => r.parcel?.parcelWeight > 5).length} active={filter === 'priority'} onClick={() => setFilter('priority')} />
           <TabButton label="Regular" count={requests.filter(r => r.parcel?.parcelWeight <= 5).length} active={filter === 'regular'} onClick={() => setFilter('regular')} />
         </div>
-        
+
         <div className="flex items-center gap-2 text-sm text-slate-500 whitespace-nowrap">
           <span>Sort by:</span>
           <button className="flex items-center gap-1 font-bold text-slate-900 hover:text-blue-600 transition-colors">
@@ -262,7 +260,7 @@ const ParcelRequests = () => {
           <p className="text-slate-500 max-w-sm mb-10 text-lg leading-relaxed">
             There are no delivery requests in your area right now. Stay online to be notified immediately.
           </p>
-          <button 
+          <button
             onClick={() => refetch()}
             className="flex items-center gap-3 bg-slate-900 text-white font-bold px-8 py-4 rounded-2xl hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-200"
           >
@@ -273,9 +271,9 @@ const ParcelRequests = () => {
       ) : (
         <div className="space-y-4">
           {requests.map((request, index) => (
-            <HorizontalRequestCard 
-              key={request._id} 
-              request={request} 
+            <HorizontalRequestCard
+              key={request._id}
+              request={request}
               index={index}
               isRemoving={removingIds.includes(request.parcelId)}
               onAccept={() => acceptMutation.mutate(request.parcelId)}
@@ -289,7 +287,7 @@ const ParcelRequests = () => {
               isDisabled={acceptMutation.isPending || rejectMutation.isPending}
             />
           ))}
-          
+
           <div className="bg-blue-50/50 rounded-2xl p-4 flex items-center gap-3 border border-blue-100 mt-8">
             <div className="bg-blue-600 text-white p-1.5 rounded-lg">
               <CheckCircle className="w-4 h-4" />
@@ -303,9 +301,9 @@ const ParcelRequests = () => {
 
       {/* Details Modal */}
       {isModalOpen && selectedRequest && (
-        <DetailsModal 
-          request={selectedRequest} 
-          onClose={() => setIsModalOpen(false)} 
+        <DetailsModal
+          request={selectedRequest}
+          onClose={() => setIsModalOpen(false)}
           onAccept={() => {
             setIsModalOpen(false);
             acceptMutation.mutate(selectedRequest.parcelId);
@@ -352,17 +350,15 @@ const StatCard = ({ label, value, subtext, icon, color, loading }) => {
 };
 
 const TabButton = ({ label, count, active, onClick }) => (
-  <button 
+  <button
     onClick={onClick}
-    className={`pb-3 border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${
-      active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'
-    }`}
+    className={`pb-3 border-b-2 transition-all whitespace-nowrap flex items-center gap-2 ${active ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+      }`}
   >
     <span className="font-bold">{label}</span>
     {count > 0 && (
-      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-        active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
-      }`}>
+      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+        }`}>
         {count}
       </span>
     )}
@@ -371,22 +367,19 @@ const TabButton = ({ label, count, active, onClick }) => (
 
 const HorizontalRequestCard = ({ request, index, onAccept, onReject, onViewDetails, isAccepting, isRejecting, isDisabled, isRemoving }) => {
   const isHighPriority = request.parcel?.parcelWeight > 5;
-  const isFragile = request.parcel?.parcelType === 'fragile';
-  
+
   return (
-    <div 
-      className={`group bg-white rounded-3xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 p-5 sm:p-6 overflow-hidden relative animate-in fade-in slide-in-from-bottom-6 ${
-        isRemoving ? 'scale-95 opacity-0 grayscale duration-700 pointer-events-none translate-x-full' : ''
-      }`}
+    <div
+      className={`group bg-white rounded-3xl border border-slate-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-500 p-5 sm:p-6 overflow-hidden relative animate-in fade-in slide-in-from-bottom-6 ${isRemoving ? 'scale-95 opacity-0 grayscale duration-700 pointer-events-none translate-x-full' : ''
+        }`}
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="flex flex-col lg:flex-row gap-6 lg:items-center">
-        
+
         {/* Left: Parcel Info */}
         <div className="flex items-center gap-4 lg:w-72 flex-shrink-0">
-          <div className={`w-20 h-20 rounded-3xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${
-            isHighPriority ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
-          }`}>
+          <div className={`w-20 h-20 rounded-3xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${isHighPriority ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'
+            }`}>
             <Package className="w-10 h-10" />
           </div>
           <div className="min-w-0">
@@ -397,7 +390,7 @@ const HorizontalRequestCard = ({ request, index, onAccept, onReject, onViewDetai
               <span className="text-slate-500 font-bold text-xs">#{request.trackingId}</span>
               {isHighPriority && <span className="bg-red-50 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Priority</span>}
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-tight">
               <span className="bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">{request.parcel?.parcelType}</span>
               <span className="bg-slate-50 px-2 py-1 rounded-lg border border-slate-100 flex items-center gap-1">
@@ -447,13 +440,13 @@ const HorizontalRequestCard = ({ request, index, onAccept, onReject, onViewDetai
           </div>
 
           <div className="flex gap-2 w-full sm:w-auto">
-            <button 
+            <button
               onClick={onViewDetails}
               className="flex-1 sm:flex-none px-4 py-4 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all active:scale-95"
             >
               Details
             </button>
-            <button 
+            <button
               onClick={onReject}
               disabled={isDisabled}
               className="p-4 rounded-2xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 disabled:opacity-50"
@@ -461,7 +454,7 @@ const HorizontalRequestCard = ({ request, index, onAccept, onReject, onViewDetai
             >
               {isRejecting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <XCircle className="w-5 h-5" />}
             </button>
-            <button 
+            <button
               onClick={onAccept}
               disabled={isDisabled}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all active:scale-95 shadow-lg shadow-blue-200 group/btn disabled:opacity-50"
@@ -481,7 +474,7 @@ const HorizontalRequestCard = ({ request, index, onAccept, onReject, onViewDetai
           </div>
         </div>
       </div>
-      
+
       {/* Auto-reject timer bar mockup */}
       <div className="absolute bottom-0 left-0 h-1 bg-slate-100 w-full overflow-hidden">
         <div className="h-full bg-blue-500 w-3/4"></div>
@@ -492,19 +485,18 @@ const HorizontalRequestCard = ({ request, index, onAccept, onReject, onViewDetai
 
 const DetailsModal = ({ request, onClose, onAccept, isAccepting, isDisabled }) => {
   const parcel = request.parcel;
-  const isHighPriority = parcel?.parcelWeight > 5;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}
       ></div>
-      
+
       {/* Modal Container */}
       <div className="relative bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
-        
+
         {/* Header */}
         <div className="bg-slate-900 p-6 sm:p-8 text-white relative">
           <div className="flex items-start justify-between">
@@ -519,14 +511,14 @@ const DetailsModal = ({ request, onClose, onAccept, isAccepting, isDisabled }) =
                 </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="p-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95"
             >
               <IoClose className="w-6 h-6" />
             </button>
           </div>
-          
+
           <div className="mt-8 flex flex-wrap gap-4">
             <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
@@ -549,7 +541,7 @@ const DetailsModal = ({ request, onClose, onAccept, isAccepting, isDisabled }) =
         {/* Content */}
         <div className="p-6 sm:p-10 max-h-[70vh] overflow-y-auto no-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            
+
             {/* Sender Info */}
             <section className="space-y-6">
               <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
@@ -558,7 +550,7 @@ const DetailsModal = ({ request, onClose, onAccept, isAccepting, isDisabled }) =
                 </div>
                 <h3 className="text-lg font-black text-slate-900">Sender Information</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <InfoItem label="Full Name" value={parcel?.senderName} icon={<User className="w-4 h-4 text-slate-400" />} />
                 <InfoItem label="Phone Number" value={parcel?.senderPhone} icon={<Phone className="w-4 h-4 text-slate-400" />} />
@@ -585,7 +577,7 @@ const DetailsModal = ({ request, onClose, onAccept, isAccepting, isDisabled }) =
                 </div>
                 <h3 className="text-lg font-black text-slate-900">Receiver Information</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <InfoItem label="Receiver Name" value={parcel?.receiverName} icon={<User className="w-4 h-4 text-slate-400" />} />
                 <InfoItem label="Phone Number" value={parcel?.receiverPhone} icon={<Phone className="w-4 h-4 text-slate-400" />} />
@@ -613,7 +605,7 @@ const DetailsModal = ({ request, onClose, onAccept, isAccepting, isDisabled }) =
               <p className="text-2xl font-black text-slate-900">৳{parcel?.totalPrice}</p>
               <p className="text-xs text-slate-500 font-bold mt-1">Full Delivery Fee</p>
             </div>
-            
+
             <div className="p-6 bg-green-50 rounded-3xl border border-green-100">
               <div className="flex items-center gap-2 mb-4">
                 <DollarSign className="w-5 h-5 text-green-600" />
@@ -658,13 +650,13 @@ const DetailsModal = ({ request, onClose, onAccept, isAccepting, isDisabled }) =
 
         {/* Footer Actions */}
         <div className="p-6 sm:p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-4">
-          <button 
+          <button
             onClick={onClose}
             className="px-8 py-4 rounded-2xl font-bold text-slate-500 hover:text-slate-700 transition-all active:scale-95"
           >
             Go Back
           </button>
-          <button 
+          <button
             onClick={onAccept}
             disabled={isDisabled}
             className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-12 py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black transition-all active:scale-95 shadow-xl shadow-blue-200 disabled:opacity-50"

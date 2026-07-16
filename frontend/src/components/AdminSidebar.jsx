@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import useAxiosSecure from '../hooks/useAxiosSecure';
 import useAuth from '../hooks/useAuth';
 import { useNotifications } from '../contexts/NotificationContext';
-import { io } from 'socket.io-client';
 import {
   MdDashboard,
   MdGroup,
@@ -24,8 +23,8 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
   const location = useLocation();
 
   const axiosSecure = useAxiosSecure();
-  const { user } = useAuth();
-  const { unreadCount } = useNotifications();
+  const { user, tokenReady } = useAuth();
+  const { unreadCount, socket } = useNotifications();
   const queryClient = useQueryClient();
 
   // 1. Delivery Control & All Parcels counts (from dashboard-stats)
@@ -35,7 +34,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       const res = await axiosSecure.get('/admin/dashboard-stats');
       return res.data?.stats || {};
     },
-    enabled: !!user?.email,
+    enabled: !!user?.email && tokenReady,
     refetchInterval: 20000,
     staleTime: 5000,
   });
@@ -47,7 +46,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       const res = await axiosSecure.get('/admin/stats');
       return res.data?.stats || {};
     },
-    enabled: !!user?.email,
+    enabled: !!user?.email && tokenReady,
     refetchInterval: 30000,
   });
 
@@ -58,40 +57,43 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
       const res = await axiosSecure.get('/admin/support?status=open');
       return res.data?.count || 0;
     },
-    enabled: !!user?.email,
+    enabled: !!user?.email && tokenReady,
     refetchInterval: 30000,
   });
 
   // Real-time socket updates for sidebar
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?.email || !socket) return;
 
-    // Connect to sockets (assuming same namespace or default)
-    const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000', {
-      withCredentials: true
-    });
+    const handleParcelUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    };
+
+    const handleNewParcel = () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
+    };
+
+    const handleTicketCreated = () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-support-open-count'] });
+    };
+
+    const handleRiderApplication = () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    };
 
     // Listen for events that should update sidebar counts
-    socket.on('parcelUpdate', () => {
-      queryClient.invalidateQueries(['admin-dashboard-stats']);
-    });
-
-    socket.on('newParcel', () => {
-      queryClient.invalidateQueries(['admin-dashboard-stats']);
-    });
-
-    socket.on('ticketCreated', () => {
-      queryClient.invalidateQueries(['admin-support-open-count']);
-    });
-
-    socket.on('riderApplication', () => {
-      queryClient.invalidateQueries(['admin-stats']);
-    });
+    socket.on('parcelUpdate', handleParcelUpdate);
+    socket.on('newParcel', handleNewParcel);
+    socket.on('ticketCreated', handleTicketCreated);
+    socket.on('riderApplication', handleRiderApplication);
 
     return () => {
-      socket.disconnect();
+      socket.off('parcelUpdate', handleParcelUpdate);
+      socket.off('newParcel', handleNewParcel);
+      socket.off('ticketCreated', handleTicketCreated);
+      socket.off('riderApplication', handleRiderApplication);
     };
-  }, [user, queryClient]);
+  }, [user, socket, queryClient]);
 
   const deliveryControlCount = dashboardStats?.pendingParcels > 0 ? dashboardStats.pendingParcels.toString() : null;
   const approveRidersCount = adminStats?.riderStats?.pending > 0 ? adminStats.riderStats.pending.toString() : null;
@@ -272,7 +274,7 @@ const AdminSidebar = ({ isOpen, onClose, isCollapsed = false, onToggleCollapse =
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <svg
-                  xmlns="http://www.w3.org/2000/lg"
+                  xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="white"
                   className="w-6 h-6"
