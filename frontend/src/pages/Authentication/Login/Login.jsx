@@ -309,10 +309,10 @@ const Login = () => {
                         </button>
 
                         {/* Demo Credentials */}
-                        <div className="text-xs font-bold space-y-1">
-                            <p>👤 User: user2@gmail.com | 11223344</p>
-                            <p>🏍️ Rider: rider2@gmail.com | 11223344</p>
-                            <p>🛡️ Admin: admin@gmail.com | 11223344</p>
+                        <div className={`text-sm font-bold space-y-2 p-3 rounded-xl border ${isDarkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+                            <p>👤 User: <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>user2@gmail.com</span> | Password: <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>11223344</span></p>
+                            <p>🏍️ Rider: <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>rider2@gmail.com</span> | Password: <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>11223344</span></p>
+                            <p>🛡️ Admin: <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>admin@gmail.com</span> | Password: <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>11223344</span></p>
                         </div>
 
                         <div className="relative py-4 flex items-center justify-center">
